@@ -6,7 +6,7 @@ Welcome to the **Guild Club Services** clinical management platform. Below are y
 
 ## 1. Demo Login Credentials
 
-**Login URL**: `https://<your-deployed-domain>/login` (or `http://localhost:3000/login` locally)
+**Login URL**: 'https://guildclub-services.vercel.app/'
 
 | Role | Email | Password | Dashboard URL | Primary Responsibility |
 |---|---|---|---|---|
