@@ -1,0 +1,2 @@
+CREATE INDEX "case_events_event_type_occurred_idx" ON "case_events" USING btree ("event_type","occurred_at");--> statement-breakpoint
+CREATE INDEX "case_events_to_status_occurred_idx" ON "case_events" USING btree ("to_status","occurred_at");
