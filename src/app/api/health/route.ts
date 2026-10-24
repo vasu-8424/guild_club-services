@@ -15,13 +15,23 @@ export async function GET(request: Request) {
     uptime: process.uptime(),
   };
 
+  let dbHost = "none";
+  try {
+    if (process.env.DATABASE_URL) {
+      dbHost = new URL(process.env.DATABASE_URL).host;
+    }
+  } catch {
+    dbHost = "invalid URL";
+  }
+  response.dbHost = dbHost;
+
   if (checkDb) {
     try {
       await db.execute(sql`SELECT 1`);
       response.database = "connected";
-    } catch {
+    } catch (err: any) {
       response.status = "degraded";
-      response.database = "disconnected";
+      response.database = "error: " + (err?.cause?.message || err?.message || String(err));
       return NextResponse.json(response, { status: 503 });
     }
   }
