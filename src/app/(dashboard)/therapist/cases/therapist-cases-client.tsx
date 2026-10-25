@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { PriorityBadge } from "@/components/ui/priority-badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { acceptCaseAction, declineCaseAction } from "@/lib/actions/case-actions";
+import { Icons } from "@/components/ui/icons";
 
 export interface CaseListItem {
   id: string;
@@ -183,20 +184,21 @@ export function TherapistCasesClient({
                 <div className="flex items-center gap-2 shrink-0">
                   <Button
                     size="sm"
+                    variant="primary"
                     data-testid="invitation-accept-button"
                     onClick={() => handleAccept(c.id)}
                     isLoading={actionLoadingId === c.id}
-                    className="bg-teal-700 hover:bg-teal-800 text-white text-xs h-8 px-3"
+                    leadingIcon={<Icons.Check />}
                   >
                     Accept Case
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="destructive-outline"
                     size="sm"
                     data-testid="invitation-decline-button"
                     onClick={() => handleDecline(c.id)}
                     isLoading={actionLoadingId === c.id}
-                    className="text-rose-600 border-rose-200 hover:bg-rose-50 text-xs h-8 px-3"
+                    leadingIcon={<Icons.X />}
                   >
                     Decline
                   </Button>
@@ -209,8 +211,8 @@ export function TherapistCasesClient({
 
       {/* Active Treatment Caseload */}
       {(activeTab === "all" || activeTab === "active") && (
-        <div className="rounded-xl border border-slate-200/80 bg-white overflow-hidden shadow-xs">
-          <div className="border-b border-slate-100 px-5 py-3 flex items-center justify-between">
+        <div className="rounded-none border border-slate-200 bg-white overflow-hidden shadow-xs">
+          <div className="border-b border-slate-200 px-5 py-3 flex items-center justify-between bg-slate-50/50">
             <div className="flex items-center gap-2">
               <HeartHandshake className="h-4 w-4 text-teal-700" />
               <h2 className="text-sm font-semibold text-slate-900">
@@ -236,14 +238,14 @@ export function TherapistCasesClient({
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="sticky top-0 bg-slate-50/90 border-b border-slate-200/80 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
+                <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[10px] select-none z-10">
                   <tr>
-                    <th className="px-5 py-3">Case</th>
-                    <th className="px-5 py-3">Client</th>
-                    <th className="px-5 py-3">Category</th>
-                    <th className="px-5 py-3">Priority</th>
-                    <th className="px-5 py-3">Status</th>
-                    <th className="px-5 py-3 text-right">Action</th>
+                    <th className="px-5 py-3 min-w-[130px]">Case</th>
+                    <th className="px-5 py-3 min-w-[160px]">Client</th>
+                    <th className="px-5 py-3 min-w-[160px]">Category</th>
+                    <th className="px-5 py-3 min-w-[100px]">Priority</th>
+                    <th className="px-5 py-3 min-w-[120px]">Status</th>
+                    <th className="px-5 py-3 text-right w-[180px] min-w-[180px]">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
@@ -264,11 +266,14 @@ export function TherapistCasesClient({
                       <td className="px-5 py-3.5">
                         <StatusBadge status={c.status} />
                       </td>
-                      <td className="px-5 py-3.5 text-right">
+                      <td className="px-5 py-3.5 text-right w-[180px] min-w-[180px]">
                         <Link href={`/therapist/cases/${c.id}`}>
-                          <Button variant="outline" size="sm" className="h-7 text-xs">
-                            <span>Open Details</span>
-                            <ArrowRight className="h-3 w-3 ml-1" />
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            trailingIcon={<Icons.ArrowRight />}
+                          >
+                            Open Details
                           </Button>
                         </Link>
                       </td>

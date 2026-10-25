@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Edit3, KeyRound, Trash2, CheckCircle2, UserX, DoorOpen } from "lucide-react";
+import { Icons } from "@/components/ui/icons";
+import { RowActionsMenu, RowActionMenuItem } from "@/components/ui/row-actions-menu";
 import { ResetPasswordModal } from "@/components/auth/reset-password-modal";
 import { DeleteUserModal } from "@/components/auth/delete-user-modal";
 import { AssignRoomModal } from "@/components/therapists/assign-room-modal";
@@ -31,6 +32,7 @@ export function TherapistRowActions({
   currentUserId,
   currentUserRole,
 }: TherapistRowActionsProps) {
+  const router = useRouter();
   const [showResetModal, setShowResetModal] = React.useState(false);
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
   const [showRoomModal, setShowRoomModal] = React.useState(false);
@@ -55,7 +57,6 @@ export function TherapistRowActions({
       const cases = await getTherapistOpenCasesAction(therapist.id);
       setOpenCases(cases);
     } catch {
-      // Fallback
       setOpenCases([]);
     }
     setShowDeleteModal(true);
@@ -80,85 +81,68 @@ export function TherapistRowActions({
     }
   };
 
+  // Build items for kebab menu
+  const menuItems: RowActionMenuItem[] = [
+    {
+      key: "edit",
+      label: "Edit profile",
+      icon: <Icons.PencilSimple />,
+      onClick: () => router.push(`/admin/therapists/${therapist.id}`),
+      "data-testid": `edit-therapist-btn-${therapist.id}`,
+    },
+    {
+      key: "reset-password",
+      label: "Reset password",
+      icon: <Icons.ArrowCounterClockwise />,
+      onClick: () => setShowResetModal(true),
+      variant: "warning",
+      "data-testid": `reset-therapist-pwd-${therapist.id}`,
+    },
+  ];
+
+  if (!isSelf) {
+    menuItems.push({
+      key: "toggle-status",
+      label: therapist.isActive ? "Deactivate practitioner" : "Activate practitioner",
+      icon: therapist.isActive ? <Icons.X /> : <Icons.Check />,
+      onClick: handleToggleStatus,
+      disabled: isToggling,
+      "data-testid": `toggle-therapist-btn-${therapist.id}`,
+    });
+
+    menuItems.push({
+      key: "delete",
+      label: "Delete practitioner",
+      icon: <Icons.Trash />,
+      onClick: handleOpenDelete,
+      variant: "destructive",
+      isDividerBefore: true,
+      "data-testid": `delete-therapist-btn-${therapist.id}`,
+    });
+  }
+
   return (
     <>
-      <div className="flex items-center justify-end gap-1.5">
+      <div className="flex items-center justify-end gap-2 w-full max-w-[220px] ml-auto">
+        {/* Single Primary Row Action */}
         <Button
           data-testid={`assign-room-button-${therapist.id}`}
-          variant="outline"
+          variant="secondary"
           size="sm"
-          className="h-8 px-2.5 text-xs flex items-center gap-1 text-teal-700 border-teal-200 hover:bg-teal-50"
+          leadingIcon={<Icons.Door />}
           onClick={() => setShowRoomModal(true)}
           title="Assign Room"
         >
-          <DoorOpen className="h-3.5 w-3.5" />
-          <span>Assign Room</span>
+          Assign room
         </Button>
 
-        <Link href={`/admin/therapists/${therapist.id}`}>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 px-2.5 text-xs flex items-center gap-1"
-            title="Edit details"
-          >
-            <Edit3 className="h-3.5 w-3.5" />
-            <span>Edit</span>
-          </Button>
-        </Link>
-
-        <Button
-          data-testid={`reset-therapist-pwd-${therapist.id}`}
-          variant="outline"
-          size="sm"
-          className="h-8 px-2.5 text-xs flex items-center gap-1 text-amber-700 border-amber-200 hover:bg-amber-50"
-          onClick={() => setShowResetModal(true)}
-          title="Reset Password"
-        >
-          <KeyRound className="h-3.5 w-3.5" />
-          <span>Reset</span>
-        </Button>
-
-        {!isSelf && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`h-8 px-2 text-xs flex items-center gap-1 ${
-              therapist.isActive
-                ? "text-slate-600 hover:text-rose-600 hover:bg-rose-50"
-                : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-            }`}
-            onClick={handleToggleStatus}
-            isLoading={isToggling}
-            title={therapist.isActive ? "Deactivate" : "Activate"}
-          >
-            {therapist.isActive ? (
-              <>
-                <UserX className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Deactivate</span>
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Activate</span>
-              </>
-            )}
-          </Button>
-        )}
-
-        {!isSelf && (
-          <Button
-            data-testid={`delete-therapist-btn-${therapist.id}`}
-            variant="ghost"
-            size="sm"
-            className="h-8 px-2 text-xs flex items-center gap-1 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
-            onClick={handleOpenDelete}
-            title="Delete Account"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Delete</span>
-          </Button>
-        )}
+        {/* Kebab Dropdown Menu for secondary & dangerous actions */}
+        <RowActionsMenu
+          items={menuItems}
+          triggerTestId={`row-actions-kebab-${therapist.id}`}
+          menuTestId={`row-actions-menu-${therapist.id}`}
+          buttonTitle="More actions"
+        />
       </div>
 
       {/* Modals */}

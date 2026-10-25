@@ -248,16 +248,18 @@ export function CreateTherapistForm() {
           </div>
 
           {/* Sticky Footer */}
-          <div className="sticky bottom-0 bg-white/95 py-3 border-t border-slate-100 flex items-center justify-end gap-3 z-10">
-            <Link href="/admin/therapists">
-              <Button variant="outline" type="button">
+          <div className="sticky bottom-0 bg-white/95 py-3 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-center justify-end gap-3 z-10">
+            <Link href="/admin/therapists" className="w-full sm:w-auto">
+              <Button variant="secondary" type="button" className="w-full sm:w-auto">
                 Cancel
               </Button>
             </Link>
             <Button
               data-testid="therapist-submit-button"
               type="submit"
+              variant="primary"
               isLoading={isLoading}
+              className="w-full sm:w-auto"
             >
               Save Therapist
             </Button>

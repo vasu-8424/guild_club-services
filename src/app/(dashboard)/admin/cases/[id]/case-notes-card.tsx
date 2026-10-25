@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { FileText, Send, AlertCircle, CheckCircle } from "lucide-react";
+import { Icons } from "@/components/ui/icons";
 
 interface NoteItem {
   id: string;
@@ -132,9 +133,14 @@ export function CaseNotesCard({ caseId, notes }: CaseNotesCardProps) {
             required
           />
 
-          <Button data-testid="note-submit-button" type="submit" size="sm" className="flex items-center gap-1.5" isLoading={isLoading}>
-            <Send className="h-3.5 w-3.5" />
-            <span>Post Note</span>
+          <Button
+            data-testid="note-submit-button"
+            type="submit"
+            size="sm"
+            leadingIcon={<Icons.ArrowRight />}
+            isLoading={isLoading}
+          >
+            Post Note
           </Button>
         </form>
       </CardContent>

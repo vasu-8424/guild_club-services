@@ -6,6 +6,7 @@ import { acceptCaseAction, declineCaseAction } from "@/lib/actions/case-actions"
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Check, X, AlertCircle } from "lucide-react";
+import { Icons } from "@/components/ui/icons";
 
 interface CaseInvitationActionsProps {
   caseId: string;
@@ -67,23 +68,24 @@ export function CaseInvitationActions({ caseId }: CaseInvitationActionsProps) {
 
   if (isDeclining) {
     return (
-      <form onSubmit={handleDeclineSubmit} className="space-y-3 mt-3 p-3 bg-rose-50/50 rounded-xl border border-rose-200">
+      <form onSubmit={handleDeclineSubmit} className="space-y-3 mt-3 p-3 bg-rose-50/50 rounded-none border border-rose-200">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-rose-800">
             Decline Case Assignment
           </span>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => setIsDeclining(false)}
-            className="text-xs text-slate-500 hover:text-slate-800"
           >
             Cancel
-          </button>
+          </Button>
         </div>
 
         {error && (
           <p data-testid="invitation-error" className="text-xs text-rose-600 flex items-center gap-1">
-            <AlertCircle className="h-3 w-3 shrink-0" />
+            <Icons.Alert className="h-3 w-3 shrink-0" />
             {error}
           </p>
         )}
@@ -100,7 +102,7 @@ export function CaseInvitationActions({ caseId }: CaseInvitationActionsProps) {
         <div className="flex items-center justify-end gap-2">
           <Button
             type="button"
-            variant="ghost"
+            variant="secondary"
             size="sm"
             onClick={() => setIsDeclining(false)}
           >
@@ -110,7 +112,7 @@ export function CaseInvitationActions({ caseId }: CaseInvitationActionsProps) {
             type="submit"
             size="sm"
             data-testid="decline-submit-button"
-            className="bg-rose-600 hover:bg-rose-700 text-white"
+            variant="destructive"
             isLoading={isLoading}
           >
             Confirm Decline
@@ -126,24 +128,23 @@ export function CaseInvitationActions({ caseId }: CaseInvitationActionsProps) {
       <div className="flex items-center gap-2">
         <Button
           size="sm"
+          variant="primary"
           data-testid="invitation-accept-button"
-          className="h-8 px-3 text-xs bg-emerald-600 hover:bg-emerald-700 flex items-center gap-1"
           onClick={handleAccept}
           isLoading={isLoading}
+          leadingIcon={<Icons.Check />}
         >
-          <Check className="h-3.5 w-3.5" />
-          <span>Accept</span>
+          Accept
         </Button>
         <Button
-          variant="outline"
+          variant="destructive-outline"
           size="sm"
           data-testid="invitation-decline-button"
-          className="h-8 px-3 text-xs text-rose-700 border-rose-200 hover:bg-rose-50 flex items-center gap-1"
           onClick={() => setIsDeclining(true)}
           disabled={isLoading}
+          leadingIcon={<Icons.X />}
         >
-          <X className="h-3.5 w-3.5" />
-          <span>Decline</span>
+          Decline
         </Button>
       </div>
     </div>

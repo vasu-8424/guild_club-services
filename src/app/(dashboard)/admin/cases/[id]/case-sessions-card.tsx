@@ -214,37 +214,34 @@ export function CaseSessionsCard({
                   </div>
 
                   {s.status === "scheduled" && (
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0">
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
                         data-testid="session-held-button"
-                        className="h-7 px-2 text-[11px] text-emerald-700 hover:bg-emerald-50"
+                        leadingIcon={<Check className="text-emerald-600" />}
                         onClick={() => handleUpdateStatus(s.id, "held")}
                         isLoading={updatingId === s.id}
                       >
-                        <Check className="h-3 w-3 mr-1" />
                         Held
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="warning-outline"
                         size="sm"
                         data-testid="session-missed-button"
-                        className="h-7 px-2 text-[11px] text-amber-700 hover:bg-amber-50"
                         onClick={() => handleUpdateStatus(s.id, "missed")}
                         isLoading={updatingId === s.id}
                       >
                         Missed
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="destructive-outline"
                         size="sm"
                         data-testid="session-cancelled-button"
-                        className="h-7 px-2 text-[11px] text-rose-700 hover:bg-rose-50"
+                        leadingIcon={<X className="text-rose-600" />}
                         onClick={() => handleUpdateStatus(s.id, "cancelled")}
                         isLoading={updatingId === s.id}
                       >
-                        <X className="h-3 w-3 mr-1" />
                         Cancel
                       </Button>
                     </div>
@@ -385,8 +382,13 @@ export function CaseSessionsCard({
               />
             </div>
 
-            <Button type="submit" size="sm" data-testid="session-submit-button" isLoading={scheduleLoading}>
-              <Plus className="h-3.5 w-3.5 mr-1" />
+            <Button
+              type="submit"
+              size="sm"
+              data-testid="session-submit-button"
+              isLoading={scheduleLoading}
+              leadingIcon={<Plus />}
+            >
               Schedule Session
             </Button>
           </form>

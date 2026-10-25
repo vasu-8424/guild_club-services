@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Icons } from "./icons";
+import { Button } from "./button";
 import { cn } from "@/lib/utils";
 
 interface DialogProps {
@@ -46,14 +47,16 @@ export function DialogContent({
       )}
     >
       {onClose && (
-        <button
+        <Button
           type="button"
+          size="icon-sm"
+          variant="ghost"
           onClick={onClose}
-          className="absolute right-4 top-4 h-8 w-8 flex items-center justify-center rounded-none text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+          className="absolute right-3 top-3 text-slate-400 hover:text-slate-700"
+          aria-label="Close"
         >
           <Icons.Close className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </button>
+        </Button>
       )}
       {children}
     </div>

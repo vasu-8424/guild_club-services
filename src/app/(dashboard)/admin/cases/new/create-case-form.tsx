@@ -311,13 +311,20 @@ export function CreateCaseForm({ therapists }: CreateCaseFormProps) {
       </Card>
 
       {/* Sticky Action Footer */}
-      <div className="sticky bottom-0 bg-slate-50/95 py-3.5 backdrop-blur-xs border-t border-slate-200/80 z-20 flex items-center justify-end gap-3 mt-6">
-        <Link href="/admin/cases">
-          <Button variant="outline" type="button">
+      <div className="sticky bottom-0 bg-slate-50/95 py-3.5 backdrop-blur-xs border-t border-slate-200 z-20 flex flex-col-reverse sm:flex-row items-center justify-end gap-3 mt-6">
+        <Link href="/admin/cases" className="w-full sm:w-auto">
+          <Button variant="secondary" type="button" className="w-full sm:w-auto">
             Cancel
           </Button>
         </Link>
-        <Button data-testid="case-submit-button" type="submit" size="md" isLoading={isLoading}>
+        <Button
+          data-testid="case-submit-button"
+          type="submit"
+          variant="primary"
+          size="md"
+          isLoading={isLoading}
+          className="w-full sm:w-auto"
+        >
           Create Case Intake
         </Button>
       </div>

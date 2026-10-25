@@ -186,6 +186,10 @@ test.describe("NEW CREDENTIAL RULES & LIFECYCLE", () => {
     await expect(saPage).toHaveURL(/\/super-admin\/dashboard/, { timeout: 15000 });
 
     await saPage.goto("/super-admin/admins");
+    const kebabBtn = saPage.getByTestId(`row-actions-kebab-${adminId}`);
+    if (await kebabBtn.isVisible()) {
+      await kebabBtn.click();
+    }
     const resetBtn = saPage.getByTestId(`reset-admin-pwd-${adminId}`);
     await expect(resetBtn).toBeVisible({ timeout: 10000 });
     await resetBtn.click();
@@ -261,6 +265,10 @@ test.describe("NEW CREDENTIAL RULES & LIFECYCLE", () => {
     await expect(saPage).toHaveURL(/\/super-admin\/dashboard/, { timeout: 15000 });
 
     await saPage.goto("/super-admin/admins");
+    const kebabBtn = saPage.getByTestId(`row-actions-kebab-${delId}`);
+    if (await kebabBtn.isVisible()) {
+      await kebabBtn.click();
+    }
     const deleteBtn = saPage.getByTestId(`delete-admin-btn-${delId}`);
     await expect(deleteBtn).toBeVisible({ timeout: 10000 });
     await deleteBtn.click();
@@ -268,7 +276,7 @@ test.describe("NEW CREDENTIAL RULES & LIFECYCLE", () => {
     // Type email to confirm
     await saPage.getByTestId("delete-confirm-email-input").fill(delEmail);
     await saPage.getByTestId("confirm-delete-user-button").click();
-    await expect(deleteBtn).not.toBeVisible({ timeout: 15000 });
+    await expect(saPage.getByTestId("confirm-delete-user-button")).not.toBeVisible({ timeout: 15000 });
 
     // 4. Verify user_deleted event recorded in DB
     const delEventRows = await sql.query(
@@ -356,6 +364,10 @@ test.describe("NEW CREDENTIAL RULES & LIFECYCLE", () => {
 
     // Try deleting therapist
     await page.goto("/admin/therapists");
+    const kebabBtn = page.getByTestId(`row-actions-kebab-${tId}`);
+    if (await kebabBtn.isVisible()) {
+      await kebabBtn.click();
+    }
     const delBtn = page.getByTestId(`delete-therapist-btn-${tId}`);
     await expect(delBtn).toBeVisible({ timeout: 10000 });
     await delBtn.click();
@@ -371,6 +383,9 @@ test.describe("NEW CREDENTIAL RULES & LIFECYCLE", () => {
     await sql.query("UPDATE cases SET current_therapist_id = NULL, status = 'new' WHERE id = $1", [caseId]);
 
     // Reopen delete modal
+    if (await kebabBtn.isVisible()) {
+      await kebabBtn.click();
+    }
     await delBtn.click();
 
     // Now confirmation email input is available
@@ -379,6 +394,7 @@ test.describe("NEW CREDENTIAL RULES & LIFECYCLE", () => {
     await page.getByTestId("confirm-delete-user-button").click();
 
     // Deletion succeeds!
+    await expect(page.getByTestId("confirm-delete-user-button")).not.toBeVisible({ timeout: 15000 });
     await expect(delBtn).not.toBeVisible({ timeout: 15000 });
   });
 

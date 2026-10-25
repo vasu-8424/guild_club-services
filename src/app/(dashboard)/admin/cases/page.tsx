@@ -1,57 +1,55 @@
-import Link from "next/link";
-import { eq, desc, and, or, ilike } from "drizzle-orm";
-import { db } from "@/db";
-import { cases, clients, users, type CasePriority, type CaseStatus } from "@/db/schema";
 import { requireRole } from "@/lib/session";
+import { db } from "@/db";
+import { cases, clients, users } from "@/db/schema";
+import { eq, desc, and, or, ilike } from "drizzle-orm";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PriorityBadge } from "@/components/ui/priority-badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Plus, Search, Eye, Filter, MoreHorizontal, ArrowRight } from "lucide-react";
 import { formatUserName } from "@/lib/format-user";
+import { Plus, Search, Filter } from "lucide-react";
+import { CaseRowActions } from "./case-row-actions";
+import Link from "next/link";
 
 interface CasesPageProps {
-  searchParams: Promise<{
-    status?: string;
-    priority?: string;
-    search?: string;
-  }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function AdminCasesPage({ searchParams }: CasesPageProps) {
+export default async function CasesPage({ searchParams }: CasesPageProps) {
   const currentUser = await requireRole("admin", "super_admin");
-  const params = await searchParams;
 
-  const statusFilter = params.status && params.status !== "all" ? params.status : undefined;
-  const priorityFilter = params.priority && params.priority !== "all" ? params.priority : undefined;
-  const searchQuery = params.search?.trim();
+  const resolvedParams = await searchParams;
+  const statusFilter = typeof resolvedParams.status === "string" ? resolvedParams.status : undefined;
+  const priorityFilter = typeof resolvedParams.priority === "string" ? resolvedParams.priority : undefined;
+  const searchQuery = typeof resolvedParams.search === "string" ? resolvedParams.search : undefined;
 
-  // Build conditions
+  // Build filter conditions
   const conditions = [];
 
-  if (statusFilter) {
-    conditions.push(eq(cases.status, statusFilter as CaseStatus));
+  if (statusFilter && statusFilter !== "all") {
+    conditions.push(eq(cases.status, statusFilter as any));
   }
 
-  if (priorityFilter) {
-    conditions.push(eq(cases.priority, priorityFilter as CasePriority));
+  if (priorityFilter && priorityFilter !== "all") {
+    conditions.push(eq(cases.priority, priorityFilter as any));
   }
 
-  if (searchQuery) {
+  if (searchQuery && searchQuery.trim() !== "") {
+    const term = `%${searchQuery.trim()}%`;
     conditions.push(
       or(
-        ilike(cases.caseNumber, `%${searchQuery}%`),
-        ilike(clients.fullName, `%${searchQuery}%`),
-        ilike(clients.phone, `%${searchQuery}%`)
+        ilike(cases.caseNumber, term),
+        ilike(clients.fullName, term),
+        ilike(clients.phone, term)
       )
     );
   }
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-  // Query cases joined with clients and assigned therapists
+  // Query cases joined with clients and therapists
   const casesList = await db
     .select({
       id: cases.id,
@@ -84,20 +82,24 @@ export default async function AdminCasesPage({ searchParams }: CasesPageProps) {
             { label: "Cases" },
           ]}
           action={
-            <Link href="/admin/cases/new">
-              <Button size="sm" className="flex items-center gap-1.5">
-                <Plus className="h-4 w-4" />
-                <span>+ New case</span>
+            <Link href="/admin/cases/new" className="w-full sm:w-auto">
+              <Button
+                size="sm"
+                variant="primary"
+                leadingIcon={<Plus className="h-4 w-4" />}
+                className="w-full sm:w-auto"
+              >
+                New Case
               </Button>
             </Link>
           }
         />
 
-        {/* Search & Filter Toolbar */}
-        <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs">
-          <form method="GET" className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
-            <div className="sm:col-span-1">
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+        {/* Filter Toolbar */}
+        <div className="rounded-none border border-slate-200 bg-white p-4 shadow-xs">
+          <form method="GET" className="grid grid-cols-1 gap-3 sm:grid-cols-4 items-end">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
                 Search
               </label>
               <div className="relative">
@@ -106,19 +108,19 @@ export default async function AdminCasesPage({ searchParams }: CasesPageProps) {
                   name="search"
                   defaultValue={searchQuery || ""}
                   placeholder="Case # or client name..."
-                  className="w-full rounded-lg border border-slate-200 bg-white pl-8 pr-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 shadow-2xs hover:border-slate-300 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                  className="w-full rounded-none border border-slate-300 bg-white pl-8 pr-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 shadow-2xs hover:border-slate-400 focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
                 Status
               </label>
               <select
                 name="status"
                 defaultValue={statusFilter || "all"}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 shadow-2xs hover:border-slate-300 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                className="w-full rounded-none border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 shadow-2xs hover:border-slate-400 focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600"
               >
                 <option value="all">All statuses</option>
                 <option value="new">New</option>
@@ -131,13 +133,13 @@ export default async function AdminCasesPage({ searchParams }: CasesPageProps) {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
                 Priority
               </label>
               <select
                 name="priority"
                 defaultValue={priorityFilter || "all"}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 shadow-2xs hover:border-slate-300 focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                className="w-full rounded-none border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 shadow-2xs hover:border-slate-400 focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600"
               >
                 <option value="all">All priorities</option>
                 <option value="urgent">Urgent</option>
@@ -148,13 +150,18 @@ export default async function AdminCasesPage({ searchParams }: CasesPageProps) {
             </div>
 
             <div className="flex gap-2">
-              <Button type="submit" size="sm" className="w-full flex items-center justify-center gap-1.5 h-8">
-                <Filter className="h-3.5 w-3.5" />
-                <span>Filter</span>
+              <Button
+                type="submit"
+                size="sm"
+                variant="primary"
+                leadingIcon={<Filter className="h-4 w-4" />}
+                className="w-full"
+              >
+                Filter
               </Button>
               {(statusFilter || priorityFilter || searchQuery) && (
                 <Link href="/admin/cases">
-                  <Button type="button" variant="outline" size="sm" className="h-8 px-3 text-xs">
+                  <Button type="button" variant="secondary" size="sm">
                     Clear
                   </Button>
                 </Link>
@@ -163,15 +170,15 @@ export default async function AdminCasesPage({ searchParams }: CasesPageProps) {
           </form>
         </div>
 
-        {/* Cases Table: Max 6 Columns */}
-        <div className="rounded-xl border border-slate-200/80 bg-white overflow-hidden shadow-xs">
-          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
+        {/* Cases Table */}
+        <div className="rounded-none border border-slate-200 bg-white overflow-hidden shadow-xs">
+          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5 bg-slate-50/50">
             <div>
               <h2 className="text-sm font-semibold text-slate-900">
-                Case Records
+                All Cases
               </h2>
               <p className="text-[11px] text-slate-500">
-                {casesList.length} matching case record{casesList.length === 1 ? "" : "s"}
+                {casesList.length} case{casesList.length === 1 ? "" : "s"} found
               </p>
             </div>
           </div>
@@ -180,88 +187,87 @@ export default async function AdminCasesPage({ searchParams }: CasesPageProps) {
             <div className="p-8">
               <EmptyState
                 title="No cases found"
-                description="No cases match your filter criteria or have been created yet."
+                description={
+                  statusFilter || priorityFilter || searchQuery
+                    ? "No cases matched your filter criteria. Try resetting the filters."
+                    : "No client cases have been registered in the system yet."
+                }
                 actionHref="/admin/cases/new"
-                actionLabel="Create new case"
+                actionLabel="New Case"
               />
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="sticky top-0 bg-slate-50/90 backdrop-blur-xs border-b border-slate-200/80 text-slate-500 font-semibold uppercase tracking-wider text-[10px] select-none">
+                <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[10px] select-none z-10">
                   <tr>
-                    <th className="px-5 py-3">Case</th>
-                    <th className="px-5 py-3">Client</th>
-                    <th className="px-5 py-3">Category & Priority</th>
-                    <th className="px-5 py-3">Assigned Therapist</th>
-                    <th className="px-5 py-3">Status</th>
-                    <th className="px-5 py-3 text-right">Action</th>
+                    <th className="px-5 py-3 min-w-[130px]">Case</th>
+                    <th className="px-5 py-3 min-w-[160px]">Client</th>
+                    <th className="px-5 py-3 min-w-[160px]">Category & Priority</th>
+                    <th className="px-5 py-3 min-w-[170px]">Assigned Therapist</th>
+                    <th className="px-5 py-3 min-w-[120px]">Status</th>
+                    <th className="px-5 py-3 text-right w-[220px] min-w-[220px]">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {casesList.map((cs) => (
-                    <tr
-                      key={cs.id}
-                      className="hover:bg-slate-50/60 transition-colors duration-150"
-                    >
-                      {/* 1. Case Number */}
-                      <td className="px-5 py-3.5 font-mono font-medium text-teal-800">
-                        {cs.caseNumber}
-                      </td>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {casesList.map((cs) => {
+                    const isAssigned = Boolean(cs.therapistName);
 
-                      {/* 2. Client */}
-                      <td className="px-5 py-3.5">
-                        <div className="font-medium text-slate-900">
-                          {cs.clientName}
-                        </div>
-                        <div className="text-[11px] text-slate-500">
-                          {cs.clientPhone}
-                        </div>
-                      </td>
+                    return (
+                      <tr
+                        key={cs.id}
+                        className="hover:bg-slate-50/60 transition-colors duration-150"
+                      >
+                        {/* 1. Case Number */}
+                        <td className="px-5 py-3.5 font-mono font-medium text-teal-800 whitespace-nowrap">
+                          {cs.caseNumber}
+                        </td>
 
-                      {/* 3. Category & Priority */}
-                      <td className="px-5 py-3.5">
-                        <div className="text-slate-800 font-medium truncate max-w-[180px]">
-                          {cs.category}
-                        </div>
-                        <div className="mt-0.5">
-                          <PriorityBadge priority={cs.priority} />
-                        </div>
-                      </td>
-
-                      {/* 4. Assigned Therapist */}
-                      <td className="px-5 py-3.5 text-slate-700">
-                        {cs.therapistName ? (
-                          <div className="font-medium text-slate-800">
-                            {formatUserName(cs.therapistName, cs.therapistDeletedAt)}
+                        {/* 2. Client */}
+                        <td className="px-5 py-3.5 min-w-[160px]">
+                          <div className="font-semibold text-slate-900">
+                            {cs.clientName}
                           </div>
-                        ) : (
-                          <span className="italic text-slate-400">
-                            Unassigned
-                          </span>
-                        )}
-                      </td>
+                          <div className="text-[11px] text-slate-500 font-mono">
+                            {cs.clientPhone}
+                          </div>
+                        </td>
 
-                      {/* 5. Status */}
-                      <td className="px-5 py-3.5">
-                        <StatusBadge status={cs.status} />
-                      </td>
+                        {/* 3. Category & Priority */}
+                        <td className="px-5 py-3.5 min-w-[160px]">
+                          <div className="text-slate-800 font-medium truncate max-w-[180px]">
+                            {cs.category}
+                          </div>
+                          <div className="mt-1">
+                            <PriorityBadge priority={cs.priority} />
+                          </div>
+                        </td>
 
-                      {/* 6. Action */}
-                      <td className="px-5 py-3.5 text-right">
-                        <Link href={`/admin/cases/${cs.id}`}>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-xs border-slate-200 hover:border-teal-500 hover:text-teal-700 text-slate-700"
-                          >
-                            <Eye className="h-3.5 w-3.5 mr-1" />
-                            <span>Manage</span>
-                          </Button>
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
+                        {/* 4. Assigned Therapist */}
+                        <td className="px-5 py-3.5 text-slate-700 min-w-[170px]">
+                          {cs.therapistName ? (
+                            <div className="font-medium text-slate-800">
+                              {formatUserName(cs.therapistName, cs.therapistDeletedAt)}
+                            </div>
+                          ) : (
+                            <span className="italic text-slate-400">
+                              Unassigned
+                            </span>
+                          )}
+                        </td>
+
+                        {/* 5. Status */}
+                        <td className="px-5 py-3.5 min-w-[120px] whitespace-nowrap">
+                          <StatusBadge status={cs.status} />
+                        </td>
+
+                        {/* 6. Action (Fixed 220px, Right-aligned) */}
+                        <td className="px-5 py-3.5 text-right w-[220px] min-w-[220px] whitespace-nowrap">
+                          <CaseRowActions caseId={cs.id} isAssigned={isAssigned} />
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

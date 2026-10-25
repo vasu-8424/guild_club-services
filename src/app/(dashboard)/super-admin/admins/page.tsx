@@ -1,31 +1,51 @@
-import Link from "next/link";
-import { eq, and, isNull, desc } from "drizzle-orm";
+import { requireRole } from "@/lib/session";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { requireRole } from "@/lib/session";
+import { eq, isNull, and } from "drizzle-orm";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { UserPlus } from "lucide-react";
 import { AdminRowActions } from "./admin-row-actions";
+import { Plus } from "lucide-react";
+import Link from "next/link";
 
-interface SuperAdminAdminsPageProps {
-  searchParams: Promise<{ showDeleted?: string }>;
+interface AdminsPageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function SuperAdminAdminsPage({
-  searchParams,
-}: SuperAdminAdminsPageProps) {
+export default async function AdminsPage({ searchParams }: AdminsPageProps) {
   const currentUser = await requireRole("super_admin");
-  const params = await searchParams;
-  const showDeleted = params.showDeleted === "true";
 
-  const condition = showDeleted
-    ? eq(users.role, "admin")
-    : and(eq(users.role, "admin"), isNull(users.deletedAt));
+  // Enforce super_admin only access at page level (also enforced in proxy)
+  if (currentUser.role !== "super_admin") {
+    return (
+      <DashboardShell user={currentUser} title="Administrator Management">
+        <div className="p-8 text-center">
+          <p className="text-rose-600 font-semibold">
+            Access Restricted: Only Super Admins can manage administrators.
+          </p>
+        </div>
+      </DashboardShell>
+    );
+  }
 
+  const resolvedParams = await searchParams;
+  const showDeleted = resolvedParams.showDeleted === "true";
+
+  // Build the query condition based on showDeleted toggle
+  let whereCondition;
+  if (showDeleted) {
+    whereCondition = eq(users.role, "admin");
+  } else {
+    whereCondition = and(
+      eq(users.role, "admin"),
+      isNull(users.deletedAt)
+    );
+  }
+
+  // Fetch admin accounts
   const adminList = await db
     .select({
       id: users.id,
@@ -34,46 +54,49 @@ export default async function SuperAdminAdminsPage({
       phone: users.phone,
       isActive: users.isActive,
       deletedAt: users.deletedAt,
-      mustChangePassword: users.mustChangePassword,
       createdAt: users.createdAt,
     })
     .from(users)
-    .where(condition)
-    .orderBy(desc(users.createdAt));
+    .where(whereCondition)
+    .orderBy(users.name);
 
   return (
-    <DashboardShell user={currentUser} title="Administrators">
+    <DashboardShell user={currentUser} title="Administrator Management">
       <div className="space-y-6">
-        {/* Page Header */}
         <PageHeader
-          title="Administrators"
-          description="Manage clinical administrator staff with permissions to triage cases and manage therapists."
+          title="Administrator Management"
+          description="Create, monitor, and manage clinical admin accounts, privileges, and credentials."
           breadcrumbs={[
             { label: "Dashboard", href: "/super-admin/dashboard" },
-            { label: "Administrators" },
+            { label: "Admins" },
           ]}
           action={
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 w-full sm:w-auto">
               <Link
                 href={
                   showDeleted
                     ? "/super-admin/admins"
                     : "/super-admin/admins?showDeleted=true"
                 }
-                data-testid="toggle-show-deleted-link"
-                className={`text-xs px-3 py-1.5 rounded-lg border transition-all font-medium ${
-                  showDeleted
-                    ? "bg-slate-800 text-white border-slate-800"
-                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                }`}
+                data-testid="toggle-show-deleted-admins"
               >
-                {showDeleted ? "Hide Deleted" : "Show Deleted"}
+                <Button
+                  variant={showDeleted ? "primary" : "secondary"}
+                  size="sm"
+                >
+                  {showDeleted ? "Hide Deleted" : "Show Deleted"}
+                </Button>
               </Link>
 
-              <Link href="/super-admin/admins/new">
-                <Button data-testid="add-admin-button" size="sm" className="flex items-center gap-1.5">
-                  <UserPlus className="h-4 w-4" />
-                  <span>Add Admin</span>
+              <Link href="/super-admin/admins/new" className="w-full sm:w-auto">
+                <Button
+                  data-testid="add-admin-button"
+                  size="sm"
+                  variant="primary"
+                  leadingIcon={<Plus className="h-4 w-4" />}
+                  className="w-full sm:w-auto"
+                >
+                  Add Admin
                 </Button>
               </Link>
             </div>
@@ -81,8 +104,8 @@ export default async function SuperAdminAdminsPage({
         />
 
         {/* Admins Table */}
-        <div className="rounded-xl border border-slate-200/80 bg-white overflow-hidden shadow-xs">
-          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
+        <div className="rounded-none border border-slate-200 bg-white overflow-hidden shadow-xs">
+          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5 bg-slate-50/50">
             <div>
               <h2 className="text-sm font-semibold text-slate-900">
                 Registered Administrators
@@ -106,14 +129,14 @@ export default async function SuperAdminAdminsPage({
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="sticky top-0 bg-slate-50/90 backdrop-blur-xs border-b border-slate-200/80 text-slate-500 font-semibold uppercase tracking-wider text-[10px] select-none">
+                <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[10px] select-none z-10">
                   <tr>
-                    <th className="px-5 py-3">Name</th>
-                    <th className="px-5 py-3">Email</th>
-                    <th className="px-5 py-3">Phone</th>
-                    <th className="px-5 py-3">Status</th>
-                    <th className="px-5 py-3">Created</th>
-                    <th className="px-5 py-3 text-right">Actions</th>
+                    <th className="px-5 py-3 min-w-[200px]">Name</th>
+                    <th className="px-5 py-3 min-w-[200px]">Email</th>
+                    <th className="px-5 py-3 min-w-[140px]">Phone</th>
+                    <th className="px-5 py-3 min-w-[120px]">Status</th>
+                    <th className="px-5 py-3 min-w-[120px]">Created</th>
+                    <th className="px-5 py-3 text-right w-[220px] min-w-[220px]">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
@@ -128,23 +151,25 @@ export default async function SuperAdminAdminsPage({
                           isDeleted ? "bg-slate-50/40 text-slate-400" : ""
                         }`}
                       >
-                        <td className="px-5 py-3.5 font-medium text-slate-900">
-                          <span
+                        <td className="px-5 py-3.5 min-w-[200px]">
+                          <div
                             data-testid={`admin-name-${adm.id}`}
-                            className={isDeleted ? "line-through text-slate-400" : ""}
+                            className={`font-semibold text-sm ${
+                              isDeleted ? "line-through text-slate-400" : "text-slate-900"
+                            }`}
                           >
                             {displayName}
-                          </span>
+                          </div>
                         </td>
-                        <td className="px-5 py-3.5 text-slate-600 font-mono text-xs">
+                        <td className="px-5 py-3.5 min-w-[200px] text-slate-600 font-mono">
                           {adm.email}
                         </td>
-                        <td className="px-5 py-3.5 text-slate-600 text-xs">
+                        <td className="px-5 py-3.5 min-w-[140px] text-slate-600">
                           {adm.phone || "—"}
                         </td>
-                        <td className="px-5 py-3.5">
+                        <td className="px-5 py-3.5 min-w-[120px] whitespace-nowrap">
                           {isDeleted ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                            <span className="inline-flex items-center h-[24px] px-2 text-[12px] uppercase font-semibold tracking-wider rounded-none bg-slate-100 text-slate-600 border border-slate-200">
                               Deleted
                             </span>
                           ) : (
@@ -153,12 +178,10 @@ export default async function SuperAdminAdminsPage({
                             />
                           )}
                         </td>
-                        <td className="px-5 py-3.5 text-xs text-slate-500">
-                          {new Date(adm.createdAt).toLocaleDateString("en-IN", {
-                            timeZone: "Asia/Kolkata",
-                          })}
+                        <td className="px-5 py-3.5 min-w-[120px] text-slate-500 text-[11px] whitespace-nowrap font-mono">
+                          {adm.createdAt ? new Date(adm.createdAt).toLocaleDateString("en-IN") : "—"}
                         </td>
-                        <td className="px-5 py-3.5 text-right">
+                        <td className="px-5 py-3.5 text-right w-[220px] min-w-[220px] whitespace-nowrap">
                           <AdminRowActions
                             admin={adm}
                             currentUserId={currentUser.id}

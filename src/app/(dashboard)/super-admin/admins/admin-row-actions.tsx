@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Edit3, KeyRound, Trash2, CheckCircle2, UserX } from "lucide-react";
+import { Icons } from "@/components/ui/icons";
+import { RowActionsMenu, RowActionMenuItem } from "@/components/ui/row-actions-menu";
 import { ResetPasswordModal } from "@/components/auth/reset-password-modal";
 import { DeleteUserModal } from "@/components/auth/delete-user-modal";
 import {
@@ -24,6 +25,7 @@ interface AdminRowActionsProps {
 }
 
 export function AdminRowActions({ admin, currentUserId }: AdminRowActionsProps) {
+  const router = useRouter();
   const [showResetModal, setShowResetModal] = React.useState(false);
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
   const [isToggling, setIsToggling] = React.useState(false);
@@ -58,73 +60,60 @@ export function AdminRowActions({ admin, currentUserId }: AdminRowActionsProps) 
     }
   };
 
+  const menuItems: RowActionMenuItem[] = [
+    {
+      key: "reset-password",
+      label: "Reset password",
+      icon: <Icons.ArrowCounterClockwise />,
+      onClick: () => setShowResetModal(true),
+      variant: "warning",
+      "data-testid": `reset-admin-pwd-${admin.id}`,
+    },
+  ];
+
+  if (!isSelf) {
+    menuItems.push({
+      key: "toggle-status",
+      label: admin.isActive ? "Deactivate admin" : "Activate admin",
+      icon: admin.isActive ? <Icons.X /> : <Icons.Check />,
+      onClick: handleToggleStatus,
+      disabled: isToggling,
+      "data-testid": `toggle-admin-btn-${admin.id}`,
+    });
+
+    menuItems.push({
+      key: "delete",
+      label: "Delete admin",
+      icon: <Icons.Trash />,
+      onClick: () => setShowDeleteModal(true),
+      variant: "destructive",
+      isDividerBefore: true,
+      "data-testid": `delete-admin-btn-${admin.id}`,
+    });
+  }
+
   return (
     <>
-      <div className="flex items-center justify-end gap-1.5">
-        <Link href={`/super-admin/admins/${admin.id}`}>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 px-2.5 text-xs flex items-center gap-1"
-            title="Edit details"
-          >
-            <Edit3 className="h-3.5 w-3.5" />
-            <span>Edit</span>
-          </Button>
-        </Link>
-
+      <div className="flex items-center justify-end gap-2 w-full max-w-[220px] ml-auto">
+        {/* Visible Primary Row Action: Edit */}
         <Button
-          data-testid={`reset-admin-pwd-${admin.id}`}
-          variant="outline"
+          data-testid={`edit-admin-btn-${admin.id}`}
+          variant="secondary"
           size="sm"
-          className="h-8 px-2.5 text-xs flex items-center gap-1 text-amber-700 border-amber-200 hover:bg-amber-50"
-          onClick={() => setShowResetModal(true)}
-          title="Reset Password"
+          leadingIcon={<Icons.PencilSimple />}
+          onClick={() => router.push(`/super-admin/admins/${admin.id}`)}
+          title="Edit details"
         >
-          <KeyRound className="h-3.5 w-3.5" />
-          <span>Reset</span>
+          Edit
         </Button>
 
-        {!isSelf && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`h-8 px-2 text-xs flex items-center gap-1 ${
-              admin.isActive
-                ? "text-slate-600 hover:text-rose-600 hover:bg-rose-50"
-                : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-            }`}
-            onClick={handleToggleStatus}
-            isLoading={isToggling}
-            title={admin.isActive ? "Deactivate" : "Activate"}
-          >
-            {admin.isActive ? (
-              <>
-                <UserX className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Deactivate</span>
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Activate</span>
-              </>
-            )}
-          </Button>
-        )}
-
-        {!isSelf && (
-          <Button
-            data-testid={`delete-admin-btn-${admin.id}`}
-            variant="ghost"
-            size="sm"
-            className="h-8 px-2 text-xs flex items-center gap-1 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
-            onClick={() => setShowDeleteModal(true)}
-            title="Delete Account"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Delete</span>
-          </Button>
-        )}
+        {/* Kebab dropdown for secondary & dangerous actions */}
+        <RowActionsMenu
+          items={menuItems}
+          triggerTestId={`row-actions-kebab-${admin.id}`}
+          menuTestId={`row-actions-menu-${admin.id}`}
+          buttonTitle="More actions"
+        />
       </div>
 
       {/* Modals */}

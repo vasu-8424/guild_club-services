@@ -387,15 +387,17 @@ export function SessionDetailDrawer({
             </h2>
           </div>
 
-          <button
+          <Button
             type="button"
+            size="icon-sm"
+            variant="ghost"
             data-testid="session-drawer-close-button"
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
             aria-label="Close session details"
+            title="Close"
           >
-            <X className="h-5 w-5" />
-          </button>
+            <X className="h-4 w-4" />
+          </Button>
         </div>
 
         {/* Drawer Scrollable Content */}
@@ -547,14 +549,14 @@ export function SessionDetailDrawer({
                   />
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
                     data-testid="in-time-photo-button"
                     onClick={() => inFileInputRef.current?.click()}
                     isLoading={inTimeLoading}
-                    className="text-xs w-full sm:w-auto"
+                    leadingIcon={<Camera className="h-4 w-4 text-teal-700" />}
+                    className="w-full sm:w-auto"
                   >
-                    <Camera className="h-4 w-4 mr-1.5 text-teal-700" />
                     {inTimePhotoUrl ? "Retake photo" : "Take / upload photo"}
                   </Button>
                   <p className="text-[11px] text-slate-500">
@@ -599,14 +601,13 @@ export function SessionDetailDrawer({
                 </span>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   data-testid="work-done-save-button"
                   onClick={handleSaveWorkDone}
                   isLoading={workDoneLoading}
-                  className="h-7 text-xs"
+                  leadingIcon={<Save className="h-3.5 w-3.5" />}
                 >
-                  <Save className="h-3.5 w-3.5 mr-1" />
                   Save draft
                 </Button>
               </div>
@@ -666,15 +667,15 @@ export function SessionDetailDrawer({
                   />
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
                     data-testid="out-time-photo-button"
                     onClick={() => outFileInputRef.current?.click()}
                     isLoading={outTimeLoading}
                     disabled={!inTimePhotoUrl}
-                    className="text-xs w-full sm:w-auto"
+                    leadingIcon={<Camera className="h-4 w-4 text-teal-700" />}
+                    className="w-full sm:w-auto"
                   >
-                    <Camera className="h-4 w-4 mr-1.5 text-teal-700" />
                     {outTimePhotoUrl ? "Retake photo" : "Take / upload photo"}
                   </Button>
                   <p className="text-[11px] text-slate-500">
@@ -701,7 +702,7 @@ export function SessionDetailDrawer({
         <div className="border-t border-slate-200/80 p-4 bg-slate-50/80 flex items-center justify-between gap-3">
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={onClose}
           >
@@ -712,17 +713,13 @@ export function SessionDetailDrawer({
             <Button
               type="button"
               size="sm"
+              variant={canComplete ? "primary" : "secondary"}
               data-testid="complete-session-button"
               disabled={!canComplete || completeLoading}
               isLoading={completeLoading}
               onClick={handleCompleteSession}
-              className={`text-xs font-semibold px-4 py-2 transition-all ${
-                canComplete
-                  ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
-                  : "bg-slate-200 text-slate-400 cursor-not-allowed border-none"
-              }`}
+              leadingIcon={<Check className="h-4 w-4" />}
             >
-              <Check className="h-4 w-4 mr-1.5" />
               Complete session
             </Button>
           )}

@@ -107,25 +107,26 @@ export function DateSelector() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Trigger Button: Sharp 0px corners, 1px border */}
-      <button
+      {/* Trigger Button: Shared Button with fixed height, leading and trailing icons */}
+      <Button
         type="button"
+        variant="secondary"
+        size="sm"
         data-testid="dashboard-date-selector"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-none border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:bg-slate-50 hover:border-[#0B7A63] focus:outline-none focus:ring-1 focus:ring-[#0B7A63] transition-colors"
+        leadingIcon={<Icons.Calendar className="text-[#0B7A63]" />}
+        trailingIcon={<Icons.CaretDown className="text-slate-400" />}
         aria-expanded={isOpen}
       >
-        <Icons.Calendar className="h-4 w-4 text-[#0B7A63] shrink-0" />
         <span className="font-semibold text-slate-900 max-w-[170px] sm:max-w-xs truncate">
           {filter.filterLabel}
         </span>
         {filter.isPast && (
-          <span className="inline-flex items-center rounded-[2px] bg-amber-100 px-1.5 py-0.2 text-[10px] font-bold text-amber-800 uppercase tracking-wider">
+          <span className="ml-1.5 inline-flex items-center rounded-none bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800 uppercase tracking-wider">
             History
           </span>
         )}
-        <Icons.CaretDown className="h-3.5 w-3.5 text-slate-400" />
-      </button>
+      </Button>
 
       {/* Dropdown Menu: Sharp 0px, 1px border */}
       {isOpen && (

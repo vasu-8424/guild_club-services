@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Activity, CheckCircle, AlertCircle, XCircle } from "lucide-react";
+import { Icons } from "@/components/ui/icons";
 import type { CaseStatus, CaseOutcome } from "@/db/schema";
 
 interface CaseStatusCardProps {
@@ -209,7 +210,8 @@ export function CaseStatusCard({
                   data-testid="case-close-submit-button"
                   type="submit"
                   size="sm"
-                  className="bg-rose-600 hover:bg-rose-700 text-white"
+                  variant="destructive"
+                  leadingIcon={<Icons.Check />}
                   isLoading={closeLoading}
                 >
                   Close Case & Discharge

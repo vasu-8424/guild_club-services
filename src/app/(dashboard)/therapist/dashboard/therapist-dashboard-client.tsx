@@ -130,10 +130,11 @@ export function TherapistDashboardClient({
                       <span>({inv.clientName})</span>
                       <Button
                         size="sm"
+                        variant="primary"
                         data-testid="invitation-accept-button"
                         onClick={() => handleAcceptInvitation(inv.id)}
                         isLoading={acceptingId === inv.id}
-                        className="h-6 px-2 text-[11px] bg-teal-700 hover:bg-teal-800 text-white ml-1"
+                        className="ml-1"
                       >
                         Accept
                       </Button>
@@ -142,12 +143,10 @@ export function TherapistDashboardClient({
                 </div>
               </div>
             </div>
-            <Link
-              href="/therapist/cases"
-              className="text-xs font-semibold text-teal-800 hover:text-teal-950 flex items-center gap-1"
-            >
-              <span>View All Cases</span>
-              <ArrowRight className="h-3.5 w-3.5" />
+            <Link href="/therapist/cases">
+              <Button variant="ghost" size="sm" showArrow>
+                View All Cases
+              </Button>
             </Link>
           </div>
         </div>
@@ -269,7 +268,7 @@ export function TherapistDashboardClient({
                 data-session-id={session.id}
                 data-status={isHeld ? "completed" : "pending"}
                 onClick={() => handleOpenSession(session)}
-                className={`group relative flex flex-col justify-between rounded-xl p-4 text-left transition-all duration-150 select-none shadow-xs hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 min-h-[96px] md:min-h-[110px] lg:min-h-[120px] ${
+                className={`group relative flex flex-col justify-between rounded-none p-4 text-left transition-all duration-150 select-none shadow-xs hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 min-h-[96px] md:min-h-[110px] lg:min-h-[120px] ${
                   isHeld
                     ? "bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500"
                     : "bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-500"

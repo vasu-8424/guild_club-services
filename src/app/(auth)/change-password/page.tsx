@@ -138,12 +138,14 @@ export default function ChangePasswordPage() {
 
           <div className="mt-5 border-t border-slate-100 pt-4 text-center">
             <form action={logoutAction}>
-              <button
+              <Button
                 type="submit"
-                className="text-xs text-slate-500 hover:text-slate-800 underline transition-colors"
+                variant="link"
+                size="sm"
+                className="text-xs text-slate-500 hover:text-slate-800"
               >
                 Sign out instead
-              </button>
+              </Button>
             </form>
           </div>
         </div>

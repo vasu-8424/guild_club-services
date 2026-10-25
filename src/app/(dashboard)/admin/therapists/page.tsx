@@ -1,53 +1,59 @@
-import Link from "next/link";
-import { eq, desc, sql, ne, and, isNotNull, isNull } from "drizzle-orm";
+import { requireRole } from "@/lib/session";
 import { db } from "@/db";
 import { users, therapistProfiles, cases } from "@/db/schema";
-import { requireRole } from "@/lib/session";
+import { eq, isNull, and, or, sql } from "drizzle-orm";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { UserPlus, AlertTriangle } from "lucide-react";
 import { TherapistRowActions } from "./therapist-row-actions";
+import { Plus, AlertCircle } from "lucide-react";
+import Link from "next/link";
 
-interface TherapistsListPageProps {
-  searchParams: Promise<{ showDeleted?: string }>;
+interface TherapistsPageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function TherapistsListPage({
+export default async function TherapistsPage({
   searchParams,
-}: TherapistsListPageProps) {
+}: TherapistsPageProps) {
   const currentUser = await requireRole("admin", "super_admin");
-  const params = await searchParams;
   const isSuperAdmin = currentUser.role === "super_admin";
-  const showDeleted = isSuperAdmin && params.showDeleted === "true";
 
-  const condition = showDeleted
-    ? eq(users.role, "therapist")
-    : and(eq(users.role, "therapist"), isNull(users.deletedAt));
+  const resolvedParams = await searchParams;
+  const showDeleted = isSuperAdmin && resolvedParams.showDeleted === "true";
 
-  // Fetch therapists with their profiles
+  // Build the query condition based on role and showDeleted toggle
+  let whereCondition;
+  if (showDeleted) {
+    whereCondition = eq(users.role, "therapist");
+  } else {
+    whereCondition = and(
+      eq(users.role, "therapist"),
+      isNull(users.deletedAt)
+    );
+  }
+
+  // Fetch therapists with profiles
   const therapistList = await db
     .select({
       id: users.id,
       name: users.name,
       email: users.email,
-      phone: users.phone,
       isActive: users.isActive,
       deletedAt: users.deletedAt,
       specialization: therapistProfiles.specialization,
       experienceYears: therapistProfiles.experienceYears,
       maxOpenCases: therapistProfiles.maxOpenCases,
-      createdAt: users.createdAt,
     })
     .from(users)
     .innerJoin(therapistProfiles, eq(users.id, therapistProfiles.userId))
-    .where(condition)
-    .orderBy(desc(users.createdAt));
+    .where(whereCondition)
+    .orderBy(users.name);
 
-  // Fetch open case counts per therapist
-  const openCasesCounts = await db
+  // Count active cases for each therapist
+  const activeCasesCounts = await db
     .select({
       therapistId: cases.currentTherapistId,
       count: sql<number>`count(*)::int`,
@@ -55,26 +61,29 @@ export default async function TherapistsListPage({
     .from(cases)
     .where(
       and(
-        isNotNull(cases.currentTherapistId),
-        ne(cases.status, "completed")
+        sql`${cases.currentTherapistId} IS NOT NULL`,
+        or(
+          eq(cases.status, "assigned"),
+          eq(cases.status, "accepted"),
+          eq(cases.status, "in_progress")
+        )
       )
     )
     .groupBy(cases.currentTherapistId);
 
   const openCasesMap = new Map<string, number>();
-  for (const row of openCasesCounts) {
-    if (row.therapistId) {
-      openCasesMap.set(row.therapistId, row.count);
+  activeCasesCounts.forEach((c) => {
+    if (c.therapistId) {
+      openCasesMap.set(c.therapistId, c.count);
     }
-  }
+  });
 
   return (
-    <DashboardShell user={currentUser} title="Therapists">
+    <DashboardShell user={currentUser} title="Therapist Management">
       <div className="space-y-6">
-        {/* Page Header */}
         <PageHeader
-          title="Therapists"
-          description="Manage clinical practitioners, specializations, case capacity, and operational status."
+          title="Therapist Management"
+          description="Manage clinical practitioners, specializations, credentials, and daily room allocations."
           breadcrumbs={[
             {
               label: "Dashboard",
@@ -83,7 +92,7 @@ export default async function TherapistsListPage({
             { label: "Therapists" },
           ]}
           action={
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 w-full sm:w-auto">
               {isSuperAdmin && (
                 <Link
                   href={
@@ -92,20 +101,25 @@ export default async function TherapistsListPage({
                       : "/admin/therapists?showDeleted=true"
                   }
                   data-testid="toggle-show-deleted-therapists"
-                  className={`text-xs px-3 py-1.5 rounded-lg border transition-all font-medium ${
-                    showDeleted
-                      ? "bg-slate-800 text-white border-slate-800"
-                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                  }`}
                 >
-                  {showDeleted ? "Hide Deleted" : "Show Deleted"}
+                  <Button
+                    variant={showDeleted ? "primary" : "secondary"}
+                    size="sm"
+                  >
+                    {showDeleted ? "Hide Deleted" : "Show Deleted"}
+                  </Button>
                 </Link>
               )}
 
-              <Link href="/admin/therapists/new">
-                <Button data-testid="add-therapist-button" size="sm" className="flex items-center gap-1.5">
-                  <UserPlus className="h-4 w-4" />
-                  <span>Register Therapist</span>
+              <Link href="/admin/therapists/new" className="w-full sm:w-auto">
+                <Button
+                  data-testid="add-therapist-button"
+                  size="sm"
+                  variant="primary"
+                  leadingIcon={<Plus className="h-4 w-4" />}
+                  className="w-full sm:w-auto"
+                >
+                  Register Therapist
                 </Button>
               </Link>
             </div>
@@ -113,8 +127,8 @@ export default async function TherapistsListPage({
         />
 
         {/* Therapists Table: 6 Columns */}
-        <div className="rounded-xl border border-slate-200/80 bg-white overflow-hidden shadow-xs">
-          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
+        <div className="rounded-none border border-slate-200 bg-white overflow-hidden shadow-xs">
+          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5 bg-slate-50/50">
             <div>
               <h2 className="text-sm font-semibold text-slate-900">
                 Registered Practitioners
@@ -138,14 +152,14 @@ export default async function TherapistsListPage({
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="sticky top-0 bg-slate-50/90 backdrop-blur-xs border-b border-slate-200/80 text-slate-500 font-semibold uppercase tracking-wider text-[10px] select-none">
+                <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[10px] select-none z-10">
                   <tr>
-                    <th className="px-5 py-3">Therapist</th>
-                    <th className="px-5 py-3">Specialization</th>
-                    <th className="px-5 py-3">Experience</th>
-                    <th className="px-5 py-3">Caseload / Capacity</th>
-                    <th className="px-5 py-3">Status</th>
-                    <th className="px-5 py-3 text-right">Actions</th>
+                    <th className="px-5 py-3 min-w-[200px]">Therapist</th>
+                    <th className="px-5 py-3 min-w-[240px]">Specialization</th>
+                    <th className="px-5 py-3 min-w-[100px]">Experience</th>
+                    <th className="px-5 py-3 min-w-[180px]">Caseload / Capacity</th>
+                    <th className="px-5 py-3 min-w-[120px]">Status</th>
+                    <th className="px-5 py-3 text-right w-[220px] min-w-[220px]">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
@@ -153,7 +167,10 @@ export default async function TherapistsListPage({
                     const isDeleted = th.deletedAt !== null;
                     const displayName = isDeleted ? `${th.name} (deleted)` : th.name;
                     const openCount = openCasesMap.get(th.id) ?? 0;
-                    const isAtMax = openCount >= (th.maxOpenCases ?? 10);
+                    const maxCap = th.maxOpenCases ?? 10;
+                    const isAtCapacity = openCount === maxCap;
+                    const isOverCapacity = openCount > maxCap;
+                    const percent = Math.min(Math.round((openCount / maxCap) * 100), 100);
 
                     return (
                       <tr
@@ -162,7 +179,8 @@ export default async function TherapistsListPage({
                           isDeleted ? "bg-slate-50/40 text-slate-400" : ""
                         }`}
                       >
-                        <td className="px-5 py-3.5">
+                        {/* 1. Therapist Name & Email */}
+                        <td className="px-5 py-3.5 min-w-[200px]">
                           <div
                             data-testid={`therapist-name-${th.id}`}
                             className={`font-semibold text-sm ${
@@ -175,30 +193,62 @@ export default async function TherapistsListPage({
                             {th.email}
                           </div>
                         </td>
-                        <td className="px-5 py-3.5 text-slate-700">
-                          <span className="inline-block bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[11px] font-medium">
+
+                        {/* 2. Specialization (min-width 240px with line-clamp-2) */}
+                        <td className="px-5 py-3.5 min-w-[240px] max-w-[300px]">
+                          <span
+                            className="inline-block text-slate-800 text-[11px] font-medium leading-relaxed"
+                            title={th.specialization}
+                          >
                             {th.specialization}
                           </span>
                         </td>
-                        <td className="px-5 py-3.5 text-slate-600">
+
+                        {/* 3. Experience */}
+                        <td className="px-5 py-3.5 min-w-[100px] text-slate-600 whitespace-nowrap">
                           {th.experienceYears} yr{th.experienceYears === 1 ? "" : "s"}
                         </td>
-                        <td className="px-5 py-3.5">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-slate-800">
-                              {openCount} / {th.maxOpenCases}
-                            </span>
-                            {isAtMax && !isDeleted && (
-                              <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 border border-amber-200">
-                                <AlertTriangle className="h-3 w-3" />
-                                At Capacity
+
+                        {/* 4. Caseload / Capacity (Never Wrap) */}
+                        <td className="px-5 py-3.5 min-w-[180px] whitespace-nowrap">
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-mono tabular-nums font-semibold text-xs text-slate-800">
+                                {openCount} / {maxCap}
                               </span>
-                            )}
+                              {isOverCapacity && !isDeleted && (
+                                <span className="inline-flex items-center gap-1 rounded-none bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold text-rose-700 border border-rose-200 uppercase tracking-wide">
+                                  <AlertCircle className="h-3 w-3" />
+                                  Over capacity
+                                </span>
+                              )}
+                              {isAtCapacity && !isDeleted && (
+                                <span className="inline-flex items-center gap-1 rounded-none bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200 uppercase tracking-wide">
+                                  <AlertCircle className="h-3 w-3" />
+                                  At capacity
+                                </span>
+                              )}
+                            </div>
+                            {/* Visual Progress Bar */}
+                            <div className="h-1.5 w-full bg-slate-100 rounded-none overflow-hidden">
+                              <div
+                                className={`h-full transition-all duration-300 rounded-none ${
+                                  isOverCapacity
+                                    ? "bg-rose-600"
+                                    : isAtCapacity
+                                    ? "bg-amber-500"
+                                    : "bg-teal-600"
+                                }`}
+                                style={{ width: `${percent}%` }}
+                              />
+                            </div>
                           </div>
                         </td>
-                        <td className="px-5 py-3.5">
+
+                        {/* 5. Status Badge */}
+                        <td className="px-5 py-3.5 min-w-[120px] whitespace-nowrap">
                           {isDeleted ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                            <span className="inline-flex items-center h-[24px] px-2 text-[12px] uppercase font-semibold tracking-wider rounded-none bg-slate-100 text-slate-600 border border-slate-200">
                               Deleted
                             </span>
                           ) : (
@@ -207,7 +257,9 @@ export default async function TherapistsListPage({
                             />
                           )}
                         </td>
-                        <td className="px-5 py-3.5 text-right">
+
+                        {/* 6. Row Actions (Fixed 220px, Right-aligned) */}
+                        <td className="px-5 py-3.5 text-right w-[220px] min-w-[220px] whitespace-nowrap">
                           <TherapistRowActions
                             therapist={th}
                             currentUserId={currentUser.id}
