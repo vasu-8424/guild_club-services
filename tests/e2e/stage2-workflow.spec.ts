@@ -128,6 +128,7 @@ test.describe.serial("THW: Therapist Case Workflow", () => {
 
   test("THW-03: Accepted case appears in active caseload and navigates to detail", async ({ page }) => {
     await loginAsTherapist(page);
+    await page.goto("/therapist/cases");
     await expect(page.locator("body")).toContainText(workflowCaseNumber, { timeout: 10000 });
 
     // Navigate to therapist case detail page

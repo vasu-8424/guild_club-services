@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { requireApiRole } from "@/lib/session";
 import { db } from "@/db";
-import { cases, users, caseNotes } from "@/db/schema";
+import { cases, caseNotes } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { recordEvent } from "@/lib/events";
-import { queueEmail } from "@/lib/email";
+import { notifyCaseClosed } from "@/lib/notifications/in-app";
 import { closeCaseSchema } from "@/lib/validators";
 
 export async function POST(
@@ -51,12 +51,6 @@ export async function POST(
       return NextResponse.json({ error: "Case is already completed" }, { status: 400 });
     }
 
-    const [adminCreator] = await db
-      .select({ name: users.name, email: users.email })
-      .from(users)
-      .where(eq(users.id, targetCase.createdBy))
-      .limit(1);
-
     const closedAt = new Date();
     const { outcome, closingNotes } = parsed.data;
 
@@ -100,21 +94,16 @@ export async function POST(
         });
       }
 
-      if (adminCreator) {
-        await queueEmail(tx as any, {
-          toEmail: adminCreator.email,
-          toName: adminCreator.name,
-          template: "case_closed",
-          payload: {
-            adminName: adminCreator.name,
-            therapistName: user.name,
-            caseNumber: targetCase.caseNumber,
-            caseId: id,
-            outcome,
-            closedAt: closedAt.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-          },
-        });
-      }
+      // Notify creating admin, assigning admin, and Super Admins (in-app + outbox email)
+      await notifyCaseClosed({
+        tx,
+        caseId: id,
+        caseNumber: targetCase.caseNumber,
+        outcome,
+        therapistName: user.name,
+        createdById: targetCase.createdBy,
+        closedAt,
+      });
     });
 
     return NextResponse.json({ success: true, caseId: id, outcome, closedAt });

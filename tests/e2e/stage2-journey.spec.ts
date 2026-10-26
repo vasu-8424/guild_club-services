@@ -151,9 +151,9 @@ test.describe.serial("E2E: Complete Multi-Role Lifecycle Journey", () => {
 
     await expect(page.getByTestId("assign-success-message")).toBeVisible({ timeout: 15000 });
 
-    // Verify assignment email queued
+    // Verify assignment email is NOT queued (removed per user directive)
     const assignEmail = await getLatestEmail(journeyTherapist.email, "case_assigned");
-    expect(assignEmail, "case_assigned email should be queued to therapist").not.toBeNull();
+    expect(assignEmail, "case_assigned email should NOT be queued to therapist").toBeNull();
 
     // -------------------------------------------------------------------------
     // Step 6: Therapist logs in directly to /therapist/dashboard

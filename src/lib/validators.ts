@@ -42,6 +42,18 @@ export const manualPasswordSchema = z
   .regex(/[a-zA-Z]/, "Password must contain at least one letter")
   .regex(/[0-9]/, "Password must contain at least one number");
 
+import parsePhoneNumberFromString from "libphonenumber-js";
+
+export function normalizePhoneNumber(phone?: string | null): string | null {
+  if (!phone || phone.trim() === "") return null;
+  const trimmed = phone.trim();
+  const parsed = parsePhoneNumberFromString(trimmed, "IN") || parsePhoneNumberFromString(trimmed);
+  if (parsed && parsed.isValid()) {
+    return parsed.format("E.164");
+  }
+  return trimmed;
+}
+
 // Admin Management
 export const createAdminSchema = z
   .object({
@@ -52,9 +64,25 @@ export const createAdminSchema = z
       .min(1, "Email is required")
       .email("Please provide a valid email address")
       .toLowerCase(),
-    phone: z.string().trim().optional().or(z.literal("")),
+    phone: z
+      .string()
+      .trim()
+      .optional()
+      .or(z.literal(""))
+      .superRefine((val, ctx) => {
+        if (!val || val.trim() === "") return;
+        const parsed = parsePhoneNumberFromString(val.trim(), "IN") || parsePhoneNumberFromString(val.trim());
+        if (!parsed || !parsed.isValid()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Please provide a valid phone number",
+          });
+        }
+      })
+      .transform((val) => normalizePhoneNumber(val) ?? ""),
     password: manualPasswordSchema,
     confirmPassword: z.string().min(1, "Please confirm password"),
+    emailCredentials: z.boolean().default(true).optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -72,7 +100,12 @@ export const editAdminSchema = z.object({
     .min(1, "Email is required")
     .email("Please provide a valid email address")
     .toLowerCase(),
-  phone: z.string().trim().optional().or(z.literal("")),
+  phone: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(""))
+    .transform((val) => normalizePhoneNumber(val) ?? ""),
 });
 
 export type EditAdminInput = z.infer<typeof editAdminSchema>;
@@ -114,17 +147,33 @@ export const createTherapistSchema = z
       .min(1, "Email is required")
       .email("Please provide a valid email address")
       .toLowerCase(),
-    phone: z.string().trim().min(5, "Phone number is required"),
-    specialization: z.string().trim().min(2, "Specialization is required"),
+    phone: z
+      .string()
+      .trim()
+      .min(1, "Phone number is required")
+      .superRefine((val, ctx) => {
+        if (!val || val.trim() === "") return;
+        const parsed = parsePhoneNumberFromString(val.trim(), "IN") || parsePhoneNumberFromString(val.trim());
+        if (!parsed || !parsed.isValid()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Please provide a valid phone number",
+          });
+        }
+      })
+      .transform((val) => normalizePhoneNumber(val) || val.trim()),
+    specialization: z.string().trim().default(""),
     experienceYears: z.coerce
       .number()
-      .min(0, "Experience years must be 0 or greater"),
+      .min(0, "Experience years must be 0 or greater")
+      .default(0),
     maxOpenCases: z.coerce
       .number()
       .min(1, "Max open cases must be at least 1")
       .default(10),
     password: manualPasswordSchema,
     confirmPassword: z.string().min(1, "Please confirm password"),
+    emailCredentials: z.boolean().default(true).optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -163,8 +212,16 @@ export const caseStatusEnum = z.enum([
   "in_progress",
   "on_hold",
   "completed",
+  "active",
 ]);
-export const caseOutcomeEnum = z.enum(["successful", "unsuccessful", "referred"]);
+export const caseOutcomeEnum = z.enum([
+  "successful",
+  "unsuccessful",
+  "referred",
+  "improved",
+  "partially_improved",
+  "no_change",
+]);
 export const sessionStatusEnum = z.enum(["held", "missed", "cancelled"]);
 
 export const createCaseSchema = z.object({

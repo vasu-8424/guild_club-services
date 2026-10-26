@@ -67,8 +67,8 @@ Guild Club Services enforces strict Role-Based Access Control (RBAC):
 - **Worker / API Route (`/api/email/process`)**: Processes pending emails in batches with `SELECT ... FOR UPDATE SKIP LOCKED` and a 3-attempt retry limit.
 - **Templates**:
   - `admin_credentials`: Welcome email with login link and temporary password
-  - `therapist_credentials`: Welcome email with credentials and first-login requirements
-  - `case_assigned`: New case notification with priority and client name
+  - `therapist_credentials`: High-clarity welcome email with Login ID, Access Password, and direct portal link
+  - `case_assigned`: *(Removed per clinical workflow directive: therapists create cases and assign to themselves)*
   - `case_declined`: Alert to intake admin with practitioner's decline rationale
   - `case_closed`: Final discharge notice with outcome
   - `password_reset`: 30-minute time-limited reset link
@@ -256,6 +256,147 @@ npm run db:migrate
 # 2. Seed initial Super Admin and foundational accounts
 npm run db:seed
 ```
+
+---
+
+## 🩺 Simplified Therapist Workflow
+
+Guild Club Services includes a simplified, clinically-focused therapist experience designed for ease of use on mobile devices and desktop workstations, following a strict 0px border-radius (`rounded-none`) design system and `#0B7A63` brand color.
+
+### 1. Therapist Shift Login & Geolocation Recording
+- **Shift Location Prompt**: Upon signing into `/login`, therapists are prompted for shift location capture.
+- **GPS Coordinates**: Records exact `latitude`, `longitude`, `accuracy` (meters), client IP, and `logged_in_at` timestamp into `login_records`.
+- **Policy Enforcement**: Controlled by the `REQUIRE_LOCATION_ON_LOGIN` environment flag (`true` enforces capture or denied logging).
+- **Privacy Assurance**: Geolocation coordinates are strictly access-controlled. They are **never sent via email or SMS**.
+- **Admin Audit**: Clinic administrators can review login activity and view map pins directly via OpenStreetMap (`https://www.openstreetmap.org/?mlat=LAT&mlon=LNG#map=17/LAT/LNG`).
+
+### 2. Therapist-Only Case Creation & Automatic Self-Assignment
+- **Therapist Exclusivity**: Cases are initiated directly by treating therapists from `/therapist/dashboard` via the `+ Create Case` button. Admin case creation is hidden and blocked with HTTP 403 Forbidden.
+- **Demographics & Intake**: Captures patient name, age (0–120), sex (`male`, `female`, `other`), clinical problem, present condition, room number, and facility branch.
+- **Three Supported Clinical Services**:
+  - `physiotherapy` — Physiotherapy
+  - `swallow_therapy` — Swallow Therapy
+  - `vitalstim_therapy` — VitalStim Therapy
+- **Joining Condition Photos**: 1 to 3 mandatory baseline intake photos with direct device camera capture (`capture="environment"`), image preview, and removal capabilities (JPEG, PNG, WebP up to 5MB).
+- **Consent Verification**: Requires explicit patient/guardian consent confirmation.
+- **Atomic Concurrency-Safe Generation**: Automatically generates a unique sequential patient ID (`GCP-XXXX`) and case reference number (`GCS-YYYY-NNNN`) within a single database transaction.
+- **Zero Admin Burden**: Automatically assigns the case to the creating therapist (`currentTherapistId = therapist.id`) and logs a `case_created` in-app notification to all administrators (`"<Therapist> created case GCP-XXXX"`).
+
+### 3. Month Calendar on Case Page
+- **Boundary Navigation**: Calendar bounds strictly between case `startDate` and `closedAt` (or today IST). Previous and Next month buttons disable at boundaries.
+- **Color-Coded Statuses**:
+  - 🟢 **Green (Session Done)**: A clinical session was recorded. Clicking opens the session note and attached photo.
+  - 🔴 **Red (Missed)**: Past day or today without session. Clicking opens an informational modal: *"No session was recorded on this day. Clinical sessions can only be recorded on the day they occur."*
+  - ⚪ **Gray (Future)**: Days after today are disabled and unclickable.
+  - 🔵 **Blue Outline (Today)**: Highlights current date in Asia/Kolkata timezone. Clicking opens the session recording modal.
+- **Counters**: Displays aggregate **Sessions Done**, **Missed Days**, and **Attendance %** directly above the calendar.
+
+### 4. Daily Session Logging
+- **Today Only**: Sessions can only be logged for today (Asia/Kolkata) and are editable until midnight IST. Past days cannot be recorded retroactively.
+- **Clinical Validation**: Minimum 10 characters required for session notes.
+- **Photo Upload**: Optional photo attachment from device camera.
+- **Instant UI Reactivity**: Calendar day cell updates immediately to green without requiring a full page refresh.
+- **Grouped Admin Notification**: Batched low-priority notification dispatches to admins.
+
+### 5. Discharge & Case Closure (Mandatory Final Progress Report)
+- **Outcome Mapping**:
+  - `Improved` ➔ `successful`
+  - `Partially improved` ➔ `successful`
+  - `No change` ➔ `unsuccessful`
+  - `Referred` ➔ `referred`
+- **Mandatory Final Report**: Case closure requires the therapist to author the patient's final progress evaluation in words (Current Condition min 10 chars, Progress Since Last Report min 20 chars, Treatment Given & Plan Ahead, Remarks).
+- **Present Condition Photos**: Requires 1 to 3 present condition photos showing the patient's status upon discharge.
+- **Confirmation Safeguard**: Two-step modal requiring explicit review and confirmation:
+  > *"Close case GCP-XXXX? You cannot add sessions after closing."*
+- **Database Unique Constraint**: Enforced by a partial unique index on `(case_id) WHERE report_type = 'final'` ensuring exactly one final report per case.
+- **Read-Only Lock**: Once closed, status permanently updates to `Closed`, and the case and all progress reports are permanently locked.
+
+### 6. Clinical Progress Reports & Printable Report Page
+- **Route**: Accessible at `/cases/[id]/report` (with backwards-compatible redirects from `/therapist/cases/[id]/report` and `/admin/cases/[id]/report`).
+- **Authorization**: Owning therapist, Admins, and Super Admins. Other therapists receive a 404 Not Found.
+- **Top-to-Bottom Layout**:
+  1. **Header**: Patient ID, patient name, age, sex, service, problem, branch, room, start date, end date or "Ongoing", and status.
+  2. **Facts Strip**: System-calculated numbers only: Sessions Done, Missed Days, Attendance %.
+  3. **Visual Progression Photos**: Joining condition photo (intake) and present condition photo (discharge), side by side with capture dates.
+  4. **Therapist's Report**: Submitted narrative reports in chronological order, displaying exact words, preserved line breaks, date & time, type tag ("Progress Update" or "Final Report"), author's name, and `(edited)` badge if prior versions exist.
+  5. **Session Notes Timeline**: Chronological log of daily notes recorded during held appointments.
+  6. **Discharge Outcome & Closing Summary**: Rendered once the case is closed.
+  7. **Footer Line**: `"Report written by <Therapist name>, <Service>, <Branch>"` and print timestamp.
+- **Download PDF**: Standard `window.print()` trigger with dedicated A4 print stylesheet (`@media print`) that suppresses navigation, eliminates page breaks inside photo cards and report entries, and formats clean headers and footers.
+
+---
+
+## 📝 How Therapists Write Progress Reports
+
+### 1. Therapist-Authored Clinical Narrative (Zero Auto-Summarization)
+The clinical progress report is **written by the therapist in words**. The system never auto-writes, auto-summarizes, or applies generative templates to clinical evaluations. Plain textareas with character counters, clear labels, and realistic example sentences under each field provide guidance while preserving the clinician's original language.
+
+### 2. Saving Drafts
+- Therapists can draft a progress update at any time while a case is active.
+- Only the **Current Condition** field (non-empty) is required to save a draft.
+- Drafts remain **strictly private to the owning therapist** and are completely hidden from Admins and Super Admins until submitted.
+
+### 3. Submitting Reports
+- Submitting a progress report enforces character length minimums:
+  - **Current Condition**: Required, min 10 characters, max 3,000.
+  - **Progress Since Last Report**: Required, min 20 characters, max 3,000.
+  - **Treatment Given & Plan Ahead**: Optional, max 3,000.
+  - **Remarks**: Optional, max 3,000.
+- Report dates default to today IST (`Asia/Kolkata`) and are immutably locked to the date saved on the server.
+- Upon submission, the report becomes visible to Admins and Super Admins in the case report view and cases table.
+- An in-app notification is dispatched to clinic administrators (grouped over a 30-minute window). **Clinical narrative text is strictly excluded from notifications, email queues, and event logs.**
+
+### 4. 24-Hour Edit Window & Immutable Version Snapshots
+- The authoring therapist may edit a submitted report within **24 hours** of submission.
+- Every edit creates an immutable historical snapshot in `progress_report_versions` containing the previous text, editor ID, and timestamp.
+- Edited reports display an `(edited)` badge on the case tab and printable report page.
+- Once 24 hours have elapsed from the submission timestamp, the report is permanently locked and cannot be edited by any user role.
+
+### 5. Mandatory Final Report at Case Closing
+- A case cannot be closed without completing the final progress report.
+- The final report is saved with `report_type = 'final'`, `status = 'submitted'`, and `locked_at = NOW()` atomically in the same database transaction as the case closing.
+- Once closed, no further progress updates can be submitted, and the final report cannot be edited.
+
+---
+
+## 🏥 Admin Panel: Rooms and Notes
+
+The simplified Admin panel delivers streamlined operational efficiency with zero visual clutter: **no charts, no sparklines, no heatmaps, and no funnels**. The panel prioritizes high-clarity numbers, clean tables, dynamic room lifecycle management, and private administrative notes.
+
+### 1. Room Lifecycle & Calculated Occupancy
+- **Dynamic Occupancy**: Room status (`FREE`, `OCCUPIED`, `INACTIVE`) is never stored as a mutable boolean flag. It is computed dynamically via a join on active cases (`cases.room_id = rooms.id AND cases.status <> 'completed'`), preventing desynchronization.
+- **Engine-Level Race Prevention**: Concurrency conflicts are strictly blocked at the PostgreSQL engine level via a partial unique index:
+  ```sql
+  CREATE UNIQUE INDEX one_open_case_per_room ON cases (room_id)
+  WHERE status <> 'completed' AND room_id IS NOT NULL;
+  ```
+  If two practitioners attempt to reserve the same room simultaneously, exactly one succeeds and the other receives a friendly message: *"This room was just taken by another patient. Please choose another room."*
+- **Room Immutability**: The assigned room is locked once a case is opened. Case reassignment keeps the room assigned. Closing or completing a case frees the room immediately for other patients.
+- **Protection & Deletion Rules**:
+  - Occupied rooms cannot be renamed or deactivated.
+  - Rooms that have **ever** been linked to any case (past or present) cannot be deleted; administrators are guided to deactivate them instead.
+  - Only rooms that have never been used can be deleted.
+- **Bulk Room Creation**: Administrators can generate ranges of rooms per branch (e.g., prefix `R-`, start `101`, end `110`) in a single atomic action that automatically skips duplicates and reports a creation summary.
+
+### 2. Admin Dashboard & Metrics
+- **Plain Numbers Only**: 4 clean metric boxes: Active Practitioners, Active Cases, Sessions on Selected Date, and Rooms in Use / Total.
+- **Clean Practitioners Table**: Displays Practitioner Name, Sessions on this date, Active cases, Cases closed on this date, Rooms in use, and Last login.
+  - Sortable headers and instant search.
+  - Sticky totals row summing all column values.
+  - Quick-action **Send note** button and dropdown menu.
+- **Historical Date Navigation**: Selecting past dates renders an informational banner (*"Viewing historical data as of [Date]"*), showing exact historical state without modification capabilities.
+
+### 3. Admin Notes to Practitioners
+- **Direct Communication**: Clinic administrators can send direct operational notes (up to 1,000 characters) to therapists.
+- **Privacy First**: Note text is strictly plain text and is **never** included in Resend notification emails. Notification emails contain only: *"You have a new note from <Admin Name> on Guild Club Services"* with a direct sign-in button.
+- **In-App Delivery**: Creates an in-app notification with an 80-character preview, updates the therapist's navigation badge, and displays on `/therapist/notes` with a one-click *"Mark as read"* action.
+- **Read Receipts**: When a therapist marks a note as read, the administrator sees a green `Seen` badge on the practitioner's detail page (`/admin/therapists/[id]`).
+- **Safety Limits**: Rate limited to 20 notes per hour per administrator. Blocked if attempting to send to deactivated practitioners.
+
+### 4. High-Clarity Credentials Dispatch
+- **Crystal Clear Credentials**: When an administrator registers a therapist (`/admin/therapists/new`) or resends credentials, the therapist receives an onboarding email featuring a prominent **Account Login Credentials** card.
+- **Email & Password Included**: Contains Login ID / Email, Access Password (in monospace font with dedicated container), Assigned Role, Created By, and direct Sign In button.
+- **Zero Inbox Noise**: Case assignment emails (`case_assigned`) to therapists have been removed since clinicians create and self-assign cases directly.
 
 ---
 

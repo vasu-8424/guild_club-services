@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { NotificationBell } from "./notification-bell";
 import { UserMenu } from "./user-menu";
 import { DateSelector } from "@/components/dashboard/date-selector";
 import type { CurrentUser } from "@/lib/session";
-import { Icons } from "@/components/ui/icons";
 import { usePathname } from "next/navigation";
 
 interface TopbarProps {
@@ -50,15 +50,8 @@ export function Topbar({ user, title = "Dashboard" }: TopbarProps) {
         {/* Date Selector */}
         <DateSelector />
 
-        {/* Notifications Icon Button with Square Notification Badge */}
-        <button
-          type="button"
-          aria-label="View notifications"
-          className="relative flex h-9 w-9 items-center justify-center rounded-none border border-slate-300 text-slate-600 hover:text-[#0B7A63] hover:border-[#0B7A63] hover:bg-slate-50 transition-colors cursor-pointer"
-        >
-          <Icons.Alert className="h-4 w-4" />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-[1px] bg-[#0B7A63] ring-1 ring-white" />
-        </button>
+        {/* Dynamic Notification Bell with Dropdown & Polling */}
+        <NotificationBell userRole={user.role} />
 
         {/* Vertical divider */}
         <div className="h-6 w-px bg-slate-200" />

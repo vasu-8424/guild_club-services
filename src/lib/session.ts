@@ -18,6 +18,7 @@ export interface CurrentUser {
   role: UserRole;
   isActive: boolean;
   mustChangePassword: boolean;
+  temporaryPasswordPrompt: boolean;
   deletedAt: Date | null;
   sessionVersion: number;
 }
@@ -50,6 +51,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
         role: users.role,
         isActive: users.isActive,
         mustChangePassword: users.mustChangePassword,
+        temporaryPasswordPrompt: users.temporaryPasswordPrompt,
         deletedAt: users.deletedAt,
         sessionVersion: users.sessionVersion,
       })

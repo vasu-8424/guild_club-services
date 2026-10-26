@@ -49,6 +49,7 @@ import {
   Buildings,
   Door,
   FileText,
+  Phone,
   FileXls,
   FilePdf,
   Pulse,
@@ -57,6 +58,8 @@ import {
   CircleNotch,
   ListDashes,
   Sparkle,
+  Envelope,
+  Copy,
   type IconProps,
 } from "@phosphor-icons/react";
 
@@ -142,6 +145,10 @@ export const Icons = {
   FileExcel: (props: IconProps) => <FileXls weight="duotone" size={18} {...props} />,
   FilePdf: (props: IconProps) => <FilePdf weight="duotone" size={18} {...props} />,
   UserSingle: (props: IconProps) => <User weight="duotone" size={18} {...props} />,
+  User: (props: IconProps) => <User weight="duotone" size={18} {...props} />,
+  Envelope: (props: IconProps) => <Envelope weight="duotone" size={16} {...props} />,
+  Phone: (props: IconProps) => <Phone weight="duotone" size={16} {...props} />,
+  Copy: (props: IconProps) => <Copy weight="bold" size={16} {...props} />,
   Spinner: (props: IconProps) => <CircleNotch weight="bold" size={16} className="animate-spin" {...props} />,
 };
 

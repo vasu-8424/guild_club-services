@@ -14,6 +14,7 @@ import {
   getTherapistCapacityList,
   getAdminProductivityList,
 } from "@/lib/dashboard";
+import { getRecentlyClosedCasesAction } from "@/lib/actions/notification-actions";
 import { SuperAdminDashboardClient } from "./super-admin-dashboard-client";
 
 interface SuperAdminDashboardPageProps {
@@ -45,6 +46,7 @@ export default async function SuperAdminDashboard({
     trendData,
     therapistCapacity,
     adminProductivity,
+    recentlyClosedRes,
   ] = await Promise.all([
     getDashboardSummary(user, filter),
     getPeopleSummary(user, filter),
@@ -69,6 +71,7 @@ export default async function SuperAdminDashboard({
     getDailyTrendData(filter),
     getTherapistCapacityList(),
     getAdminProductivityList(filter),
+    getRecentlyClosedCasesAction(5),
   ]);
 
   // 2. Status breakdown for charts
@@ -110,6 +113,8 @@ export default async function SuperAdminDashboard({
     value: r.count,
   }));
 
+  const recentlyClosedCases = recentlyClosedRes?.data || [];
+
   return (
     <DashboardShell user={user} title="Super Administrator Portal">
       <SuperAdminDashboardClient
@@ -128,6 +133,7 @@ export default async function SuperAdminDashboard({
         trendData={trendData}
         therapistCapacity={therapistCapacity}
         adminProductivity={adminProductivity}
+        recentlyClosedCases={recentlyClosedCases}
       />
     </DashboardShell>
   );

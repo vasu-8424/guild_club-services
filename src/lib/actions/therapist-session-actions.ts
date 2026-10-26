@@ -8,6 +8,7 @@ import { requireRole } from "@/lib/session";
 import { recordEvent } from "@/lib/events";
 import { saveStorageFile } from "@/lib/storage";
 import { getTodayIST } from "@/lib/date-utils";
+import { notifySessionCompleted } from "@/lib/notifications/in-app";
 
 /**
  * Returns date as YYYY-MM-DD in Asia/Kolkata timezone.
@@ -519,6 +520,15 @@ export async function completeSessionAction(params: {
           completedAt: now.toISOString(),
           scheduledAt: session.scheduledAt.toISOString(),
         },
+      });
+
+      // 3. Notify assigning admin of session completion
+      await notifySessionCompleted({
+        tx,
+        sessionId,
+        caseId: session.caseId,
+        therapistId: user.id,
+        therapistName: user.name,
       });
     });
 

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   cases,
@@ -9,12 +9,15 @@ import {
   users,
   sessions,
   caseNotes,
+  caseEvents,
   therapistRoomAssignments,
   type CaseStatus,
 } from "@/db/schema";
-import { requireRole } from "@/lib/session";
+import { requireRole, getCurrentUser } from "@/lib/session";
 import { recordEvent } from "@/lib/events";
 import { queueEmail } from "@/lib/email";
+import { triggerOpportunisticQueueProcess } from "@/lib/notifications";
+import { notifyCaseClosed } from "@/lib/notifications/in-app";
 import { generateCaseNumber } from "@/lib/case-number";
 import {
   createCaseSchema,
@@ -44,12 +47,19 @@ export type ActionResponse<T = unknown> = {
 };
 
 /**
- * Admin / Super Admin: Create a new Case and Client in a single transaction.
+ * Therapist only: Create a new Case and Client in a single transaction.
+ * Admins and Super Admins are forbidden from creating cases per therapist-simplification.
  */
 export async function createCaseAction(
   rawInput: CreateCaseInput
 ): Promise<ActionResponse<{ id: string; caseNumber: string }>> {
-  const currentUser = await requireRole("admin", "super_admin");
+  const currentUser = await getCurrentUser();
+  if (!currentUser || currentUser.role !== "therapist") {
+    return {
+      success: false,
+      error: "Forbidden: Only therapists are authorized to create cases.",
+    };
+  }
 
   const parsed = createCaseSchema.safeParse(rawInput);
   if (!parsed.success) {
@@ -163,24 +173,14 @@ export async function createCaseAction(
             metadata: { therapistName: therapist.name },
           });
 
-          await queueEmail(tx as any, {
-            toEmail: therapist.email,
-            toName: therapist.name,
-            template: "case_assigned",
-            payload: {
-              therapistName: therapist.name,
-              caseNumber,
-              priority,
-              category,
-              clientName,
-              caseId: newCase.id,
-            },
-          });
+          // Note: case_assigned email removed per user directive (therapists create cases and assign to themselves).
         }
       }
 
       return newCase;
     });
+
+    triggerOpportunisticQueueProcess();
 
     revalidatePath("/admin/cases");
     revalidatePath("/therapist/dashboard");
@@ -314,21 +314,55 @@ export async function assignCaseAction(
         });
       }
 
-      // Queue email notification
-      await queueEmail(tx as any, {
-        toEmail: therapist.email,
-        toName: therapist.name,
-        template: "case_assigned",
-        payload: {
-          therapistName: therapist.name,
-          caseNumber: existingCase.caseNumber,
-          priority: existingCase.priority,
-          category: existingCase.category,
-          clientName: client?.fullName ?? "Client",
-          caseId,
-        },
+      const assignedDate = new Date().toLocaleDateString("en-IN", {
+        timeZone: "Asia/Kolkata",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
       });
+
+      if (isReassign && existingCase.currentTherapistId) {
+        // 1. Notify previous therapist
+        const [prevTherapist] = await tx
+          .select({ name: users.name, email: users.email })
+          .from(users)
+          .where(eq(users.id, existingCase.currentTherapistId))
+          .limit(1);
+
+        if (prevTherapist) {
+          await queueEmail(tx as any, {
+            toEmail: prevTherapist.email,
+            toName: prevTherapist.name,
+            template: "case_unassigned",
+            payload: {
+              therapistName: prevTherapist.name,
+              caseNumber: existingCase.caseNumber,
+              reassignedDate: assignedDate,
+            },
+          });
+        }
+
+        // 2. Notify new therapist
+        await queueEmail(tx as any, {
+          toEmail: therapist.email,
+          toName: therapist.name,
+          template: "case_reassigned",
+          payload: {
+            therapistName: therapist.name,
+            caseNumber: existingCase.caseNumber,
+            priority: existingCase.priority,
+            category: existingCase.category,
+            assignedBy: currentUser.name,
+            assignedDate,
+            caseId,
+          },
+        });
+      } else {
+        // Initial assignment: case_assigned email removed per user directive.
+      }
     });
+
+    triggerOpportunisticQueueProcess();
 
     revalidatePath("/admin/cases");
     revalidatePath(`/admin/cases/${caseId}`);
@@ -466,12 +500,30 @@ export async function declineCaseAction(
       };
     }
 
-    // Get admin creator to notify
-    const [adminCreator] = await db
-      .select({ name: users.name, email: users.email })
-      .from(users)
-      .where(eq(users.id, targetCase.createdBy))
+    // Find assigning admin to notify (latest assign event or creator)
+    const [latestAssignEvent] = await db
+      .select({ actorId: caseEvents.actorId })
+      .from(caseEvents)
+      .where(
+        and(
+          eq(caseEvents.caseId, caseId),
+          or(
+            eq(caseEvents.eventType, "case_assigned"),
+            eq(caseEvents.eventType, "case_reassigned")
+          )
+        )
+      )
+      .orderBy(sql`${caseEvents.occurredAt} DESC`)
       .limit(1);
+
+    const adminIdToNotify = latestAssignEvent?.actorId || targetCase.createdBy;
+    const [adminToNotify] = adminIdToNotify
+      ? await db
+          .select({ name: users.name, email: users.email })
+          .from(users)
+          .where(eq(users.id, adminIdToNotify))
+          .limit(1)
+      : [null];
 
     await db.transaction(async (tx) => {
       // Clear therapist and set status back to 'new'
@@ -503,14 +555,14 @@ export async function declineCaseAction(
         note: `Declined by therapist: ${reason}`,
       });
 
-      // Queue decline email to creator
-      if (adminCreator) {
+      // Queue decline email to assigning admin
+      if (adminToNotify) {
         await queueEmail(tx as any, {
-          toEmail: adminCreator.email,
-          toName: adminCreator.name,
+          toEmail: adminToNotify.email,
+          toName: adminToNotify.name,
           template: "case_declined",
           payload: {
-            adminName: adminCreator.name,
+            adminName: adminToNotify.name,
             therapistName: currentUser.name,
             caseNumber: targetCase.caseNumber,
             caseId,
@@ -519,6 +571,8 @@ export async function declineCaseAction(
         });
       }
     });
+
+    triggerOpportunisticQueueProcess();
 
     revalidatePath("/admin/cases");
     revalidatePath(`/admin/cases/${caseId}`);
@@ -584,8 +638,9 @@ export async function updateCaseStatusAction(
       assigned: ["accepted", "new"],
       accepted: ["in_progress"],
       in_progress: ["on_hold", "completed"],
-      on_hold: ["in_progress", "completed"],
+      on_hold: ["in_progress", "completed", "active"],
       completed: [],
+      active: ["completed", "on_hold"],
     };
 
     if (
@@ -688,12 +743,6 @@ export async function closeCaseAction(
       return { success: false, error: "You are not assigned to this case." };
     }
 
-    const [adminCreator] = await db
-      .select({ name: users.name, email: users.email })
-      .from(users)
-      .where(eq(users.id, targetCase.createdBy))
-      .limit(1);
-
     const closedAt = new Date();
 
     await db.transaction(async (tx) => {
@@ -736,26 +785,24 @@ export async function closeCaseAction(
         });
       }
 
-      // Notify admin creator
-      if (adminCreator) {
-        await queueEmail(tx as any, {
-          toEmail: adminCreator.email,
-          toName: adminCreator.name,
-          template: "case_closed",
-          payload: {
-            adminName: adminCreator.name,
-            therapistName: currentUser.name,
-            caseNumber: targetCase.caseNumber,
-            caseId,
-            outcome,
-            closedAt: closedAt.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-          },
-        });
-      }
+      // Notify creating admin, assigning admin, and Super Admins (in-app + outbox email)
+      await notifyCaseClosed({
+        tx,
+        caseId,
+        caseNumber: targetCase.caseNumber,
+        outcome,
+        therapistName: currentUser.name,
+        createdById: targetCase.createdBy,
+        closedAt,
+      });
     });
+
+    triggerOpportunisticQueueProcess();
 
     revalidatePath("/admin/cases");
     revalidatePath(`/admin/cases/${caseId}`);
+    revalidatePath("/admin/rooms");
+    revalidatePath("/admin/dashboard");
     revalidatePath("/therapist/dashboard");
     revalidatePath(`/therapist/cases/${caseId}`);
 
@@ -864,6 +911,7 @@ export async function scheduleSessionAction(
     const [targetCase] = await db
       .select({
         id: cases.id,
+        caseNumber: cases.caseNumber,
         status: cases.status,
         currentTherapistId: cases.currentTherapistId,
       })
@@ -955,8 +1003,33 @@ export async function scheduleSessionAction(
         });
       }
 
+      // Queue session scheduled notification to therapist
+      const [therapistUser] = await tx
+        .select({ name: users.name, email: users.email })
+        .from(users)
+        .where(eq(users.id, therapistId))
+        .limit(1);
+
+      if (therapistUser) {
+        await queueEmail(tx as any, {
+          toEmail: therapistUser.email,
+          toName: therapistUser.name,
+          template: "session_scheduled",
+          payload: {
+            therapistName: therapistUser.name,
+            caseNumber: targetCase.caseNumber,
+            scheduledAt: new Date(scheduledAt).toLocaleString("en-IN", {
+              timeZone: "Asia/Kolkata",
+            }),
+            caseId,
+          },
+        });
+      }
+
       return newSession;
     });
+
+    triggerOpportunisticQueueProcess();
 
     revalidatePath(`/admin/cases/${caseId}`);
     revalidatePath(`/therapist/cases/${caseId}`);

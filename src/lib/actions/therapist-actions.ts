@@ -7,6 +7,9 @@ import { db } from "@/db";
 import { users, therapistProfiles, cases } from "@/db/schema";
 import { requireRole } from "@/lib/session";
 import { recordEvent } from "@/lib/events";
+import { queueEmail } from "@/lib/email";
+import { triggerOpportunisticQueueProcess } from "@/lib/notifications";
+import { sendCredentialsDirect } from "@/lib/notifications/credentials-sender";
 import {
   createTherapistSchema,
   editTherapistSchema,
@@ -37,7 +40,7 @@ export type ActionResponse<T = unknown> = {
  */
 export async function createTherapistAction(
   rawInput: CreateTherapistInput
-): Promise<ActionResponse<{ id: string; email: string }>> {
+): Promise<ActionResponse<{ id: string; email: string; emailWarning?: string }>> {
   const currentUser = await requireRole("admin", "super_admin");
 
   const parsed = createTherapistSchema.safeParse(rawInput);
@@ -56,6 +59,7 @@ export async function createTherapistAction(
     experienceYears,
     maxOpenCases,
     password,
+    emailCredentials = true,
   } = parsed.data;
 
   // Check email uniqueness among non-deleted users
@@ -86,6 +90,7 @@ export async function createTherapistAction(
           role: "therapist",
           isActive: true,
           mustChangePassword: false,
+          temporaryPasswordPrompt: true,
           createdBy: currentUser.id,
           sessionVersion: 1,
         })
@@ -102,7 +107,7 @@ export async function createTherapistAction(
         maxOpenCases,
       });
 
-      // Record audit event
+      // Record audit event (WITHOUT PLAIN PASSWORD)
       await recordEvent(tx, {
         eventType: "therapist_registered",
         actorId: currentUser.id,
@@ -114,10 +119,22 @@ export async function createTherapistAction(
           maxOpenCases,
           email,
           name,
+          role: "therapist",
         },
       });
 
       return newTherapist;
+    });
+
+    // Send credentials DIRECTLY outside transaction with in-memory password & 5s timeout
+    const sendRes = await sendCredentialsDirect({
+      userId: result.id,
+      toEmail: result.email,
+      toName: result.name,
+      role: "therapist",
+      createdByName: currentUser.name,
+      password,
+      emailCredentials,
     });
 
     revalidatePath("/admin/therapists");
@@ -127,6 +144,9 @@ export async function createTherapistAction(
       data: {
         id: result.id,
         email: result.email,
+        emailWarning: sendRes.error
+          ? `Account created, but the email could not be sent: ${sendRes.error}`
+          : undefined,
       },
     };
   } catch (error) {
@@ -271,6 +291,7 @@ export async function resetTherapistPasswordAction(
     const [target] = await db
       .select({
         id: users.id,
+        name: users.name,
         role: users.role,
         email: users.email,
         deletedAt: users.deletedAt,
@@ -314,7 +335,21 @@ export async function resetTherapistPasswordAction(
           targetRole: target.role,
         },
       });
+
+      // Queue password reset notification (without password)
+      await queueEmail(tx as any, {
+        toEmail: target.email,
+        toName: target.name,
+        template: "password_reset",
+        payload: {
+          recipientName: target.name,
+          loginId: target.email,
+          resetByName: currentUser.name,
+        },
+      });
     });
+
+    triggerOpportunisticQueueProcess();
 
     revalidatePath("/admin/therapists");
     revalidatePath(`/admin/therapists/${userId}`);

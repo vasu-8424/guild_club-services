@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/ui/icons";
 import { RowActionsMenu, RowActionMenuItem } from "@/components/ui/row-actions-menu";
 import { ResetPasswordModal } from "@/components/auth/reset-password-modal";
+import { ResendCredentialsModal } from "@/components/auth/resend-credentials-modal";
 import { DeleteUserModal } from "@/components/auth/delete-user-modal";
 import {
   resetAdminPasswordAction,
@@ -27,6 +28,7 @@ interface AdminRowActionsProps {
 export function AdminRowActions({ admin, currentUserId }: AdminRowActionsProps) {
   const router = useRouter();
   const [showResetModal, setShowResetModal] = React.useState(false);
+  const [showResendModal, setShowResendModal] = React.useState(false);
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
   const [isToggling, setIsToggling] = React.useState(false);
 
@@ -61,6 +63,13 @@ export function AdminRowActions({ admin, currentUserId }: AdminRowActionsProps) 
   };
 
   const menuItems: RowActionMenuItem[] = [
+    {
+      key: "resend-credentials",
+      label: "Resend credentials",
+      icon: <Icons.Envelope />,
+      onClick: () => setShowResendModal(true),
+      "data-testid": `resend-admin-cred-${admin.id}`,
+    },
     {
       key: "reset-password",
       label: "Reset password",
@@ -117,6 +126,15 @@ export function AdminRowActions({ admin, currentUserId }: AdminRowActionsProps) 
       </div>
 
       {/* Modals */}
+      <ResendCredentialsModal
+        isOpen={showResendModal}
+        onClose={() => setShowResendModal(false)}
+        userId={admin.id}
+        userName={admin.name}
+        userEmail={admin.email}
+        roleLabel="admin"
+      />
+
       <ResetPasswordModal
         isOpen={showResetModal}
         onClose={() => setShowResetModal(false)}

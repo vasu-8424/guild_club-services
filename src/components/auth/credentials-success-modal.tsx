@@ -18,6 +18,8 @@ interface CredentialsSuccessModalProps {
   returnHref?: string;
   returnLabel?: string;
   title?: string;
+  emailWarning?: string | null;
+  userId?: string;
   onDone?: () => void;
 }
 
@@ -28,6 +30,8 @@ export function CredentialsSuccessModal({
   returnHref = "",
   returnLabel = "Done & Return to List",
   title,
+  emailWarning,
+  userId,
   onDone,
 }: CredentialsSuccessModalProps) {
   const [copiedEmail, setCopiedEmail] = React.useState(false);
@@ -55,6 +59,28 @@ export function CredentialsSuccessModal({
     setTimeout(() => setCopiedAll(false), 2000);
   };
 
+  const [isResending, setIsResending] = React.useState(false);
+  const [resendStatus, setResendStatus] = React.useState<string | null>(null);
+
+  const handleResend = async () => {
+    if (!userId) return;
+    setIsResending(true);
+    setResendStatus(null);
+    try {
+      const { resendCredentialsAction } = await import("@/lib/actions/admin-actions");
+      const res = await resendCredentialsAction({ userId });
+      if (res.success) {
+        setResendStatus("Credentials resent successfully! A new password has been generated and sent.");
+      } else {
+        setResendStatus(`Failed to resend: ${res.error}`);
+      }
+    } catch {
+      setResendStatus("An unexpected error occurred while resending.");
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   return (
     <Card className="max-w-xl mx-auto border-emerald-200 shadow-md">
       <CardHeader className="bg-emerald-50/60 rounded-t-2xl border-b border-emerald-100 pb-5">
@@ -73,6 +99,36 @@ export function CredentialsSuccessModal({
         </div>
       </CardHeader>
       <CardContent className="pt-6 space-y-4">
+        {/* Email Warning Alert if email could not be sent */}
+        {emailWarning && (
+          <div
+            data-testid="credentials-email-warning"
+            className="flex items-start gap-2.5 rounded-none border border-amber-300 bg-amber-50 p-3.5 text-xs text-amber-900"
+          >
+            <ShieldAlert className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+            <div className="flex-1">
+              <span className="font-semibold block mb-0.5">Email Delivery Alert:</span>
+              <span>{emailWarning}</span>
+              {resendStatus && (
+                <span className="block mt-1 font-semibold text-emerald-800">{resendStatus}</span>
+              )}
+            </div>
+            {userId && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleResend}
+                isLoading={isResending}
+                data-testid="resend-credentials-btn"
+                className="shrink-0 text-xs"
+              >
+                Resend credentials
+              </Button>
+            )}
+          </div>
+        )}
+
         {/* Security Warning Notice */}
         <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900">
           <ShieldAlert className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />

@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/ui/icons";
 import { RowActionsMenu, RowActionMenuItem } from "@/components/ui/row-actions-menu";
 import { ResetPasswordModal } from "@/components/auth/reset-password-modal";
+import { ResendCredentialsModal } from "@/components/auth/resend-credentials-modal";
 import { DeleteUserModal } from "@/components/auth/delete-user-modal";
-import { AssignRoomModal } from "@/components/therapists/assign-room-modal";
+import { SendNoteDialog } from "@/components/admin/send-note-dialog";
+import { LoginActivityModal } from "@/components/therapists/login-activity-modal";
 import {
   resetTherapistPasswordAction,
   deleteTherapistAction,
@@ -34,8 +36,10 @@ export function TherapistRowActions({
 }: TherapistRowActionsProps) {
   const router = useRouter();
   const [showResetModal, setShowResetModal] = React.useState(false);
+  const [showResendModal, setShowResendModal] = React.useState(false);
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
-  const [showRoomModal, setShowRoomModal] = React.useState(false);
+  const [showSendNoteModal, setShowSendNoteModal] = React.useState(false);
+  const [showLoginModal, setShowLoginModal] = React.useState(false);
   const [isToggling, setIsToggling] = React.useState(false);
   const [openCases, setOpenCases] = React.useState<
     Array<{ id: string; caseNumber: string; status: string }>
@@ -91,12 +95,26 @@ export function TherapistRowActions({
       "data-testid": `edit-therapist-btn-${therapist.id}`,
     },
     {
+      key: "resend-credentials",
+      label: "Resend credentials",
+      icon: <Icons.Envelope />,
+      onClick: () => setShowResendModal(true),
+      "data-testid": `resend-therapist-cred-${therapist.id}`,
+    },
+    {
       key: "reset-password",
       label: "Reset password",
       icon: <Icons.ArrowCounterClockwise />,
       onClick: () => setShowResetModal(true),
       variant: "warning",
       "data-testid": `reset-therapist-pwd-${therapist.id}`,
+    },
+    {
+      key: "login-activity",
+      label: "Login activity",
+      icon: <Icons.Clock />,
+      onClick: () => setShowLoginModal(true),
+      "data-testid": `login-activity-btn-${therapist.id}`,
     },
   ];
 
@@ -124,16 +142,16 @@ export function TherapistRowActions({
   return (
     <>
       <div className="flex items-center justify-end gap-2 w-full max-w-[220px] ml-auto">
-        {/* Single Primary Row Action */}
+        {/* Single Primary Row Action: Send Note */}
         <Button
-          data-testid={`assign-room-button-${therapist.id}`}
-          variant="secondary"
+          data-testid={`send-note-button-${therapist.id}`}
+          variant="primary"
           size="sm"
-          leadingIcon={<Icons.Door />}
-          onClick={() => setShowRoomModal(true)}
-          title="Assign Room"
+          leadingIcon={<Icons.Envelope />}
+          onClick={() => setShowSendNoteModal(true)}
+          title="Send Note"
         >
-          Assign room
+          Send note
         </Button>
 
         {/* Kebab Dropdown Menu for secondary & dangerous actions */}
@@ -146,13 +164,21 @@ export function TherapistRowActions({
       </div>
 
       {/* Modals */}
-      <AssignRoomModal
-        isOpen={showRoomModal}
-        onClose={() => setShowRoomModal(false)}
+      <SendNoteDialog
+        isOpen={showSendNoteModal}
+        onClose={() => setShowSendNoteModal(false)}
         therapistId={therapist.id}
         therapistName={therapist.name}
       />
 
+      <ResendCredentialsModal
+        isOpen={showResendModal}
+        onClose={() => setShowResendModal(false)}
+        userId={therapist.id}
+        userName={therapist.name}
+        userEmail={therapist.email}
+        roleLabel="therapist"
+      />
       <ResetPasswordModal
         isOpen={showResetModal}
         onClose={() => setShowResetModal(false)}
@@ -172,6 +198,13 @@ export function TherapistRowActions({
         roleLabel="therapist"
         openCases={openCases}
         onDelete={deleteTherapistAction}
+      />
+
+      <LoginActivityModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        therapistId={therapist.id}
+        therapistName={therapist.name}
       />
     </>
   );

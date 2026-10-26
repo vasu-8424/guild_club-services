@@ -20,10 +20,13 @@ export function CreateTherapistForm() {
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+  const [emailCredentials, setEmailCredentials] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [createdCredentials, setCreatedCredentials] = React.useState<{
     email: string;
     password: string;
+    userId?: string;
+    emailWarning?: string;
   } | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -53,6 +56,7 @@ export function CreateTherapistForm() {
         maxOpenCases,
         password,
         confirmPassword,
+        emailCredentials,
       });
 
       if (!res.success) {
@@ -65,6 +69,8 @@ export function CreateTherapistForm() {
       setCreatedCredentials({
         email: email.trim().toLowerCase(),
         password,
+        userId: res.data?.id,
+        emailWarning: res.data?.emailWarning,
       });
     } catch {
       setError("An unexpected error occurred. Please try again.");
@@ -84,7 +90,7 @@ export function CreateTherapistForm() {
         roleLabel="therapist"
         email={createdCredentials.email}
         password={createdCredentials.password}
-        returnHref="/admin/therapists"
+        returnHref={`/admin/therapists?created=true&name=${encodeURIComponent(name || "Practitioner")}`}
         returnLabel="Done & Return to Directory"
       />
     );
@@ -95,7 +101,7 @@ export function CreateTherapistForm() {
       <CardHeader>
         <CardTitle>Register Clinical Therapist</CardTitle>
         <CardDescription>
-          Type the therapist details and login password manually. No email will be sent; share credentials directly.
+          Configure the clinician profile and access credentials.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -150,51 +156,10 @@ export function CreateTherapistForm() {
             </div>
           </div>
 
-          {/* Section 2: Clinical Qualifications */}
+          {/* Section 2: Credentials & Access */}
           <div className="space-y-3.5 pt-2">
             <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1.5">
-              2. Clinical Qualifications & Capacity
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2">
-                <Input
-                  data-testid="therapist-specialization-input"
-                  label="Clinical Specialization"
-                  placeholder="e.g. Anxiety & Mood Disorders, Trauma, CBT"
-                  value={specialization}
-                  onChange={(e) => setSpecialization(e.target.value)}
-                  required
-                />
-              </div>
-
-              <Input
-                data-testid="therapist-experience-input"
-                label="Experience (Years)"
-                type="number"
-                min={0}
-                max={60}
-                value={experienceYears}
-                onChange={(e) => setExperienceYears(parseInt(e.target.value) || 0)}
-                required
-              />
-
-              <Input
-                data-testid="therapist-max-cases-input"
-                label="Max Open Cases"
-                type="number"
-                min={1}
-                max={50}
-                value={maxOpenCases}
-                onChange={(e) => setMaxOpenCases(parseInt(e.target.value) || 1)}
-                required
-              />
-            </div>
-          </div>
-
-          {/* Section 3: Credentials & Access */}
-          <div className="space-y-3.5 pt-2">
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1.5">
-              3. Credentials & Access
+              2. Credentials & Access
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
@@ -243,6 +208,26 @@ export function CreateTherapistForm() {
                     )}
                   </button>
                 </div>
+              </div>
+
+              {/* Email Credentials Checkbox */}
+              <div className="sm:col-span-2 pt-2">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    id="therapist-email-credentials"
+                    data-testid="therapist-email-credentials-checkbox"
+                    checked={emailCredentials}
+                    onChange={(e) => setEmailCredentials(e.target.checked)}
+                    className="h-4 w-4 rounded-none border-slate-300 text-[#0B7A63] focus:ring-[#0B7A63] cursor-pointer"
+                  />
+                  <span className="text-xs font-semibold text-slate-800">
+                    Email these login details to the therapist
+                  </span>
+                </label>
+                <p className="text-[11px] text-slate-500 mt-1 ml-6">
+                  When checked, the temporary password and login link will be sent directly to the therapist.
+                </p>
               </div>
             </div>
           </div>

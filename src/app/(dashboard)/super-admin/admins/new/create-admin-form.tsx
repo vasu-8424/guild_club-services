@@ -17,10 +17,13 @@ export function CreateAdminForm() {
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+  const [emailCredentials, setEmailCredentials] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [createdCredentials, setCreatedCredentials] = React.useState<{
     email: string;
     password: string;
+    userId?: string;
+    emailWarning?: string;
   } | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -47,6 +50,7 @@ export function CreateAdminForm() {
         phone,
         password,
         confirmPassword,
+        emailCredentials,
       });
 
       if (!res.success) {
@@ -59,6 +63,8 @@ export function CreateAdminForm() {
       setCreatedCredentials({
         email: email.trim().toLowerCase(),
         password,
+        userId: res.data?.id,
+        emailWarning: res.data?.emailWarning,
       });
     } catch {
       setError("An unexpected error occurred. Please try again.");
@@ -78,6 +84,8 @@ export function CreateAdminForm() {
         roleLabel="admin"
         email={createdCredentials.email}
         password={createdCredentials.password}
+        userId={createdCredentials.userId}
+        emailWarning={createdCredentials.emailWarning}
         returnHref="/super-admin/admins"
       />
     );
@@ -88,7 +96,7 @@ export function CreateAdminForm() {
       <CardHeader>
         <CardTitle>Create Administrator Account</CardTitle>
         <CardDescription>
-          Type the admin details and password manually. No email will be sent; you will share the login details directly.
+          Configure the administrator profile and access credentials.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -194,6 +202,26 @@ export function CreateAdminForm() {
                     )}
                   </button>
                 </div>
+              </div>
+
+              {/* Email Credentials Checkbox */}
+              <div className="sm:col-span-2 pt-2">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    id="admin-email-credentials"
+                    data-testid="admin-email-credentials-checkbox"
+                    checked={emailCredentials}
+                    onChange={(e) => setEmailCredentials(e.target.checked)}
+                    className="h-4 w-4 rounded-none border-slate-300 text-[#0B7A63] focus:ring-[#0B7A63] cursor-pointer"
+                  />
+                  <span className="text-xs font-semibold text-slate-800">
+                    Email these login details to the admin
+                  </span>
+                </label>
+                <p className="text-[11px] text-slate-500 mt-1 ml-6">
+                  When checked, the temporary password and login link will be sent directly to the administrator.
+                </p>
               </div>
             </div>
           </div>

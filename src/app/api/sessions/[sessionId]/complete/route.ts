@@ -5,6 +5,7 @@ import { sessions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { recordEvent } from "@/lib/events";
 import { getTodayIST } from "@/lib/date-utils";
+import { notifySessionCompleted } from "@/lib/notifications/in-app";
 
 interface RouteParams {
   params: Promise<{
@@ -130,6 +131,15 @@ export async function POST(
         sessionId,
         completedAt: now.toISOString(),
       },
+    });
+
+    // Notify assigning admin of session completion
+    await notifySessionCompleted({
+      tx,
+      sessionId,
+      caseId: session.caseId,
+      therapistId: user.id,
+      therapistName: user.name,
     });
   });
 

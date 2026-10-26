@@ -11,8 +11,9 @@ const allowedTransitions: Record<CaseStatus, CaseStatus[]> = {
   assigned: ["accepted", "new"],
   accepted: ["in_progress"],
   in_progress: ["on_hold", "completed"],
-  on_hold: ["in_progress", "completed"],
+  on_hold: ["in_progress", "completed", "active"],
   completed: [],
+  active: ["completed", "on_hold"],
 };
 
 export async function POST(

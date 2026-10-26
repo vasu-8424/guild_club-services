@@ -9,6 +9,9 @@ import { Avatar } from "@/components/ui/avatar";
 import type { UserRole } from "@/db/schema";
 import type { IconProps } from "@phosphor-icons/react";
 
+import { getTherapistNotesAction } from "@/lib/actions/admin-notes-actions";
+import { logoutAction } from "@/lib/actions/auth-actions";
+
 interface SidebarProps {
   role: UserRole;
   userName: string;
@@ -18,6 +21,7 @@ interface NavItem {
   title: string;
   href: string;
   icon: (props: IconProps) => React.ReactNode;
+  badge?: number | null;
 }
 
 interface NavSection {
@@ -29,6 +33,30 @@ export function Sidebar({ role, userName }: SidebarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [collapsed, setCollapsed] = React.useState(false);
+  const [unreadNotesCount, setUnreadNotesCount] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    if (role !== "therapist") return;
+
+    let isMounted = true;
+    const fetchUnread = async () => {
+      try {
+        const res = await getTherapistNotesAction();
+        if (res.success && isMounted) {
+          setUnreadNotesCount(res.unreadCount || 0);
+        }
+      } catch {
+        // silent
+      }
+    };
+
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 20000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [role, pathname]);
 
   const getNavSections = (userRole: UserRole): NavSection[] => {
     switch (userRole) {
@@ -58,9 +86,24 @@ export function Sidebar({ role, userName }: SidebarProps) {
                 icon: Icons.Therapists,
               },
               {
+                title: "Rooms",
+                href: "/admin/rooms",
+                icon: Icons.Door,
+              },
+              {
                 title: "Admins",
                 href: "/super-admin/admins",
                 icon: Icons.Admins,
+              },
+              {
+                title: "Branches",
+                href: "/admin/branches",
+                icon: Icons.Door,
+              },
+              {
+                title: "Notifications",
+                href: "/notifications",
+                icon: Icons.Alert,
               },
             ],
           },
@@ -72,6 +115,11 @@ export function Sidebar({ role, userName }: SidebarProps) {
                 href: "/super-admin/reports",
                 icon: Icons.Reports,
               },
+              {
+                title: "Delivery & Quota",
+                href: "/super-admin/notifications",
+                icon: Icons.Analytics,
+              },
             ],
           },
         ];
@@ -79,37 +127,37 @@ export function Sidebar({ role, userName }: SidebarProps) {
       case "admin":
         return [
           {
-            section: "Overview",
+            section: "Navigation",
             items: [
               {
                 title: "Dashboard",
                 href: "/admin/dashboard",
                 icon: Icons.Dashboard,
               },
-            ],
-          },
-          {
-            section: "Cases",
-            items: [
-              {
-                title: "All Cases",
-                href: "/admin/cases",
-                icon: Icons.Cases,
-              },
-              {
-                title: "New Case",
-                href: "/admin/cases/new",
-                icon: Icons.Add,
-              },
-            ],
-          },
-          {
-            section: "Team",
-            items: [
               {
                 title: "Therapists",
                 href: "/admin/therapists",
                 icon: Icons.Therapists,
+              },
+              {
+                title: "Rooms",
+                href: "/admin/rooms",
+                icon: Icons.Door,
+              },
+              {
+                title: "Branches",
+                href: "/admin/branches",
+                icon: Icons.Door,
+              },
+              {
+                title: "Cases",
+                href: "/admin/cases",
+                icon: Icons.Cases,
+              },
+              {
+                title: "Notifications",
+                href: "/notifications",
+                icon: Icons.Alert,
               },
             ],
           },
@@ -126,9 +174,20 @@ export function Sidebar({ role, userName }: SidebarProps) {
                 icon: Icons.Dashboard,
               },
               {
-                title: "My Cases",
+                title: "My Patients",
                 href: "/therapist/cases",
                 icon: Icons.Cases,
+              },
+              {
+                title: "Notes from Admin",
+                href: "/therapist/notes",
+                icon: Icons.Envelope,
+                badge: unreadNotesCount,
+              },
+              {
+                title: "Profile",
+                href: "/therapist/profile",
+                icon: Icons.User,
               },
             ],
           },
@@ -255,7 +314,18 @@ export function Sidebar({ role, userName }: SidebarProps) {
                             : "text-slate-400 group-hover:text-slate-600"
                         )}
                       />
-                      {!collapsed && <span>{item.title}</span>}
+                      {!collapsed && <span className="truncate">{item.title}</span>}
+                      {!collapsed && typeof item.badge === "number" && item.badge > 0 && (
+                        <span
+                          data-testid="unread-notes-badge"
+                          className="ml-auto inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold bg-[#0B7A63] text-white rounded-none min-w-4"
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                      {collapsed && typeof item.badge === "number" && item.badge > 0 && (
+                        <span className="absolute top-1 right-1 h-2 w-2 bg-[#0B7A63] rounded-none ring-1 ring-white" />
+                      )}
                     </Link>
                   );
                 })}
@@ -264,28 +334,55 @@ export function Sidebar({ role, userName }: SidebarProps) {
           ))}
         </nav>
 
-        {/* User Card at bottom of sidebar: Square Profile Avatar */}
+        {/* User Card at bottom of sidebar: Square Profile Avatar & Logout Action */}
         <div className="border-t border-slate-200 p-3 bg-slate-50/70">
           <div
             className={cn(
-              "flex items-center gap-2.5",
-              collapsed ? "justify-center" : "px-1"
+              "flex items-center gap-2",
+              collapsed ? "flex-col justify-center" : "px-1 justify-between"
             )}
           >
-            <Avatar
-              name={userName || "GC"}
-              size="sm"
-              variant={role === "therapist" ? "brand" : "indigo"}
-            />
-            {!collapsed && (
-              <div className="min-w-0 flex-1 truncate">
-                <p className="text-xs font-semibold text-slate-900 truncate">
-                  {userName || "User"}
-                </p>
-                <p className="text-[11px] text-slate-500 font-medium capitalize truncate">
-                  {role.replace("_", " ")}
-                </p>
-              </div>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Avatar
+                name={userName || "GC"}
+                size="sm"
+                variant={role === "therapist" ? "brand" : "indigo"}
+              />
+              {!collapsed && (
+                <div className="min-w-0 flex-1 truncate">
+                  <p className="text-xs font-semibold text-slate-900 truncate">
+                    {userName || "User"}
+                  </p>
+                  <p className="text-[11px] text-slate-500 font-medium capitalize truncate">
+                    {role.replace("_", " ")}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {!collapsed ? (
+              <form action={logoutAction}>
+                <button
+                  data-testid="sidebar-logout-button"
+                  type="submit"
+                  title="Sign out of account"
+                  className="flex items-center gap-1.5 px-2 py-1 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors cursor-pointer rounded-none"
+                >
+                  <Icons.SignOut className="h-3.5 w-3.5" />
+                  <span>Logout</span>
+                </button>
+              </form>
+            ) : (
+              <form action={logoutAction} className="mt-1">
+                <button
+                  data-testid="sidebar-logout-button-collapsed"
+                  type="submit"
+                  title="Sign out of account"
+                  className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer rounded-none"
+                >
+                  <Icons.SignOut className="h-4 w-4" />
+                </button>
+              </form>
             )}
           </div>
         </div>

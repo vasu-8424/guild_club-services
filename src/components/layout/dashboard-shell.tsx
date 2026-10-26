@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
+import { TemporaryPasswordBanner } from "./temporary-password-banner";
 import type { CurrentUser } from "@/lib/session";
 
 interface DashboardShellProps {
@@ -22,6 +23,7 @@ export function DashboardShell({
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar user={user} title={title} />
+        <TemporaryPasswordBanner user={user} />
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="mx-auto max-w-7xl">{children}</div>

@@ -40,6 +40,10 @@ import type {
   TherapistCapacityItem,
   AdminProductivityItem,
 } from "@/lib/dashboard";
+import {
+  RecentlyClosedCasesCard,
+  type ClosedCaseItem,
+} from "@/components/dashboard/recently-closed-cases-card";
 import { getTodayIST, getDaysAgoIST } from "@/lib/date-utils";
 
 interface SuperAdminDashboardClientProps {
@@ -58,6 +62,7 @@ interface SuperAdminDashboardClientProps {
   trendData: DailyTrendItem[];
   therapistCapacity: TherapistCapacityItem[];
   adminProductivity: AdminProductivityItem[];
+  recentlyClosedCases?: ClosedCaseItem[];
 }
 
 export function SuperAdminDashboardClient({
@@ -76,6 +81,7 @@ export function SuperAdminDashboardClient({
   trendData,
   therapistCapacity,
   adminProductivity,
+  recentlyClosedCases = [],
 }: SuperAdminDashboardClientProps) {
   const router = useRouter();
   const [drilldownTarget, setDrilldownTarget] =
@@ -563,6 +569,12 @@ export function SuperAdminDashboardClient({
               />
             </div>
           </div>
+
+          {/* Recently Closed Cases Across Clinic */}
+          <RecentlyClosedCasesCard
+            cases={recentlyClosedCases}
+            userRole={user.role}
+          />
 
           {/* ROW 6: Team Activity DataTable */}
           <div className="space-y-2">

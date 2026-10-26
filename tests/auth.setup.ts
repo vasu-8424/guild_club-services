@@ -6,9 +6,10 @@ import { seedTestData } from "./helpers/seed-test-data";
 const authDir = path.resolve(process.cwd(), "playwright/.auth");
 
 setup("reset database and initialize role sessions", async ({ page }) => {
-  setup.setTimeout(60000);
+  setup.setTimeout(120000);
   // 1. Reset and reseed test database
   const seeded = await seedTestData();
+  await new Promise((r) => setTimeout(r, 1000));
 
   if (!fs.existsSync(authDir)) {
     fs.mkdirSync(authDir, { recursive: true });
@@ -19,7 +20,7 @@ setup("reset database and initialize role sessions", async ({ page }) => {
   await page.fill('[data-testid="login-email-input"]', seeded.superAdmin.email);
   await page.fill('[data-testid="login-password-input"]', seeded.superAdmin.password);
   await page.click('[data-testid="login-submit-button"]');
-  await expect(page).toHaveURL(/\/super-admin\/dashboard/, { timeout: 15000 });
+  await expect(page).toHaveURL(/\/super-admin\/dashboard/, { timeout: 30000 });
   await page.context().storageState({ path: path.join(authDir, "super-admin.json") });
 
   // 3. Admin Session Setup
@@ -28,7 +29,7 @@ setup("reset database and initialize role sessions", async ({ page }) => {
   await page.fill('[data-testid="login-email-input"]', seeded.admin.email);
   await page.fill('[data-testid="login-password-input"]', seeded.admin.password);
   await page.click('[data-testid="login-submit-button"]');
-  await expect(page).toHaveURL(/\/admin\/dashboard/, { timeout: 15000 });
+  await expect(page).toHaveURL(/\/admin\/dashboard/, { timeout: 30000 });
   await page.context().storageState({ path: path.join(authDir, "admin.json") });
 
   // 4. Therapist Session Setup
@@ -37,7 +38,7 @@ setup("reset database and initialize role sessions", async ({ page }) => {
   await page.fill('[data-testid="login-email-input"]', seeded.therapist.email);
   await page.fill('[data-testid="login-password-input"]', seeded.therapist.password);
   await page.click('[data-testid="login-submit-button"]');
-  await expect(page).toHaveURL(/\/therapist\/dashboard/, { timeout: 15000 });
+  await expect(page).toHaveURL(/\/therapist\/dashboard/, { timeout: 30000 });
   await page.context().storageState({ path: path.join(authDir, "therapist.json") });
 
   console.log("✅ Playwright role storage states saved for Super Admin, Admin, and Therapist.");

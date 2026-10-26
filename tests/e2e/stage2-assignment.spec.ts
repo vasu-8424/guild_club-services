@@ -103,7 +103,7 @@ test.describe.serial("ASG: Admin – Case Assignment", () => {
     await expect(page.getByTestId("assign-success-message")).toBeVisible({ timeout: 15000 });
   });
 
-  test("ASG-04: Assignment queues case_assigned email to therapist", async ({ page }) => {
+  test("ASG-04: Assignment does NOT queue case_assigned email to therapist (removed per directive)", async ({ page }) => {
     const { therapist } = await getTestCaseAndTherapist();
     if (!therapist) {
       test.skip();
@@ -111,7 +111,7 @@ test.describe.serial("ASG: Admin – Case Assignment", () => {
     }
     void page;
     const email = await getLatestEmail(therapist.email, "case_assigned");
-    expect(email, "case_assigned email should be queued to therapist").not.toBeNull();
+    expect(email, "case_assigned email should NOT be queued").toBeNull();
   });
 
   test("ASG-05: Case status changes to 'assigned' after assignment", async ({ page }) => {

@@ -126,6 +126,21 @@ export default async function TherapistsPage({
           }
         />
 
+        {/* Success Banner when therapist created */}
+        {resolvedParams.created === "true" && (
+          <div
+            data-testid="therapist-created-banner"
+            className="flex items-center gap-2.5 p-4 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-none shadow-xs text-xs font-semibold"
+          >
+            <span className="flex h-5 w-5 items-center justify-center rounded-none bg-emerald-600 text-white shrink-0 text-xs">
+              ✓
+            </span>
+            <span>
+              Practitioner {resolvedParams.name ? <strong>{String(resolvedParams.name)}</strong> : "account"} was successfully registered and credentialed.
+            </span>
+          </div>
+        )}
+
         {/* Therapists Table: 6 Columns */}
         <div className="rounded-none border border-slate-200 bg-white overflow-hidden shadow-xs">
           <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5 bg-slate-50/50">

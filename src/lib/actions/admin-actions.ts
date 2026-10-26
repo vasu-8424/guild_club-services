@@ -4,9 +4,11 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { and, eq, ne, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { users, caseEvents } from "@/db/schema";
 import { requireRole } from "@/lib/session";
 import { recordEvent } from "@/lib/events";
+import { queueEmail } from "@/lib/email";
+import { triggerOpportunisticQueueProcess } from "@/lib/notifications";
 import {
   createAdminSchema,
   editAdminSchema,
@@ -34,9 +36,13 @@ export type ActionResponse<T = unknown> = {
  * - No credentials email is sent (creator shares details directly)
  * - Records admin_created event in the same transaction
  */
+import { sendCredentialsDirect } from "@/lib/notifications/credentials-sender";
+import { getEmailQuotaUsage } from "@/lib/notifications/quota";
+import crypto from "crypto";
+
 export async function createAdminAction(
   rawInput: CreateAdminInput
-): Promise<ActionResponse<{ id: string; email: string }>> {
+): Promise<ActionResponse<{ id: string; email: string; emailWarning?: string }>> {
   const currentUser = await requireRole("super_admin");
 
   const parsed = createAdminSchema.safeParse(rawInput);
@@ -47,7 +53,7 @@ export async function createAdminAction(
     };
   }
 
-  const { name, email, phone, password } = parsed.data;
+  const { name, email, phone, password, emailCredentials = true } = parsed.data;
 
   // Check if active user with this email already exists (deleted emails are freed for reuse)
   const [existing] = await db
@@ -77,6 +83,7 @@ export async function createAdminAction(
           role: "admin",
           isActive: true,
           mustChangePassword: false,
+          temporaryPasswordPrompt: true,
           createdBy: currentUser.id,
           sessionVersion: 1,
         })
@@ -86,7 +93,7 @@ export async function createAdminAction(
           email: users.email,
         });
 
-      // Record audit event
+      // Record audit event (WITHOUT PLAIN PASSWORD)
       await recordEvent(tx, {
         eventType: "admin_created",
         actorId: currentUser.id,
@@ -95,10 +102,22 @@ export async function createAdminAction(
         metadata: {
           email,
           name,
+          role: "admin",
         },
       });
 
       return newAdmin;
+    });
+
+    // Send credentials DIRECTLY outside transaction with in-memory password & 5s timeout
+    const sendRes = await sendCredentialsDirect({
+      userId: result.id,
+      toEmail: result.email,
+      toName: result.name,
+      role: "admin",
+      createdByName: currentUser.name,
+      password,
+      emailCredentials,
     });
 
     revalidatePath("/super-admin/admins");
@@ -108,6 +127,9 @@ export async function createAdminAction(
       data: {
         id: result.id,
         email: result.email,
+        emailWarning: sendRes.error
+          ? `Account created, but the email could not be sent: ${sendRes.error}`
+          : undefined,
       },
     };
   } catch (error) {
@@ -117,6 +139,124 @@ export async function createAdminAction(
       error: "An unexpected error occurred while creating the admin.",
     };
   }
+}
+
+/**
+ * Resend Credentials action:
+ * - Super Admin can resend for Admin and Therapist.
+ * - Admin can resend for Therapist only (403 if target is Admin).
+ * - Generates a new temporary password (or uses provided), updates passwordHash,
+ *   invalidates existing sessions (sessionVersion++), and sends credentials email directly.
+ * - Rate-limited to 3 per hour per target user.
+ * - Records user_credentials_resent event.
+ */
+export async function resendCredentialsAction(rawInput: {
+  userId: string;
+  password?: string;
+}): Promise<ActionResponse<{ newPassword?: string; emailSent: boolean; warning?: string }>> {
+  const currentUser = await requireRole("super_admin", "admin");
+
+  const [targetUser] = await db
+    .select()
+    .from(users)
+    .where(and(eq(users.id, rawInput.userId), isNull(users.deletedAt)))
+    .limit(1);
+
+  if (!targetUser) {
+    return { success: false, error: "User not found" };
+  }
+
+  // Security check: Only Super Admins can resend credentials for Admin accounts
+  if (targetUser.role === "admin" && currentUser.role !== "super_admin") {
+    return {
+      success: false,
+      error: "Forbidden: Only Super Admins can resend credentials for admin accounts.",
+    };
+  }
+
+  // Rate limit: max 3 per hour per target user
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const [recentCountRow] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(caseEvents)
+    .where(
+      and(
+        eq(caseEvents.targetUserId, targetUser.id),
+        eq(caseEvents.eventType, "user_credentials_resent"),
+        sql`${caseEvents.occurredAt} >= ${oneHourAgo}`
+      )
+    );
+
+  const resentCount = recentCountRow?.count ?? 0;
+  if (resentCount >= 3) {
+    return {
+      success: false,
+      error: "Rate limit reached: Credentials can only be resent up to 3 times per hour for this user.",
+    };
+  }
+
+  // Quota check
+  const quota = await getEmailQuotaUsage();
+  if (quota.isDailyExceeded || quota.isMonthlyExceeded) {
+    return {
+      success: false,
+      error: "Daily email quota reached (90 emails/day). Cannot send credentials email. Please share credentials manually or resend later.",
+    };
+  }
+
+  // Generate or use specified password
+  const newPassword =
+    rawInput.password && rawInput.password.trim().length >= 8
+      ? rawInput.password.trim()
+      : crypto.randomBytes(6).toString("hex") + "A1!";
+
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(users)
+      .set({
+        passwordHash,
+        sessionVersion: sql`${users.sessionVersion} + 1`,
+        temporaryPasswordPrompt: true,
+        mustChangePassword: false,
+      })
+      .where(eq(users.id, targetUser.id));
+
+    await recordEvent(tx, {
+      eventType: "user_credentials_resent",
+      actorId: currentUser.id,
+      actorRole: currentUser.role,
+      targetUserId: targetUser.id,
+      metadata: {
+        email: targetUser.email,
+        role: targetUser.role,
+      },
+    });
+  });
+
+  // Send credentials email directly with in-memory password
+  const sendRes = await sendCredentialsDirect({
+    userId: targetUser.id,
+    toEmail: targetUser.email,
+    toName: targetUser.name,
+    role: targetUser.role as "admin" | "therapist",
+    createdByName: currentUser.name,
+    password: newPassword,
+    emailCredentials: true,
+  });
+
+  revalidatePath("/super-admin/admins");
+  revalidatePath("/admin/therapists");
+
+  return {
+    success: true,
+    data: {
+      newPassword,
+      emailSent: sendRes.emailSent,
+      warning: sendRes.error,
+    },
+  };
 }
 
 /**
@@ -228,6 +368,7 @@ export async function resetAdminPasswordAction(
     const [target] = await db
       .select({
         id: users.id,
+        name: users.name,
         role: users.role,
         email: users.email,
         deletedAt: users.deletedAt,
@@ -272,7 +413,21 @@ export async function resetAdminPasswordAction(
           targetRole: target.role,
         },
       });
+
+      // Queue password reset notification (without password)
+      await queueEmail(tx as any, {
+        toEmail: target.email,
+        toName: target.name,
+        template: "password_reset",
+        payload: {
+          recipientName: target.name,
+          loginId: target.email,
+          resetByName: currentUser.name,
+        },
+      });
     });
+
+    triggerOpportunisticQueueProcess();
 
     revalidatePath("/super-admin/admins");
     revalidatePath(`/super-admin/admins/${userId}`);

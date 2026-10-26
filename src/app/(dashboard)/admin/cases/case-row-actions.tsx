@@ -23,47 +23,33 @@ export function CaseRowActions({ caseId, isAssigned }: CaseRowActionsProps) {
       "data-testid": `view-case-${caseId}`,
     },
     {
-      key: "assign-therapist",
-      label: isAssigned ? "Reassign therapist" : "Assign therapist",
+      key: "reassign-therapist",
+      label: "Reassign case to another therapist",
       icon: <Icons.UserPlus />,
-      onClick: () => router.push(`/admin/cases/${caseId}#assign`),
-      "data-testid": `assign-case-${caseId}`,
+      onClick: () => router.push(`/admin/cases/${caseId}#reassign`),
+      "data-testid": `reassign-case-${caseId}`,
     },
     {
       key: "case-notes",
-      label: "View clinical notes",
+      label: "View progress report",
       icon: <Icons.FileText />,
-      onClick: () => router.push(`/admin/cases/${caseId}#notes`),
-      "data-testid": `notes-case-${caseId}`,
+      onClick: () => router.push(`/admin/cases/${caseId}/report`),
+      "data-testid": `report-case-${caseId}`,
     },
   ];
 
   return (
     <div className="flex items-center justify-end gap-2 w-full max-w-[220px] ml-auto">
-      {/* Primary Visible Button: Assign if unassigned, View if assigned */}
-      {!isAssigned ? (
-        <Button
-          size="sm"
-          variant="primary"
-          leadingIcon={<Icons.UserPlus />}
-          onClick={() => router.push(`/admin/cases/${caseId}`)}
-          title="Assign therapist"
-          data-testid={`primary-assign-${caseId}`}
-        >
-          Assign
-        </Button>
-      ) : (
-        <Button
-          size="sm"
-          variant="secondary"
-          leadingIcon={<Icons.Eye />}
-          onClick={() => router.push(`/admin/cases/${caseId}`)}
-          title="View case details"
-          data-testid={`primary-view-${caseId}`}
-        >
-          View
-        </Button>
-      )}
+      <Button
+        size="sm"
+        variant="secondary"
+        leadingIcon={<Icons.Eye />}
+        onClick={() => router.push(`/admin/cases/${caseId}`)}
+        title="View Case"
+        data-testid={`primary-view-${caseId}`}
+      >
+        View Case
+      </Button>
 
       {/* Dropdown Kebab Menu */}
       <RowActionsMenu

@@ -40,6 +40,17 @@ export function getDaysAgoIST(days: number): string {
   return date.toISOString().slice(0, 10);
 }
 
+/**
+ * Returns date N days ahead in Asia/Kolkata.
+ */
+export function getDaysAheadIST(days: number): string {
+  const todayStr = getTodayIST();
+  const [year, month, day] = todayStr.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
 export interface DateFilterRange {
   startDate: string; // YYYY-MM-DD
   endDate: string;   // YYYY-MM-DD
@@ -176,5 +187,18 @@ export function formatDateTimeIST(dateInput: Date | string): string {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
+  }).format(d);
+}
+
+/**
+ * Converts a Date or ISO timestamp string into YYYY-MM-DD in Asia/Kolkata timezone.
+ */
+export function formatToISTDateString(dateInput: Date | string): string {
+  const d = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
   }).format(d);
 }

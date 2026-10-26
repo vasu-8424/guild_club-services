@@ -14,6 +14,14 @@ import {
   emailQueue,
   passwordResetTokens,
   therapistRoomAssignments,
+  inAppNotifications,
+  branches,
+  casePhotos,
+  loginRecords,
+  progressReports,
+  progressReportVersions,
+  rooms,
+  adminNotes,
 } from "../../src/db/schema";
 
 // Load test environment
@@ -73,15 +81,28 @@ export async function seedTestData(): Promise<SeededTestUsers> {
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       await db.delete(passwordResetTokens);
+      await db.delete(inAppNotifications);
+      await db.delete(adminNotes);
       await db.delete(emailQueue);
       await db.delete(caseEvents);
       await db.delete(caseNotes);
+      await db.delete(casePhotos);
+      await db.delete(progressReportVersions);
+      await db.delete(progressReports);
       await db.delete(therapistRoomAssignments);
       await db.delete(sessions);
       await db.delete(cases);
+      await db.delete(rooms);
       await db.delete(clients);
       await db.delete(therapistProfiles);
+      await db.delete(loginRecords);
       await db.delete(users);
+      await db.delete(branches);
+      try {
+        await sql.query(`SELECT setval('patient_id_seq', 1, false);`);
+      } catch {
+        // ignore if seq does not exist
+      }
       break;
     } catch (err) {
       if (attempt === 3) throw err;
@@ -214,7 +235,16 @@ export async function seedTestData(): Promise<SeededTestUsers> {
     })
     .returning();
 
-  console.log("✅ Test database successfully reset and seeded with 5 test accounts.");
+  // 6. Default Branch
+  await db
+    .insert(branches)
+    .values({
+      name: "Main Branch",
+      isActive: true,
+    })
+    .onConflictDoNothing();
+
+  console.log("✅ Test database successfully reset and seeded with 5 test accounts and Main Branch.");
 
   return {
     superAdmin: {

@@ -111,6 +111,7 @@ export async function getDashboardSummary(
         sessionsScheduled += c;
         break;
       case "session_held":
+      case "session_recorded":
         sessionsHeld += c;
         break;
       case "session_missed":
@@ -121,9 +122,20 @@ export async function getDashboardSummary(
         break;
       case "case_closed":
         casesClosed += c;
-        if (row.outcome === "successful") successfulClosures += c;
-        else if (row.outcome === "unsuccessful") unsuccessfulClosures += c;
-        else if (row.outcome === "referred") referredClosures += c;
+        if (
+          row.outcome === "successful" ||
+          row.outcome === "improved" ||
+          row.outcome === "partially_improved"
+        ) {
+          successfulClosures += c;
+        } else if (
+          row.outcome === "unsuccessful" ||
+          row.outcome === "no_change"
+        ) {
+          unsuccessfulClosures += c;
+        } else if (row.outcome === "referred") {
+          referredClosures += c;
+        }
         break;
     }
   }
@@ -134,7 +146,7 @@ export async function getDashboardSummary(
   const toDateQuery = `
     SELECT 
       COUNT(*)::int as total_closed,
-      COUNT(CASE WHEN metadata->>'outcome' = 'successful' THEN 1 END)::int as total_successful
+      COUNT(CASE WHEN metadata->>'outcome' IN ('successful', 'improved', 'partially_improved') THEN 1 END)::int as total_successful
     FROM case_events ce
     LEFT JOIN cases c ON ce.case_id = c.id
     WHERE ce.event_type = 'case_closed'
@@ -669,7 +681,7 @@ export async function getSuperAdminReports(
     SELECT 
       COUNT(*)::int as total_cases,
       COUNT(CASE WHEN status = 'completed' THEN 1 END)::int as total_closed,
-      COUNT(CASE WHEN status = 'completed' AND outcome = 'successful' THEN 1 END)::int as successful_closures,
+      COUNT(CASE WHEN status = 'completed' AND outcome IN ('successful', 'improved', 'partially_improved') THEN 1 END)::int as successful_closures,
       ROUND(AVG(
         CASE WHEN status = 'completed' AND closed_at IS NOT NULL
         THEN EXTRACT(EPOCH FROM (closed_at - created_at)) / 86400
@@ -717,7 +729,7 @@ export async function getSuperAdminReports(
   // 3. Total sessions held
   const sessionsHeldRes = (await sql.query(`
     SELECT COUNT(*)::int as count FROM case_events
-    WHERE event_type = 'session_held'
+    WHERE event_type IN ('session_held', 'session_recorded')
     ${hasDateFilter ? `AND occurred_at >= ($1::date)::timestamp AT TIME ZONE 'Asia/Kolkata' AND occurred_at < (($2::date + 1))::timestamp AT TIME ZONE 'Asia/Kolkata'` : ""}
   `, dateParams))[0] as any;
 
@@ -741,9 +753,9 @@ export async function getSuperAdminReports(
       COUNT(DISTINCT CASE WHEN ce.event_type = 'case_assigned' THEN ce.case_id END)::int as total_assigned,
       COUNT(DISTINCT CASE WHEN ce.event_type = 'case_accepted' THEN ce.case_id END)::int as accepted_count,
       COUNT(DISTINCT CASE WHEN ce.event_type = 'case_declined' THEN ce.case_id END)::int as declined_count,
-      COUNT(CASE WHEN ce.event_type = 'session_held' THEN 1 END)::int as sessions_held,
+      COUNT(CASE WHEN ce.event_type IN ('session_held', 'session_recorded') THEN 1 END)::int as sessions_held,
       COUNT(CASE WHEN ce.event_type = 'case_closed' THEN 1 END)::int as cases_closed,
-      COUNT(CASE WHEN ce.event_type = 'case_closed' AND ce.metadata->>'outcome' = 'successful' THEN 1 END)::int as successful_count,
+      COUNT(CASE WHEN ce.event_type = 'case_closed' AND (ce.metadata->>'outcome' IN ('successful', 'improved', 'partially_improved')) THEN 1 END)::int as successful_count,
       ROUND(AVG(
         CASE WHEN c.status = 'completed' AND c.closed_at IS NOT NULL
         THEN EXTRACT(EPOCH FROM (c.closed_at - c.created_at)) / 86400
@@ -791,12 +803,12 @@ export async function getSuperAdminReports(
       to_char(m.m_date, 'Mon YYYY') as month_label,
       COUNT(DISTINCT c.id)::int as cases_created,
       COUNT(DISTINCT CASE WHEN ce_close.event_type = 'case_closed' THEN ce_close.case_id END)::int as cases_closed,
-      COUNT(DISTINCT CASE WHEN ce_close.event_type = 'case_closed' AND ce_close.metadata->>'outcome' = 'successful' THEN ce_close.case_id END)::int as successful_closed,
-      COUNT(DISTINCT CASE WHEN ce_sess.event_type = 'session_held' THEN ce_sess.id END)::int as sessions_held
+      COUNT(DISTINCT CASE WHEN ce_close.event_type = 'case_closed' AND (ce_close.metadata->>'outcome' IN ('successful', 'improved', 'partially_improved')) THEN ce_close.case_id END)::int as successful_closed,
+      COUNT(DISTINCT CASE WHEN ce_sess.event_type IN ('session_held', 'session_recorded') THEN ce_sess.id END)::int as sessions_held
     FROM months m
     LEFT JOIN cases c ON date_trunc('month', c.created_at AT TIME ZONE 'Asia/Kolkata') = m.m_date
     LEFT JOIN case_events ce_close ON date_trunc('month', ce_close.occurred_at AT TIME ZONE 'Asia/Kolkata') = m.m_date AND ce_close.event_type = 'case_closed'
-    LEFT JOIN case_events ce_sess ON date_trunc('month', ce_sess.occurred_at AT TIME ZONE 'Asia/Kolkata') = m.m_date AND ce_sess.event_type = 'session_held'
+    LEFT JOIN case_events ce_sess ON date_trunc('month', ce_sess.occurred_at AT TIME ZONE 'Asia/Kolkata') = m.m_date AND ce_sess.event_type IN ('session_held', 'session_recorded')
     GROUP BY m.m_date
     ORDER BY m.m_date ASC
   `;
@@ -817,10 +829,10 @@ export async function getSuperAdminReports(
 
   // 6. Categories Breakdown
   const catQuery = `
-    SELECT category, COUNT(*)::int as count 
+    SELECT COALESCE(service, category) as category, COUNT(*)::int as count 
     FROM cases
     ${dateWhereCases}
-    GROUP BY category
+    GROUP BY COALESCE(service, category)
     ORDER BY count DESC
   `;
   const catRows = (await sql.query(catQuery, dateParams)) as any[];

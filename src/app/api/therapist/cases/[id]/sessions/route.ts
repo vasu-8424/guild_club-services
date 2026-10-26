@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { requireApiRole } from "@/lib/session";
 import { db } from "@/db";
-import { cases, sessions } from "@/db/schema";
+import { cases, sessions, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { recordEvent } from "@/lib/events";
+import { queueEmail } from "@/lib/email";
 import { scheduleSessionSchema } from "@/lib/validators";
 
 export async function POST(
@@ -70,6 +71,29 @@ export async function POST(
           durationMinutes: parsed.data.durationMinutes,
         },
       });
+
+      const assignedTherapistId = targetCase.currentTherapistId ?? user.id;
+      const [therapistUser] = await tx
+        .select({ name: users.name, email: users.email })
+        .from(users)
+        .where(eq(users.id, assignedTherapistId))
+        .limit(1);
+
+      if (therapistUser) {
+        await queueEmail(tx as any, {
+          toEmail: therapistUser.email,
+          toName: therapistUser.name,
+          template: "session_scheduled",
+          payload: {
+            therapistName: therapistUser.name,
+            caseNumber: targetCase.caseNumber,
+            scheduledAt: new Date(parsed.data.scheduledAt).toLocaleString("en-IN", {
+              timeZone: "Asia/Kolkata",
+            }),
+            caseId: id,
+          },
+        });
+      }
     });
 
     return NextResponse.json({ success: true, sessionId });

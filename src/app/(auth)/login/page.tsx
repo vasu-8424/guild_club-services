@@ -44,11 +44,13 @@ function LoginForm() {
         return;
       }
 
-      if (res.redirectTo) {
-        router.push(res.redirectTo);
-      } else {
-        router.push("/admin/dashboard");
-      }
+      const redirectParam = searchParams.get("redirect");
+      const dest =
+        redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
+          ? redirectParam
+          : res.redirectTo || "/admin/dashboard";
+      router.push(dest);
+      router.refresh();
     } catch (err: any) {
       setGeneralError(err.message || "An unexpected error occurred. Please try again.");
       setIsLoading(false);
@@ -176,7 +178,7 @@ function LoginForm() {
                   />
                 </div>
                 {fieldErrors.email && (
-                  <p className="text-xs text-rose-600 font-medium">{fieldErrors.email}</p>
+                  <p data-testid="login-email-input-error" className="text-xs text-rose-600 font-medium">{fieldErrors.email}</p>
                 )}
               </div>
 

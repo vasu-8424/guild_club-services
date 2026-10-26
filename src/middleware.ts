@@ -78,6 +78,10 @@ export async function middleware(request: NextRequest) {
       if (session.mustChangePassword) {
         return NextResponse.redirect(new URL("/change-password", request.url));
       }
+      const redirectParam = request.nextUrl.searchParams.get("redirect");
+      if (redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")) {
+        return NextResponse.redirect(new URL(redirectParam, request.url));
+      }
       return NextResponse.redirect(
         new URL(getRoleDashboard(session.role), request.url)
       );
@@ -95,7 +99,14 @@ export async function middleware(request: NextRequest) {
   if (isProtectedPath) {
     if (!session || !session.isActive) {
       const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("error", "access_removed");
+      if (sessionCookie) {
+        loginUrl.searchParams.set("error", "access_removed");
+      } else {
+        loginUrl.searchParams.set(
+          "redirect",
+          pathname + (request.nextUrl.search || "")
+        );
+      }
       const response = NextResponse.redirect(loginUrl);
       if (sessionCookie) {
         // Clear invalid or deactivated session cookie

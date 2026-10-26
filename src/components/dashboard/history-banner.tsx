@@ -20,7 +20,7 @@ export function HistoryBanner({ filter, hasActivity }: HistoryBannerProps) {
             <Icons.Clock className="h-5 w-5" />
           </div>
           <div className="flex-1">
-            <p className="font-semibold text-amber-950 flex items-center gap-2">
+            <p data-testid="past-date-banner" className="font-semibold text-amber-950 flex items-center gap-2">
               <span>Viewing history (read-only)</span>
               <span className="rounded-[2px] bg-amber-200 px-1.5 py-0.2 text-[10px] font-bold text-amber-900 uppercase tracking-wider">
                 Historical Record

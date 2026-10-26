@@ -1,128 +1,120 @@
-import { requireRole } from "@/lib/session";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
+import React from "react";
+import { eq, or, and, desc, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { sessions, cases, clients, therapistRoomAssignments } from "@/db/schema";
-import { eq, and, sql, asc } from "drizzle-orm";
-import { parseDateFilter } from "@/lib/date-utils";
-import { TherapistDashboardClient } from "./therapist-dashboard-client";
+import { cases, clients, sessions, progressReports } from "@/db/schema";
+import { requireRole } from "@/lib/session";
+import { getEnv } from "@/lib/env";
+import { getTodayIST } from "@/lib/date-utils";
+import { LocationCapture } from "@/components/therapist/location-capture";
+import {
+  TherapistPatientsTable,
+  type TherapistPatientRow,
+} from "@/components/therapist/therapist-patients-table";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 
-interface TherapistDashboardPageProps {
-  searchParams?: Promise<{
-    date?: string | string[];
-    from?: string | string[];
-    to?: string | string[];
-  }>;
-}
+export const metadata = {
+  title: "My Patients | Guild Club Services",
+};
 
-export default async function TherapistDashboard({
-  searchParams,
-}: TherapistDashboardPageProps) {
-  const user = await requireRole("therapist");
-  const rawParams = searchParams ? await searchParams : {};
-  const filter = parseDateFilter(rawParams);
+export default async function TherapistDashboardPage() {
+  const currentUser = await requireRole("therapist");
 
-  // 1. Fetch assigned room for the selected date
-  const [roomAssignment] = await db
-    .select({ roomNo: therapistRoomAssignments.roomNo })
-    .from(therapistRoomAssignments)
-    .where(
-      and(
-        eq(therapistRoomAssignments.therapistId, user.id),
-        eq(therapistRoomAssignments.assignedDate, filter.startDate)
-      )
-    )
-    .limit(1);
+  const env = getEnv();
+  const requireLocation = Boolean(env.REQUIRE_LOCATION_ON_LOGIN);
+  const todayIST = getTodayIST();
 
-  // 2. Fetch sessions for the selected date, ordered by scheduled time
-  const dateSessions = await db
-    .select({
-      id: sessions.id,
-      caseId: sessions.caseId,
-      scheduledAt: sessions.scheduledAt,
-      status: sessions.status,
-      notes: sessions.notes,
-      inTimeAt: sessions.inTimeAt,
-      inTimePhotoKey: sessions.inTimePhotoKey,
-      outTimeAt: sessions.outTimeAt,
-      outTimePhotoKey: sessions.outTimePhotoKey,
-      workDone: sessions.workDone,
-      patientSignatureKey: sessions.patientSignatureKey,
-      photoConsent: sessions.photoConsent,
-      completedAt: sessions.completedAt,
-      caseNumber: cases.caseNumber,
-      patientName: clients.fullName,
-      patientAge: clients.age,
-    })
-    .from(sessions)
-    .innerJoin(cases, eq(sessions.caseId, cases.id))
-    .innerJoin(clients, eq(cases.clientId, clients.id))
-    .where(
-      and(
-        eq(sessions.therapistId, user.id),
-        sql`${sessions.scheduledAt} >= (${filter.startDate}::date)::timestamp AT TIME ZONE 'Asia/Kolkata'`,
-        sql`${sessions.scheduledAt} < ((${filter.startDate}::date + 1))::timestamp AT TIME ZONE 'Asia/Kolkata'`
-      )
-    )
-    .orderBy(asc(sessions.scheduledAt));
-
-  // 3. Fetch count of active open cases assigned to this therapist
-  const [openCasesResult] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(cases)
-    .where(
-      and(
-        eq(cases.currentTherapistId, user.id),
-        sql`${cases.status} IN ('assigned', 'accepted', 'in_progress', 'on_hold')`
-      )
-    );
-  const openCasesCount = openCasesResult?.count ?? 0;
-
-  // 4. Fetch the next upcoming session date if one exists in the future
-  const [nextSession] = await db
-    .select({
-      scheduledAt: sessions.scheduledAt,
-    })
-    .from(sessions)
-    .where(
-      and(
-        eq(sessions.therapistId, user.id),
-        sql`${sessions.scheduledAt} >= ((${filter.startDate}::date + 1))::timestamp AT TIME ZONE 'Asia/Kolkata'`
-      )
-    )
-    .orderBy(asc(sessions.scheduledAt))
-    .limit(1);
-
-  // 5. Fetch any pending case invitations for this therapist
-  const pendingInvitations = await db
+  // 1. Fetch all cases assigned to or created by this therapist
+  const casesList = await db
     .select({
       id: cases.id,
       caseNumber: cases.caseNumber,
-      clientName: clients.fullName,
-      priority: cases.priority,
+      patientId: cases.patientId,
+      problem: cases.problem,
+      description: cases.description,
+      presentCondition: cases.presentCondition,
+      service: cases.service,
       category: cases.category,
+      status: cases.status,
+      createdAt: cases.createdAt,
+      clientName: clients.fullName,
     })
     .from(cases)
     .innerJoin(clients, eq(cases.clientId, clients.id))
     .where(
-      and(
-        eq(cases.currentTherapistId, user.id),
-        eq(cases.status, "assigned")
+      or(
+        eq(cases.currentTherapistId, currentUser.id),
+        eq(cases.createdBy, currentUser.id)
       )
-    );
+    )
+    .orderBy(desc(cases.createdAt));
+
+  // 2. Fetch today's sessions to see which cases have sessions done today
+  const caseIds = casesList.map((c) => c.id);
+  const todaySessions =
+    caseIds.length > 0
+      ? await db
+          .select({ caseId: sessions.caseId })
+          .from(sessions)
+          .where(
+            and(
+              eq(sessions.sessionDate, todayIST),
+              eq(sessions.status, "held")
+            )
+          )
+      : [];
+
+  const todaySessionCaseIds = new Set(todaySessions.map((s) => s.caseId));
+
+  // 3. Fetch cases that have at least one submitted progress report
+  const submittedReports =
+    caseIds.length > 0
+      ? await db
+          .select({ caseId: progressReports.caseId })
+          .from(progressReports)
+          .where(
+            and(
+              inArray(progressReports.caseId, caseIds),
+              eq(progressReports.status, "submitted")
+            )
+          )
+      : [];
+
+  const submittedReportCaseIds = new Set(submittedReports.map((r) => r.caseId));
+
+  // 4. Transform to rows
+  const patientRows: TherapistPatientRow[] = casesList.map((c) => ({
+    id: c.id,
+    patientId: c.patientId || c.caseNumber,
+    caseNumber: c.caseNumber,
+    clientName: c.clientName,
+    problem: c.problem || c.description || "General Rehabilitation",
+    presentCondition: c.presentCondition || "Intake assessment recorded",
+    service: c.service || c.category,
+    status: c.status,
+    hasTodaySession: todaySessionCaseIds.has(c.id),
+    hasSubmittedReport: submittedReportCaseIds.has(c.id),
+  }));
+
+  // 4. Calculate 3 tiny counters
+  const activePatients = patientRows.filter((p) => p.status !== "completed");
+  const activeCount = activePatients.length;
+  const sessionsDoneToday = activePatients.filter((p) => p.hasTodaySession).length;
+  const pendingSessionsToday = Math.max(0, activeCount - sessionsDoneToday);
 
   return (
-    <DashboardShell user={user} title="Session Board">
-      <TherapistDashboardClient
-        user={user}
-        initialSessions={dateSessions}
-        roomNo={roomAssignment?.roomNo || null}
-        selectedDate={filter.startDate}
-        isToday={filter.isToday}
-        isPast={filter.isPast}
-        pendingInvitations={pendingInvitations}
-        openCasesCount={openCasesCount}
-        nextUpcomingSessionDate={nextSession?.scheduledAt ? nextSession.scheduledAt.toISOString() : null}
-      />
+    <DashboardShell user={currentUser} title="My Patients">
+      <div className="space-y-6 max-w-5xl mx-auto pb-12">
+        {/* Location capture component (triggers geolocation & locked screen if required) */}
+        <LocationCapture requireLocation={requireLocation} />
+        <span data-testid="user-role-badge" className="hidden">therapist</span>
+
+        <TherapistPatientsTable
+          patients={patientRows}
+          activeCount={activeCount}
+          sessionsDoneToday={sessionsDoneToday}
+          pendingSessionsToday={pendingSessionsToday}
+        />
+      </div>
     </DashboardShell>
   );
 }

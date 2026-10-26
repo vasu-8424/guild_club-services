@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { eq, desc, and, ne, isNotNull, isNull, sql } from "drizzle-orm";
+import { eq, desc, asc, and, ne, isNotNull, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   cases,
@@ -11,12 +11,16 @@ import {
   sessions,
   caseEvents,
   therapistRoomAssignments,
+  branches,
+  casePhotos,
 } from "@/db/schema";
 import { requireRole } from "@/lib/session";
 import { formatUserName } from "@/lib/format-user";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PriorityBadge } from "@/components/ui/priority-badge";
+import { MonthCalendar, type CalendarSessionItem } from "@/components/cases/month-calendar";
+import { formatToISTDateString } from "@/lib/date-utils";
 import { CaseAssignCard } from "./case-assign-card";
 import { CaseStatusCard } from "./case-status-card";
 import { CaseNotesCard } from "./case-notes-card";
@@ -48,11 +52,19 @@ export default async function AdminCaseDetailPage({ params }: CaseDetailPageProp
     .select({
       id: cases.id,
       caseNumber: cases.caseNumber,
+      patientId: cases.patientId,
+      service: cases.service,
       category: cases.category,
+      problem: cases.problem,
+      presentCondition: cases.presentCondition,
+      presentConditionAtClose: cases.presentConditionAtClose,
+      closingNotes: cases.closingNotes,
       priority: cases.priority,
       description: cases.description,
       status: cases.status,
       outcome: cases.outcome,
+      startDate: cases.startDate,
+      roomNo: cases.roomNo,
       createdAt: cases.createdAt,
       closedAt: cases.closedAt,
       currentTherapistId: cases.currentTherapistId,
@@ -65,10 +77,12 @@ export default async function AdminCaseDetailPage({ params }: CaseDetailPageProp
       therapistName: users.name,
       therapistDeletedAt: users.deletedAt,
       therapistEmail: users.email,
+      branchName: branches.name,
     })
     .from(cases)
     .innerJoin(clients, eq(cases.clientId, clients.id))
     .leftJoin(users, eq(cases.currentTherapistId, users.id))
+    .leftJoin(branches, eq(cases.branchId, branches.id))
     .where(eq(cases.id, id))
     .limit(1);
 
@@ -103,6 +117,7 @@ export default async function AdminCaseDetailPage({ params }: CaseDetailPageProp
       scheduledAt: sessions.scheduledAt,
       status: sessions.status,
       notes: sessions.notes,
+      sessionDate: sessions.sessionDate,
       inTimeAt: sessions.inTimeAt,
       inTimePhotoKey: sessions.inTimePhotoKey,
       outTimeAt: sessions.outTimeAt,
@@ -130,6 +145,15 @@ export default async function AdminCaseDetailPage({ params }: CaseDetailPageProp
     ...s,
     therapistName: formatUserName(s.therapistName, s.therapistDeletedAt),
   }));
+
+  const calendarSessions: CalendarSessionItem[] = rawSessionsList
+    .filter((s) => s.sessionDate !== null)
+    .map((s) => ({
+      id: s.id,
+      sessionDate: s.sessionDate!,
+      notes: s.notes || s.workDone,
+      photoKey: s.outTimePhotoKey || null,
+    }));
 
   // 4. Fetch audit events
   const rawEventsList = await db
@@ -215,16 +239,39 @@ export default async function AdminCaseDetailPage({ params }: CaseDetailPageProp
             <div>
               <div className="flex items-center gap-2.5 flex-wrap">
                 <span className="font-mono text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-                  {caseRecord.caseNumber}
+                  {caseRecord.patientId || caseRecord.caseNumber}
                 </span>
                 <StatusBadge status={caseRecord.status} />
                 <PriorityBadge priority={caseRecord.priority} />
               </div>
-              <p className="mt-1 text-xs text-slate-500">
-                {caseRecord.category} &bull; Client: <strong className="text-slate-800 font-semibold">{caseRecord.clientName}</strong>
+              <p className="mt-1 text-xs text-slate-500 font-mono">
+                Case Ref: {caseRecord.caseNumber} &bull; Client: <strong className="text-slate-800 font-semibold font-sans">{caseRecord.clientName}</strong>
               </p>
             </div>
+
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/admin/cases/${caseRecord.id}/report`}
+                data-testid="admin-progress-report-btn"
+                className="inline-flex items-center gap-1.5 border border-slate-300 hover:bg-slate-100 text-slate-800 px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-none transition-colors"
+              >
+                <FileText className="w-4 h-4 text-slate-600" />
+                <span>Progress report</span>
+              </Link>
+            </div>
           </div>
+        </div>
+
+        {/* Read-Only Month Calendar for Admin */}
+        <div className="bg-white border border-slate-200 p-5 rounded-none shadow-xs">
+          <MonthCalendar
+            caseId={caseRecord.id}
+            startDate={caseRecord.startDate || formatToISTDateString(caseRecord.createdAt)}
+            closedAtDate={caseRecord.closedAt ? formatToISTDateString(caseRecord.closedAt) : null}
+            isClosed={isClosed}
+            isReadOnly={true}
+            initialSessions={calendarSessions}
+          />
         </div>
 
         {/* 2-Column Layout: Left Tabbed Details (2/3) + Right Side Panel (1/3) */}
