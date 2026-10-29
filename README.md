@@ -456,19 +456,81 @@ The simplified Admin panel delivers streamlined operational efficiency with zero
 
 ---
 
-## 🧪 Automated Test Verification Suites
+## 🚀 Production Deployment & Go-Live Guide
 
-Run the automated verification test suites:
+### 1. Deployment Steps (Vercel / Node.js)
+1. **Repository Setup**: Connect repository to Vercel or your production Node.js 20+ host.
+2. **Database Provisioning**: Create a production Neon Serverless PostgreSQL database branch.
+3. **Environment Variables**: Configure the required environment variables listed below in your production project settings.
+4. **Database Migration**:
+   ```bash
+   npm run db:migrate
+   ```
+5. **Production Build & Verification**:
+   ```bash
+   npm run build
+   npx tsc --noEmit
+   ```
+6. **Go-Live Smoke Check**: Verify `/api/health` returns HTTP 200 with `status: "ok"` and `database: "connected"`.
 
+---
+
+### 2. Required Production Environment Variables (Names Only)
+
+All environment variables are validated at startup with strict Zod parsing:
+
+| Environment Variable Name | Required | Description |
+| :--- | :--- | :--- |
+| `DATABASE_URL` | **Yes** | Neon pooled PostgreSQL connection string |
+| `DATABASE_URL_UNPOOLED` | Optional | Direct unpooled connection string for migrations |
+| `AUTH_SECRET` | **Yes** | Cryptographic secret for signing session JWTs (min 32 chars) |
+| `APP_TIMEZONE` | **Yes** | Primary clinical timezone (default: `Asia/Kolkata`) |
+| `APP_BASE_URL` | **Yes** | Canonical public URL of the application (e.g. `https://portal.guildclubservices.com`) |
+| `EMAIL_PROVIDER` | **Yes** | Production email provider (`resend`). *Note: `mock` is blocked in production.* |
+| `RESEND_API_KEY` | **Yes** | Production Resend API token |
+| `EMAIL_FROM_NAME` | **Yes** | Display name for clinical notification emails |
+| `EMAIL_FROM_ADDRESS` | **Yes** | Verified sender email address |
+| `EMAIL_FROM_DOMAIN` | **Yes** | Verified sender domain matching `EMAIL_FROM_ADDRESS` |
+| `EMAIL_DAILY_LIMIT` | Optional | Daily dispatch quota safeguard |
+| `EMAIL_MONTHLY_LIMIT`| Optional | Monthly dispatch quota safeguard |
+| `CRON_SECRET` | Optional | Secret for authenticating scheduled background cron tasks |
+| `WRITING_ASSIST_PROVIDER` | Optional | Writing assistance AI engine (`gemini`, `anthropic`, or `off`) |
+| `WRITING_ASSIST_API_KEY` | Optional | API key for Gemini or Anthropic (required if provider is enabled) |
+
+---
+
+### 3. Database Backup & Disaster Recovery Procedure
+
+Guild Club Services utilizes Neon's point-in-time recovery (PITR) and instant copy-on-write branching for zero-downtime backups:
+
+#### Creating an Instant Manual Snapshot:
 ```bash
-# 1. Run Feature 1 (Credentials & Direct Email) & Feature 2 (Notifications & Grouping) Suite (64 tests)
-npx tsx scripts/test-feature1-feature2.ts
-
-# 2. Run Branch-Based Access, Room Checks & Isolation Suite (24 tests)
-npx tsx scripts/test-branch-scoping.ts
-
-# 3. Full TypeScript Compile & Type Check
-npx tsc --noEmit
+# Using Neon CLI
+neonctl branches create --name backup-manual-$(date +%Y%m%d) --parent main
 ```
+
+#### Point-in-Time Recovery (PITR):
+To restore to a specific timestamp before an incident:
+```bash
+neonctl branches create --name recovery-point --parent main --timestamp "2026-10-29T18:00:00Z"
+```
+
+#### Pre-Cleanup Audit Record:
+All mock and test data inventory and deletion plans are documented in [`CLEANUP-LOG.md`](file:///d:/Services/CLEANUP-LOG.md).
+
+---
+
+### 4. Production Go-Live Checklist
+
+- [ ] `NODE_ENV` is set to `"production"`.
+- [ ] `EMAIL_PROVIDER` is set to `"resend"` with verified sender domain (refuses `"mock"` in production).
+- [ ] Database connection pooling enabled (`-pooler.ap-southeast-1.aws.neon.tech`).
+- [ ] Foreign key and `branch_id` indexes applied to `cases`, `sessions`, `rooms`, `user_branches`.
+- [ ] Health monitoring probe points to `/api/health` (no secrets, credentials, or DB hostnames exposed).
+- [ ] HTTP Security Headers verified (`Strict-Transport-Security`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Permissions-Policy: geolocation=(self)`).
+- [ ] Friendly error boundaries active for 404, 500, and dashboard failures (no technical stack traces exposed).
+- [ ] AI Writing Assistant privacy masking verified (zero PHI/PII sent to AI providers).
+- [ ] Branch Patient Report downloadable by Admins in CSV and printable A4 PDF formats with `Cache-Control: no-store`.
+
 
 

@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Icons } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
+import { WritingAssist } from "@/components/writing-assist/writing-assist";
 import { sendAdminNoteAction } from "@/lib/actions/admin-notes-actions";
 
 interface SendNoteDialogProps {
@@ -170,7 +171,17 @@ export function SendNoteDialog({
               required
               minLength={5}
               maxLength={1000}
-              className="w-full border border-slate-300 p-3 text-xs text-slate-900 rounded-none focus:outline-none focus:border-[#0B7A63] focus:ring-1 focus:ring-[#0B7A63] font-sans resize-none"
+              spellCheck={true}
+              lang="en-IN"
+              autoCapitalize="sentences"
+              autoComplete="off"
+              className="w-full border border-slate-300 p-3 text-base sm:text-xs text-slate-900 rounded-none focus:outline-none focus:border-[#0B7A63] focus:ring-1 focus:ring-[#0B7A63] font-sans resize-none"
+            />
+            <WritingAssist
+              text={note}
+              onApplyText={(val) => setNote(val)}
+              context="admin_note"
+              knownNames={[therapistName]}
             />
             <p className="text-[11px] text-amber-700 bg-amber-50/70 p-2 border border-amber-200 rounded-none font-medium">
               Do not write patient names or medical details here.

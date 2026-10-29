@@ -47,7 +47,8 @@ test.describe("Suite J: RESPONSIVE AND ACCESSIBILITY", () => {
 
   test("[UI-05] Navigation icons and labels render on one line without wrapping", async ({ page }) => {
     await page.goto("/login");
-    await expect(page.locator("text=Guild Club")).toBeVisible();
+    // Verify brand heading / title is visible on login page
+    await expect(page.locator("text=Guild Club Services").first()).toBeVisible();
   });
 
   test("[UI-06] Axe accessibility evaluation on login: report serious and critical violations", async ({ page }) => {

@@ -1,7 +1,7 @@
 import { requireRole } from "@/lib/session";
 import { db } from "@/db";
-import { users } from "@/db/schema";
-import { eq, isNull, and } from "drizzle-orm";
+import { users, branches, userBranches } from "@/db/schema";
+import { eq, isNull, and, asc } from "drizzle-orm";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,33 @@ export default async function AdminsPage({ searchParams }: AdminsPageProps) {
     .from(users)
     .where(whereCondition)
     .orderBy(users.name);
+
+  // Fetch active branches for editing access
+  const activeBranches = await db
+    .select({
+      id: branches.id,
+      name: branches.name,
+      isActive: branches.isActive,
+    })
+    .from(branches)
+    .where(eq(branches.isActive, true))
+    .orderBy(asc(branches.name));
+
+  // Fetch active branch assignments
+  const allUserBranches = await db
+    .select({
+      userId: userBranches.userId,
+      branchId: userBranches.branchId,
+    })
+    .from(userBranches)
+    .where(isNull(userBranches.removedAt));
+
+  const adminBranchesMap = new Map<string, string[]>();
+  for (const ub of allUserBranches) {
+    const list = adminBranchesMap.get(ub.userId) || [];
+    list.push(ub.branchId);
+    adminBranchesMap.set(ub.userId, list);
+  }
 
   return (
     <DashboardShell user={currentUser} title="Administrator Management">
@@ -185,6 +212,8 @@ export default async function AdminsPage({ searchParams }: AdminsPageProps) {
                           <AdminRowActions
                             admin={adm}
                             currentUserId={currentUser.id}
+                            branches={activeBranches}
+                            assignedBranchIds={adminBranchesMap.get(adm.id) || []}
                           />
                         </td>
                       </tr>

@@ -76,6 +76,8 @@ export const Icons = {
   Cases: (props: IconProps) => <Briefcase weight="duotone" size={20} {...props} />,
   Therapists: (props: IconProps) => <UsersThree weight="duotone" size={20} {...props} />,
   Admins: (props: IconProps) => <UserGear weight="duotone" size={20} {...props} />,
+  Branch: (props: IconProps) => <Buildings weight="duotone" size={16} {...props} />,
+  Buildings: (props: IconProps) => <Buildings weight="duotone" size={16} {...props} />,
   Security: (props: IconProps) => <ShieldCheck weight="duotone" size={20} {...props} />,
   Reports: (props: IconProps) => <ChartBar weight="duotone" size={20} {...props} />,
   Room: (props: IconProps) => <Door weight="duotone" size={20} {...props} />,

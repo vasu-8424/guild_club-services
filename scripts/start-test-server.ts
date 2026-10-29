@@ -17,7 +17,7 @@ const nextProcess = spawn(
   ["next", "start", "-p", port],
   {
     stdio: "inherit",
-    env: { ...process.env, PORT: port },
+    env: { ...process.env, PORT: port, PLAYWRIGHT_TEST: "true" },
     shell: true,
   }
 );

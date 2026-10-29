@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
+import { WritingAssist } from "@/components/writing-assist/writing-assist";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AlertCircle, AlertTriangle, CheckCircle, ArrowLeft } from "lucide-react";
 import type { CasePriority } from "@/db/schema";
@@ -264,6 +265,12 @@ export function CreateCaseForm({ therapists }: CreateCaseFormProps) {
             required
             helperText="Minimum 5 characters required."
           />
+          <WritingAssist
+            text={presentingIssues}
+            onApplyText={(val) => setPresentingIssues(val)}
+            context="patient_condition"
+            knownNames={[clientName]}
+          />
 
           <Textarea
             data-testid="case-notes-input"
@@ -272,6 +279,12 @@ export function CreateCaseForm({ therapists }: CreateCaseFormProps) {
             rows={2}
             value={initialNotes}
             onChange={(e) => setInitialNotes(e.target.value)}
+          />
+          <WritingAssist
+            text={initialNotes}
+            onApplyText={(val) => setInitialNotes(val)}
+            context="admin_note"
+            knownNames={[clientName]}
           />
         </CardContent>
       </Card>

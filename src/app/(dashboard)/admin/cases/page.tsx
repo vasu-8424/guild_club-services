@@ -9,6 +9,7 @@ import { CLINICAL_SERVICES, getServiceLabel } from "@/lib/services";
 import { getTodayIST } from "@/lib/date-utils";
 import { Search, Filter, Check, X as CrossIcon, FileText } from "lucide-react";
 import { CaseRowActions } from "./case-row-actions";
+import { BranchReportButton } from "@/components/admin/branch-report-button";
 import Link from "next/link";
 
 interface CasesPageProps {
@@ -126,10 +127,11 @@ export default async function AdminCasesPage({ searchParams }: CasesPageProps) {
   return (
     <DashboardShell user={currentUser} title="All Cases">
       <div className="space-y-6">
-        {/* Page Header (No "New Case" button for Admin) */}
+        {/* Page Header (No "New Case" button for Admin; includes Branch Patient Report download) */}
         <PageHeader
           title="Cases"
           description="View-only access to clinical cases, therapist assignments, and treatment records."
+          action={<BranchReportButton />}
           breadcrumbs={[
             {
               label: "Dashboard",

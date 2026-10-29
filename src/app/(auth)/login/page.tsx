@@ -168,13 +168,16 @@ function LoginForm() {
                     id="email-input"
                     data-testid="login-email-input"
                     type="email"
+                    lang="en-IN"
+                    spellCheck={false}
+                    autoCapitalize="none"
                     placeholder="staff@guildclub.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     autoComplete="email"
                     autoFocus
-                    className="w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:border-slate-400 focus:border-[#0B7A63] focus:outline-none focus:ring-1 focus:ring-[#0B7A63]"
+                    className="w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-base sm:text-sm text-slate-900 placeholder:text-slate-400 shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:border-slate-400 focus:border-[#0B7A63] focus:outline-none focus:ring-1 focus:ring-[#0B7A63]"
                   />
                 </div>
                 {fieldErrors.email && (
@@ -197,12 +200,15 @@ function LoginForm() {
                     id="password-input"
                     data-testid="login-password-input"
                     type={showPassword ? "text" : "password"}
+                    lang="en-IN"
+                    spellCheck={false}
+                    autoCapitalize="none"
                     placeholder="••••••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     autoComplete="current-password"
-                    className="w-full rounded-none border border-slate-300 bg-white px-3.5 pr-10 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:border-slate-400 focus:border-[#0B7A63] focus:outline-none focus:ring-1 focus:ring-[#0B7A63]"
+                    className="w-full rounded-none border border-slate-300 bg-white px-3.5 pr-10 py-2.5 text-base sm:text-sm text-slate-900 placeholder:text-slate-400 shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:border-slate-400 focus:border-[#0B7A63] focus:outline-none focus:ring-1 focus:ring-[#0B7A63]"
                   />
                   <button
                     type="button"

@@ -9,6 +9,7 @@ import { RowActionsMenu, RowActionMenuItem } from "@/components/ui/row-actions-m
 import { DateSelector } from "@/components/dashboard/date-selector";
 import { HistoryBanner } from "@/components/dashboard/history-banner";
 import { SendNoteDialog } from "@/components/admin/send-note-dialog";
+import { BranchReportButton } from "@/components/admin/branch-report-button";
 import { ResetPasswordModal } from "@/components/auth/reset-password-modal";
 import { DeleteUserModal } from "@/components/auth/delete-user-modal";
 import { LoginActivityModal } from "@/components/therapists/login-activity-modal";
@@ -195,8 +196,11 @@ export function AdminDashboardClient({ data }: AdminDashboardClientProps) {
             (Asia/Kolkata).
           </p>
         </div>
-        <div data-testid="dashboard-date-selector">
-          <DateSelector />
+        <div className="flex flex-wrap items-center gap-2.5">
+          <BranchReportButton />
+          <div data-testid="dashboard-date-selector">
+            <DateSelector />
+          </div>
         </div>
       </div>
 

@@ -29,12 +29,12 @@ export async function DashboardShell({
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-dvh bg-slate-50">
       {/* Sidebar with role-specific menu */}
       <Sidebar role={user.role} userName={user.name} />
 
       {/* Main Content Area */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden min-h-dvh">
         <Topbar
           user={user}
           title={title}
@@ -44,7 +44,7 @@ export async function DashboardShell({
         <TemporaryPasswordBanner user={user} />
         {user.role === "therapist" && <TabCloseBeaconListener />}
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
       </div>

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { X, CheckCircle, Clock, AlertCircle, Save, Edit3, ShieldCheck } from "lucide-react";
 import { SignaturePad } from "./signature-pad";
+import { WritingAssist } from "@/components/writing-assist/writing-assist";
 import {
   recordDailySessionAction,
   updateTodaySessionAction,
@@ -151,7 +152,7 @@ export function SessionRecordPanel({
       data-testid="session-record-panel"
       className="fixed inset-0 z-50 overflow-hidden bg-stone-900/60 backdrop-blur-xs flex justify-end"
     >
-      <div className="w-full sm:max-w-xl md:max-w-2xl bg-white h-full shadow-2xl flex flex-col border-l-2 border-stone-900 overflow-y-auto">
+      <div className="w-full sm:max-w-xl md:max-w-2xl bg-white h-dvh shadow-2xl flex flex-col border-l-2 border-stone-900 overflow-y-auto">
         {/* Drawer Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-stone-50 border-b border-stone-200">
           <div>
@@ -174,7 +175,8 @@ export function SessionRecordPanel({
             type="button"
             data-testid="close-session-panel-btn"
             onClick={onClose}
-            className="p-1.5 text-stone-500 hover:text-stone-900 hover:bg-stone-200 transition-colors cursor-pointer"
+            aria-label="Close session panel"
+            className="p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-stone-200 transition-colors cursor-pointer rounded-none"
           >
             <X className="w-5 h-5" />
           </button>
@@ -230,15 +232,27 @@ export function SessionRecordPanel({
                 {caseData.todaySession?.presentConditionSnapshot || caseData.presentCondition || "—"}
               </div>
             ) : (
-              <textarea
-                id="present-condition-input"
-                data-testid="present-condition-input"
-                rows={3}
-                value={presentCondition}
-                onChange={(e) => setPresentCondition(e.target.value)}
-                placeholder="Describe patient's present condition today (e.g., Mobility improved, reports pain level 3/10)..."
-                className="w-full text-xs font-sans p-3 border-2 border-stone-800 rounded-none focus:outline-hidden focus:ring-2 focus:ring-[#0B7A63] leading-relaxed"
-              />
+              <>
+                <textarea
+                  id="present-condition-input"
+                  data-testid="present-condition-input"
+                  rows={3}
+                  value={presentCondition}
+                  onChange={(e) => setPresentCondition(e.target.value)}
+                  placeholder="Describe patient's present condition today (e.g., Mobility improved, reports pain level 3/10)..."
+                  className="w-full text-base sm:text-xs font-sans p-3 border-2 border-stone-800 rounded-none focus:outline-hidden focus:ring-2 focus:ring-[#0B7A63] leading-relaxed"
+                  spellCheck={true}
+                  lang="en-IN"
+                  autoCapitalize="sentences"
+                  autoComplete="off"
+                />
+                <WritingAssist
+                  text={presentCondition}
+                  onApplyText={(val) => setPresentCondition(val)}
+                  context="patient_condition"
+                  knownNames={[caseData.clientName]}
+                />
+              </>
             )}
             {fieldErrors.presentCondition && (
               <p className="text-[11px] text-red-600 font-medium">
@@ -263,15 +277,27 @@ export function SessionRecordPanel({
                 {caseData.todaySession?.notes || "—"}
               </div>
             ) : (
-              <textarea
-                id="session-note-input"
-                data-testid="session-note-input"
-                rows={4}
-                value={sessionNote}
-                onChange={(e) => setSessionNote(e.target.value)}
-                placeholder="Enter clinical observations, exercises completed, response to treatment..."
-                className="w-full text-xs font-sans p-3 border-2 border-stone-800 rounded-none focus:outline-hidden focus:ring-2 focus:ring-[#0B7A63] leading-relaxed"
-              />
+              <>
+                <textarea
+                  id="session-note-input"
+                  data-testid="session-note-input"
+                  rows={4}
+                  value={sessionNote}
+                  onChange={(e) => setSessionNote(e.target.value)}
+                  placeholder="Enter clinical observations, exercises completed, response to treatment..."
+                  className="w-full text-base sm:text-xs font-sans p-3 border-2 border-stone-800 rounded-none focus:outline-hidden focus:ring-2 focus:ring-[#0B7A63] leading-relaxed"
+                  spellCheck={true}
+                  lang="en-IN"
+                  autoCapitalize="sentences"
+                  autoComplete="off"
+                />
+                <WritingAssist
+                  text={sessionNote}
+                  onApplyText={(val) => setSessionNote(val)}
+                  context="session_note"
+                  knownNames={[caseData.clientName]}
+                />
+              </>
             )}
             {fieldErrors.note && (
               <p className="text-[11px] text-red-600 font-medium">

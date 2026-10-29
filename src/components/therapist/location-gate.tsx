@@ -59,6 +59,10 @@ export function LocationGate({ recordId, initialStatus = "pending" }: LocationGa
         }
       },
       async (err) => {
+        if (process.env.NODE_ENV !== "production") {
+          console.error(`[Geolocation Error] Code ${err.code}: ${err.message}`);
+        }
+
         const isDenied = err.code === err.PERMISSION_DENIED;
         const targetStatus = isDenied ? "denied" : "unavailable";
         setStatus(targetStatus);

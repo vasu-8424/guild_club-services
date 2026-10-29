@@ -98,6 +98,27 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
       dependencies: ["setup"],
     },
+    {
+      name: "admin-branch-selection",
+      testDir: "./tests/e2e/suites",
+      testMatch: /admin-branch-selection\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+      dependencies: ["setup"],
+    },
+    {
+      name: "writing-assist",
+      testDir: "./tests/e2e/suites",
+      testMatch: /writing-assist\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+      dependencies: ["setup"],
+    },
+    {
+      name: "branch-report",
+      testDir: "./tests/e2e/suites",
+      testMatch: /branch-report\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+      dependencies: ["setup"],
+    },
   ],
   webServer: {
     command: "npx tsx scripts/start-test-server.ts",

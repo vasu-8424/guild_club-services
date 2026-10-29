@@ -2,10 +2,10 @@
 
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { and, eq, ne, isNull, sql } from "drizzle-orm";
+import { and, eq, ne, isNull, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { users, caseEvents } from "@/db/schema";
-import { requireRole } from "@/lib/session";
+import { users, caseEvents, branches, userBranches } from "@/db/schema";
+import { requireRole, getCurrentUser } from "@/lib/session";
 import { recordEvent } from "@/lib/events";
 import { queueEmail } from "@/lib/email";
 import { triggerOpportunisticQueueProcess } from "@/lib/notifications";
@@ -42,8 +42,14 @@ import crypto from "crypto";
 
 export async function createAdminAction(
   rawInput: CreateAdminInput
-): Promise<ActionResponse<{ id: string; email: string; emailWarning?: string }>> {
-  const currentUser = await requireRole("super_admin");
+): Promise<ActionResponse<{ id: string; email: string; branchNames?: string[]; emailWarning?: string }>> {
+  const currentUser = await getCurrentUser();
+  if (!currentUser || currentUser.role !== "super_admin") {
+    return {
+      success: false,
+      error: "Forbidden: Only Super Admins can create administrator accounts.",
+    };
+  }
 
   const parsed = createAdminSchema.safeParse(rawInput);
   if (!parsed.success) {
@@ -53,7 +59,7 @@ export async function createAdminAction(
     };
   }
 
-  const { name, email, phone, password, emailCredentials = true } = parsed.data;
+  const { name, email, phone, password, branchIds, emailCredentials = true } = parsed.data;
 
   // Check if active user with this email already exists (deleted emails are freed for reuse)
   const [existing] = await db
@@ -73,6 +79,22 @@ export async function createAdminAction(
 
   try {
     const result = await db.transaction(async (tx) => {
+      // Validate all branchIds exist and are active
+      const dbBranches = await tx
+        .select({ id: branches.id, name: branches.name, isActive: branches.isActive })
+        .from(branches)
+        .where(inArray(branches.id, branchIds));
+
+      if (dbBranches.length !== branchIds.length) {
+        throw new Error("One or more selected branches do not exist.");
+      }
+
+      const inactiveBranch = dbBranches.find((b) => !b.isActive);
+      if (inactiveBranch) {
+        throw new Error(`Branch '${inactiveBranch.name}' is deactivated and cannot be assigned.`);
+      }
+
+      // 1. Create the user (role admin)
       const [newAdmin] = await tx
         .insert(users)
         .values({
@@ -93,7 +115,17 @@ export async function createAdminAction(
           email: users.email,
         });
 
-      // Record audit event (WITHOUT PLAIN PASSWORD)
+      // 2. Create one user_branches row per branch (role_in_branch admin, assigned_by = Super Admin)
+      await tx.insert(userBranches).values(
+        branchIds.map((branchId) => ({
+          userId: newAdmin.id,
+          branchId,
+          roleInBranch: "admin" as const,
+          assignedBy: currentUser.id,
+        }))
+      );
+
+      // 3. Record events: admin_created and user_branch_added for each branch
       await recordEvent(tx, {
         eventType: "admin_created",
         actorId: currentUser.id,
@@ -103,10 +135,29 @@ export async function createAdminAction(
           email,
           name,
           role: "admin",
+          branchIds,
         },
       });
 
-      return newAdmin;
+      for (const branchId of branchIds) {
+        await recordEvent(tx, {
+          eventType: "user_branch_added",
+          actorId: currentUser.id,
+          actorRole: currentUser.role,
+          targetUserId: newAdmin.id,
+          metadata: {
+            userId: newAdmin.id,
+            branchId,
+            roleInBranch: "admin",
+            assignedBy: currentUser.id,
+          },
+        });
+      }
+
+      return {
+        ...newAdmin,
+        branchNames: dbBranches.map((b) => b.name),
+      };
     });
 
     // Send credentials DIRECTLY outside transaction with in-memory password & 5s timeout
@@ -118,6 +169,7 @@ export async function createAdminAction(
       createdByName: currentUser.name,
       password,
       emailCredentials,
+      branchNames: result.branchNames,
     });
 
     revalidatePath("/super-admin/admins");
@@ -127,16 +179,17 @@ export async function createAdminAction(
       data: {
         id: result.id,
         email: result.email,
+        branchNames: result.branchNames,
         emailWarning: sendRes.error
           ? `Account created, but the email could not be sent: ${sendRes.error}`
           : undefined,
       },
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to create admin:", error);
     return {
       success: false,
-      error: "An unexpected error occurred while creating the admin.",
+      error: error?.message || "An unexpected error occurred while creating the admin.",
     };
   }
 }
@@ -620,6 +673,154 @@ export async function toggleAdminStatusAction(
     return {
       success: false,
       error: "An unexpected error occurred while changing account status.",
+    };
+  }
+}
+
+/**
+ * Super Admin: Update assigned branches for an Admin.
+ * - Multi-select: adds and removes user_branches rows.
+ * - Removal is blocked if the removal would leave zero branches: "An administrator must keep at least one branch".
+ * - Removing a branch never changes existing cases or records.
+ * - Each change is recorded: user_branch_added or user_branch_removed.
+ */
+export async function updateAdminBranchesAction(rawInput: {
+  adminId: string;
+  branchIds: string[];
+}): Promise<ActionResponse<{ id: string; branchIds: string[] }>> {
+  const currentUser = await getCurrentUser();
+  if (!currentUser || currentUser.role !== "super_admin") {
+    return {
+      success: false,
+      error: "Forbidden: Only Super Admins can manage branch assignments.",
+    };
+  }
+
+  const { adminId, branchIds } = rawInput;
+
+  if (!branchIds || branchIds.length === 0) {
+    return {
+      success: false,
+      error: "An administrator must keep at least one branch",
+    };
+  }
+
+  const uniqueBranchIds = Array.from(new Set(branchIds));
+
+  // Check admin exists and not deleted
+  const [admin] = await db
+    .select({ id: users.id, role: users.role, deletedAt: users.deletedAt })
+    .from(users)
+    .where(eq(users.id, adminId))
+    .limit(1);
+
+  if (!admin || admin.role !== "admin" || admin.deletedAt !== null) {
+    return {
+      success: false,
+      error: "Admin not found or deleted.",
+    };
+  }
+
+  // Check all branchIds exist and are active
+  const dbBranches = await db
+    .select({ id: branches.id, name: branches.name, isActive: branches.isActive })
+    .from(branches)
+    .where(inArray(branches.id, uniqueBranchIds));
+
+  if (dbBranches.length !== uniqueBranchIds.length) {
+    return {
+      success: false,
+      error: "One or more selected branches do not exist.",
+    };
+  }
+
+  const inactiveBranch = dbBranches.find((b) => !b.isActive);
+  if (inactiveBranch) {
+    return {
+      success: false,
+      error: `Branch '${inactiveBranch.name}' is deactivated and cannot be assigned.`,
+    };
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+      // Find current active user_branches for this admin
+      const existingRows = await tx
+        .select({ id: userBranches.id, branchId: userBranches.branchId })
+        .from(userBranches)
+        .where(
+          and(
+            eq(userBranches.userId, adminId),
+            isNull(userBranches.removedAt)
+          )
+        );
+
+      const existingBranchIds = existingRows.map((r) => r.branchId);
+
+      const toAdd = uniqueBranchIds.filter((bId) => !existingBranchIds.includes(bId));
+      const toRemove = existingRows.filter((r) => !uniqueBranchIds.includes(r.branchId));
+
+      const remainingCount = existingBranchIds.length - toRemove.length + toAdd.length;
+      if (remainingCount === 0) {
+        throw new Error("An administrator must keep at least one branch");
+      }
+
+      // Additions
+      for (const branchId of toAdd) {
+        await tx.insert(userBranches).values({
+          userId: adminId,
+          branchId,
+          roleInBranch: "admin",
+          assignedBy: currentUser.id,
+        });
+
+        await recordEvent(tx, {
+          eventType: "user_branch_added",
+          actorId: currentUser.id,
+          actorRole: currentUser.role,
+          targetUserId: adminId,
+          metadata: {
+            userId: adminId,
+            branchId,
+            roleInBranch: "admin",
+            assignedBy: currentUser.id,
+          },
+        });
+      }
+
+      // Removals (soft-delete with removed_at)
+      for (const row of toRemove) {
+        await tx
+          .update(userBranches)
+          .set({ removedAt: new Date() })
+          .where(eq(userBranches.id, row.id));
+
+        await recordEvent(tx, {
+          eventType: "user_branch_removed",
+          actorId: currentUser.id,
+          actorRole: currentUser.role,
+          targetUserId: adminId,
+          metadata: {
+            userId: adminId,
+            branchId: row.branchId,
+            roleInBranch: "admin",
+            removedBy: currentUser.id,
+          },
+        });
+      }
+    });
+
+    revalidatePath("/super-admin/admins");
+
+    return {
+      success: true,
+      data: { id: adminId, branchIds: uniqueBranchIds },
+    };
+  } catch (error: any) {
+    console.error("Failed to update admin branches:", error);
+    return {
+      success: false,
+      error: error?.message || "An unexpected error occurred while updating branches.",
     };
   }
 }

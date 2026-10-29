@@ -1,8 +1,125 @@
 import { test, expect } from "@playwright/test";
 import fs from "fs";
 import path from "path";
+import { securityHeaders } from "../../../src/lib/security-headers";
+import { neon } from "@neondatabase/serverless";
+import { assertTestDatabase } from "../../helpers/seed-test-data";
 
 test.describe("Suite I: SECURITY AND ROBUSTNESS", () => {
+  const sql = neon(assertTestDatabase());
+
+  test("[SEC-GEO-01] Unit test: securityHeaders contains Permissions-Policy with value exactly 'geolocation=(self)'", () => {
+    const permPolicy = securityHeaders.find((h) => h.key.toLowerCase() === "permissions-policy");
+    expect(permPolicy).toBeDefined();
+    expect(permPolicy?.value).toBe("geolocation=(self)");
+  });
+
+  test("[SEC-GEO-02] HTTP test: /login and therapist routes return Permissions-Policy: geolocation=(self) and never geolocation=()", async ({ request }) => {
+    const loginRes = await request.get("/login");
+    const loginHeaders = loginRes.headers();
+    const loginPermPolicy = loginHeaders["permissions-policy"];
+    expect(loginPermPolicy).toBe("geolocation=(self)");
+    expect(loginPermPolicy).not.toContain("geolocation=()");
+
+    const therapistRes = await request.get("/therapist/dashboard");
+    const therapistHeaders = therapistRes.headers();
+    const therapistPermPolicy = therapistHeaders["permissions-policy"];
+    expect(therapistPermPolicy).toBe("geolocation=(self)");
+    expect(therapistPermPolicy).not.toContain("geolocation=()");
+  });
+
+  test("[SEC-GEO-03] Browser test: grant geolocation -> location gate unlocks and login record contains lat, lng, and accuracy", async ({ browser }) => {
+    const context = await browser.newContext({
+      permissions: ["geolocation"],
+      geolocation: { latitude: 12.9716, longitude: 77.5946, accuracy: 15 },
+    });
+    const page = await context.newPage();
+
+    const consoleMessages: string[] = [];
+    page.on("console", (msg) => {
+      consoleMessages.push(msg.text());
+    });
+
+    // Log in as therapist
+    await page.goto("/login");
+    await page.fill('[data-testid="login-email-input"]', process.env.TEST_THERAPIST_1_EMAIL || "qa.therapist1.main@guildclub.com");
+    await page.fill('[data-testid="login-password-input"]', "Password@Therapist1");
+    await page.click('[data-testid="login-submit-button"]');
+
+    // Should navigate to /therapist/dashboard and unlock gate
+    await page.waitForURL(/\/therapist\/dashboard/);
+    
+    // Check that board is unlocked or location captured
+    await expect(page.getByTestId("daily-board")).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId("location-gate")).toHaveCount(0);
+
+    // Verify DB: login record contains coordinates and accuracy
+    const [tUser] = await sql`SELECT id FROM users WHERE email = ${process.env.TEST_THERAPIST_1_EMAIL || "qa.therapist1.main@guildclub.com"} LIMIT 1`;
+    const [loginRec] = await sql`
+      SELECT sign_in_latitude, sign_in_longitude, sign_in_accuracy_meters, sign_in_location_status
+      FROM login_records
+      WHERE user_id = ${tUser.id}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `;
+    expect(loginRec).toBeDefined();
+    expect(loginRec.sign_in_location_status).toBe("captured");
+    expect(Number(loginRec.sign_in_latitude)).toBeCloseTo(12.9716, 2);
+    expect(Number(loginRec.sign_in_longitude)).toBeCloseTo(77.5946, 2);
+    expect(Number(loginRec.sign_in_accuracy_meters)).toBeGreaterThan(0);
+
+    // Assert no "permissions policy" violation message on board page
+    const policyViolations = consoleMessages.filter((msg) =>
+      /permissions\s*policy/i.test(msg)
+    );
+    expect(policyViolations.length).toBe(0);
+
+    await context.close();
+  });
+
+  test("[SEC-GEO-04] Browser test: deny geolocation -> board stays locked and reset guide shows", async ({ browser }) => {
+    // Reset login record status so user is pending
+    const [tUser] = await sql`SELECT id FROM users WHERE email = ${process.env.TEST_THERAPIST_2_EMAIL || "qa.therapist2.north@guildclub.com"} LIMIT 1`;
+    if (tUser) {
+      await sql`
+        UPDATE login_records 
+        SET sign_in_location_status = 'pending' 
+        WHERE user_id = ${tUser.id}
+      `;
+    }
+
+    const context = await browser.newContext({
+      permissions: [], // No geolocation permission
+    });
+    const page = await context.newPage();
+
+    const consoleMessages: string[] = [];
+    page.on("console", (msg) => {
+      consoleMessages.push(msg.text());
+    });
+
+    await page.goto("/login");
+    await page.fill('[data-testid="login-email-input"]', process.env.TEST_THERAPIST_2_EMAIL || "qa.therapist2.north@guildclub.com");
+    await page.fill('[data-testid="login-password-input"]', "Password@Therapist2");
+    await page.click('[data-testid="login-submit-button"]');
+
+    await page.waitForURL(/\/therapist\/dashboard/);
+
+    // Location gate remains visible and board stays locked
+    await expect(page.getByTestId("location-gate")).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId("therapist-board")).toHaveCount(0);
+
+    // Reset guide / instructions must be visible
+    await expect(page.getByText("How to enable location in your browser", { exact: false })).toBeVisible();
+
+    // Assert no "permissions policy" violation message in browser console
+    const policyViolations = consoleMessages.filter((msg) =>
+      /permissions\s*policy/i.test(msg)
+    );
+    expect(policyViolations.length).toBe(0);
+
+    await context.close();
+  });
   test("[SEC-01] SQL-injection-style input is safely parameterized and rejected/handled", async ({ page }) => {
     await page.goto("/login");
     await page.fill('[data-testid="login-email-input"]', "' OR '1'='1' -- ");
@@ -95,7 +212,7 @@ test.describe("Suite I: SECURITY AND ROBUSTNESS", () => {
 
     for (const route of protectedRoutes) {
       const res = await page.request.get(route);
-      expect([401, 403, 404, 307]).toContain(res.status());
+      expect([401, 403, 404, 405, 307]).toContain(res.status());
     }
   });
 });

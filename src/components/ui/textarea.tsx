@@ -10,7 +10,7 @@ export interface TextareaProps
 }
 
 export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, label, error, helperText, id, rows = 3, ...props }, ref) => {
+  ({ className, label, error, helperText, id, rows = 3, autoCapitalize = "sentences", autoComplete = "off", lang = "en-IN", spellCheck = true, ...props }, ref) => {
     const textareaId =
       id || (label ? label.toLowerCase().replace(/\s+/g, "-") : undefined);
 
@@ -29,8 +29,12 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             id={textareaId}
             rows={rows}
             ref={ref}
+            lang={lang}
+            spellCheck={spellCheck}
+            autoCapitalize={autoCapitalize}
+            autoComplete={autoComplete}
             className={cn(
-              "w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-colors shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:border-slate-400 focus:border-[#0B7A63] focus:outline-none focus:ring-1 focus:ring-[#0B7A63] disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500",
+              "w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-base sm:text-sm text-slate-900 placeholder:text-slate-400 transition-colors shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:border-slate-400 focus:border-[#0B7A63] focus:outline-none focus:ring-1 focus:ring-[#0B7A63] disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500",
               error && "border-rose-500 focus:border-rose-600 focus:ring-rose-500/20",
               className
             )}

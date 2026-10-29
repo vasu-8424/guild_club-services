@@ -86,5 +86,12 @@ export class MockProvider implements EmailProvider {
   }
 }
 
-// Global mock singleton for easy access in tests
-export const mockEmailProvider = new MockProvider();
+// Global mock singleton attached to globalThis so all chunks/routes in the same Node.js process share state
+const globalForMock = globalThis as unknown as {
+  mockEmailProvider: MockProvider | undefined;
+};
+
+export const mockEmailProvider =
+  globalForMock.mockEmailProvider ?? new MockProvider();
+
+globalForMock.mockEmailProvider = mockEmailProvider;

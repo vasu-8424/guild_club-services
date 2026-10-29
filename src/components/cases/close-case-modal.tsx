@@ -7,6 +7,7 @@ import {
   closeCaseTherapistAction,
   type CloseCasePhotoInput,
 } from "@/lib/actions/case-close-actions";
+import { WritingAssist } from "@/components/writing-assist/writing-assist";
 import { Camera, Trash2, AlertTriangle, X } from "lucide-react";
 
 interface CloseCaseModalProps {
@@ -250,8 +251,18 @@ export function CloseCaseModal({
                   maxLength={3000}
                   rows={3}
                   placeholder="Describe patient's condition, mobility, or functional status at discharge..."
-                  className="w-full border border-stone-300 p-2.5 text-xs focus:outline-none focus:border-[#0B7A63] rounded-none bg-white font-sans"
+                  className="w-full border border-stone-300 p-2.5 text-base sm:text-xs focus:outline-none focus:border-[#0B7A63] rounded-none bg-white font-sans"
+                  spellCheck={true}
+                  lang="en-IN"
+                  autoCapitalize="sentences"
+                  autoComplete="off"
                   required
+                />
+                <WritingAssist
+                  text={currentCondition}
+                  onApplyText={(val) => setCurrentCondition(val)}
+                  context="patient_condition"
+                  knownNames={[patientId]}
                 />
                 <p className="text-[11px] text-stone-400">
                   Example: Patient swallows pureed and soft solids comfortably without choking.
@@ -278,8 +289,18 @@ export function CloseCaseModal({
                   maxLength={3000}
                   rows={4}
                   placeholder="Detail clinical progression: what functional goals were met, what challenges remain..."
-                  className="w-full border border-stone-300 p-2.5 text-xs focus:outline-none focus:border-[#0B7A63] rounded-none bg-white font-sans"
+                  className="w-full border border-stone-300 p-2.5 text-base sm:text-xs focus:outline-none focus:border-[#0B7A63] rounded-none bg-white font-sans"
+                  spellCheck={true}
+                  lang="en-IN"
+                  autoCapitalize="sentences"
+                  autoComplete="off"
                   required
+                />
+                <WritingAssist
+                  text={progressText}
+                  onApplyText={(val) => setProgressText(val)}
+                  context="progress_report"
+                  knownNames={[patientId]}
                 />
                 <p className="text-[11px] text-stone-400">
                   Example: Oral transit time reduced by 50%. Laryngeal elevation has returned to functional baseline.
@@ -417,8 +438,18 @@ export function CloseCaseModal({
                   onChange={(e) => setClosingSummary(e.target.value)}
                   rows={2}
                   placeholder="Summary of course of care and discharge recommendation..."
-                  className="w-full border border-stone-300 p-2 text-xs focus:outline-none focus:border-[#0B7A63] rounded-none bg-white font-sans"
+                  className="w-full border border-stone-300 p-2 text-base sm:text-xs focus:outline-none focus:border-[#0B7A63] rounded-none bg-white font-sans"
+                  spellCheck={true}
+                  lang="en-IN"
+                  autoCapitalize="sentences"
+                  autoComplete="off"
                   required
+                />
+                <WritingAssist
+                  text={closingSummary}
+                  onApplyText={(val) => setClosingSummary(val)}
+                  context="closing_summary"
+                  knownNames={[patientId]}
                 />
                 {fieldErrors.closingSummary && (
                   <p className="text-[11px] text-red-600 font-medium">{fieldErrors.closingSummary}</p>

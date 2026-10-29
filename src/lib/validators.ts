@@ -82,7 +82,15 @@ export const createAdminSchema = z
       .transform((val) => normalizePhoneNumber(val) ?? ""),
     password: manualPasswordSchema,
     confirmPassword: z.string().min(1, "Please confirm password"),
-    branchIds: z.array(z.string().uuid("Invalid branch ID")).optional(),
+    branchIds: z
+      .array(z.string().uuid("Invalid branch ID"), {
+        message: "Choose at least one branch",
+      })
+      .min(1, "Choose at least one branch")
+      .max(20, "At most 20 branches can be assigned")
+      .refine((items) => new Set(items).size === items.length, {
+        message: "Duplicate branches are not allowed",
+      }),
     emailCredentials: z.boolean().default(true).optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {

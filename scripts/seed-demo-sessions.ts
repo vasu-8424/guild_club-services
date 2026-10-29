@@ -3,15 +3,15 @@ import * as dotenv from "dotenv";
 
 dotenv.config({ path: ".env" });
 
-// Strict safety check: refuse to run in production
-if (process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production") {
-  console.error("❌ Refusing to run demo seed script in production!");
-  process.exit(1);
-}
-
 const dbUrl = process.env.DATABASE_URL;
 if (!dbUrl) {
   console.error("❌ DATABASE_URL is not defined in .env");
+  process.exit(1);
+}
+
+// Strict safety check: refuse to run in production
+if (process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production" || (dbUrl.includes("/neondb?") && !process.env.ALLOW_PROD_SEED)) {
+  console.error("❌ Refusing to run demo seed script in production or against the production database!");
   process.exit(1);
 }
 

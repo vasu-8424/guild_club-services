@@ -29,6 +29,24 @@ export default async function AdminDashboard({
 
   const scope = await getScope(user, branchParam);
 
+  if (user.role === "admin" && scope.allowedBranches.length === 0) {
+    return (
+      <DashboardShell user={user} title="Dashboard">
+        <div
+          data-testid="no-branch-message"
+          className="border border-amber-300 bg-amber-50 p-6 text-amber-900 rounded-none shadow-xs"
+        >
+          <h2 className="text-base font-semibold text-amber-950 mb-1">
+            No Active Branch
+          </h2>
+          <p className="text-sm">
+            Your account is not linked to an active branch. Contact your Super Admin.
+          </p>
+        </div>
+      </DashboardShell>
+    );
+  }
+
   if (scope.isSuperAdmin && !scope.hasSelectedBranch) {
     return (
       <DashboardShell user={user} title="Dashboard">

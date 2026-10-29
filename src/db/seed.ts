@@ -18,6 +18,12 @@ async function seed() {
     process.exit(1);
   }
 
+  // Safety guard: refuse to run when NODE_ENV is production or when targeting production DB
+  if (process.env.NODE_ENV === "production" || (connectionString.includes("/neondb?") && !process.env.ALLOW_PROD_SEED)) {
+    console.error("🛑 CRITICAL SAFETY GUARD: Database seeding is refused in production or against the production branch.");
+    process.exit(1);
+  }
+
   const sql = neon(connectionString);
   const db = drizzle(sql);
 

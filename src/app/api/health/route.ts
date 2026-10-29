@@ -4,37 +4,34 @@ import { sql } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const checkDb = searchParams.get("db") === "true";
-
-  const response: Record<string, any> = {
+export async function GET() {
+  const response: {
+    status: "ok" | "degraded";
+    app: string;
+    database: "connected" | "disconnected";
+    timestamp: string;
+    uptime: number;
+  } = {
     status: "ok",
     app: "Guild Club Services",
+    database: "connected",
     timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
+    uptime: Math.floor(process.uptime()),
   };
 
-  let dbHost = "none";
   try {
-    if (process.env.DATABASE_URL) {
-      dbHost = new URL(process.env.DATABASE_URL).host;
-    }
+    await db.execute(sql`SELECT 1`);
+    response.database = "connected";
   } catch {
-    dbHost = "invalid URL";
-  }
-  response.dbHost = dbHost;
-
-  if (checkDb) {
-    try {
-      await db.execute(sql`SELECT 1`);
-      response.database = "connected";
-    } catch (err: any) {
-      response.status = "degraded";
-      response.database = "error: " + (err?.cause?.message || err?.message || String(err));
-      return NextResponse.json(response, { status: 503 });
-    }
+    response.status = "degraded";
+    response.database = "disconnected";
+    return NextResponse.json(response, { status: 503 });
   }
 
-  return NextResponse.json(response, { status: 200 });
+  return NextResponse.json(response, {
+    status: 200,
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+    },
+  });
 }

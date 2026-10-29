@@ -20,6 +20,7 @@ interface CredentialsSuccessModalProps {
   title?: string;
   emailWarning?: string | null;
   userId?: string;
+  branchNames?: string[];
   onDone?: () => void;
 }
 
@@ -32,6 +33,7 @@ export function CredentialsSuccessModal({
   title,
   emailWarning,
   userId,
+  branchNames,
   onDone,
 }: CredentialsSuccessModalProps) {
   const [copiedEmail, setCopiedEmail] = React.useState(false);
@@ -93,7 +95,9 @@ export function CredentialsSuccessModal({
               {title || `${roleLabel} Account Created Successfully!`}
             </CardTitle>
             <CardDescription className="text-emerald-800 text-xs">
-              Direct login credentials have been configured.
+              {branchNames && branchNames.length > 0
+                ? `Assigned branches: ${branchNames.join(", ")}. Direct login credentials ready.`
+                : "Direct login credentials have been configured."}
             </CardDescription>
           </div>
         </div>
@@ -203,6 +207,21 @@ export function CredentialsSuccessModal({
               >
                 {password}
               </code>
+            </div>
+          )}
+
+          {/* Assigned Branches Row */}
+          {branchNames && branchNames.length > 0 && (
+            <div data-testid="credentials-branches-section">
+              <div className="text-xs text-slate-500 mb-1">
+                <span>Assigned Branches:</span>
+              </div>
+              <div
+                data-testid="credentials-branches"
+                className="block rounded-lg bg-white p-2.5 text-sm font-semibold text-slate-900 border border-slate-200"
+              >
+                {branchNames.join(", ")}
+              </div>
             </div>
           )}
         </div>

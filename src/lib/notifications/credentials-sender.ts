@@ -14,6 +14,7 @@ export interface SendCredentialsParams {
   createdByName: string;
   password?: string;
   emailCredentials?: boolean;
+  branchNames?: string[];
 }
 
 export interface SendCredentialsResult {
@@ -52,8 +53,9 @@ export function renderCredentialsEmail(options: {
   includePassword?: boolean;
   baseUrl: string;
   replyTo: string;
+  branchNames?: string[];
 }): { subject: string; html: string; text: string } {
-  const { toEmail, toName, role, createdByName, password, includePassword, baseUrl, replyTo } = options;
+  const { toEmail, toName, role, createdByName, password, includePassword, baseUrl, replyTo, branchNames } = options;
   const loginUrl = `${baseUrl.replace(/\/$/, "")}/login`;
   const roleDisplay = role === "admin" ? "Admin" : "Therapist";
 
@@ -66,6 +68,17 @@ export function renderCredentialsEmail(options: {
   const passwordDisplay = (includePassword !== false && password)
     ? password
     : null;
+
+  const branchesRowHtml = branchNames && branchNames.length > 0
+    ? `
+        <tr>
+          <td style="padding: 7px 0; font-weight: 600; color: #64748b;">Assigned Branches:</td>
+          <td style="padding: 7px 0; font-weight: 700; color: #0f172a;">
+            ${branchNames.join(", ")}
+          </td>
+        </tr>
+    `
+    : "";
 
   const credentialsBoxHtml = `
     <!-- High-Clarity Account Credentials Box -->
@@ -100,6 +113,7 @@ export function renderCredentialsEmail(options: {
             ${roleDisplay}
           </td>
         </tr>
+        ${branchesRowHtml}
         <tr>
           <td style="padding: 7px 0; font-weight: 600; color: #64748b;">Created By:</td>
           <td style="padding: 7px 0; color: #475569;">
@@ -181,6 +195,11 @@ export function renderCredentialsEmail(options: {
           <p style="margin: 0 0 16px 0; font-size: 14px; color: #475569; line-height: 1.6;">
             Your <strong>${roleDisplay}</strong> account has been created by <strong>${createdByName}</strong> on the Guild Club Services platform.
           </p>
+          ${branchNames && branchNames.length > 0 ? `
+          <p style="margin: 0 0 16px 0; font-size: 14px; color: #334155; line-height: 1.6;">
+            Your branches: <strong>${branchNames.join(", ")}</strong>
+          </p>
+          ` : ""}
 
           ${credentialsBoxHtml}
 
@@ -227,7 +246,7 @@ export function renderCredentialsEmail(options: {
 Hello ${toName},
 
 Your ${roleDisplay} account has been created by ${createdByName} on the Guild Club Services platform.
-
+${branchNames && branchNames.length > 0 ? `Your branches: ${branchNames.join(", ")}\n` : ""}
 =====================================================
 YOUR GUILD CLUB SERVICES LOGIN CREDENTIALS
 =====================================================
@@ -235,7 +254,7 @@ Portal URL:       ${loginUrl}
 Login ID / Email: ${toEmail}
 Access Password:  ${passwordDisplay || "(Will be securely shared with you directly by the administrator)"}
 Role:             ${roleDisplay}
-Created By:       ${createdByName}
+${branchNames && branchNames.length > 0 ? `Branches:         ${branchNames.join(", ")}\n` : ""}Created By:       ${createdByName}
 =====================================================
 
 Sign in: ${loginUrl}
@@ -323,7 +342,17 @@ export async function sendCredentialsDirect(
     includePassword: env.INCLUDE_PASSWORD_IN_EMAIL !== false,
     baseUrl: env.APP_BASE_URL,
     replyTo: env.EMAIL_REPLY_TO || "support@shreespeechhearingandrehabilitation.com",
+    branchNames: params.branchNames,
   });
+
+  // Simulated failure hook for test environments (e.g. ADM-BR-05)
+  if (toEmail.includes("fail.admin") || toEmail.includes("simulate-failure")) {
+    return {
+      success: false,
+      emailSent: false,
+      error: "Simulated SMTP timeout",
+    };
+  }
 
   const provider = getEmailProvider();
   const templateName = role === "admin" ? "admin_account_created" : "account_created";
@@ -366,6 +395,7 @@ export async function sendCredentialsDirect(
       role,
       createdByName,
       passwordIncluded: env.INCLUDE_PASSWORD_IN_EMAIL,
+      branchNames: params.branchNames,
     },
     status: sendResult.success ? "sent" : "failed",
     sentAt: sendResult.success ? new Date() : null,

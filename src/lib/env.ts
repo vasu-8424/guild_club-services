@@ -2,6 +2,9 @@ import { z } from "zod";
 
 const envSchema = z
   .object({
+    DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+    AUTH_SECRET: z.string().min(32, "AUTH_SECRET must be at least 32 characters"),
+    APP_TIMEZONE: z.string().default("Asia/Kolkata"),
     EMAIL_PROVIDER: z
       .string()
       .default("mock")
@@ -81,9 +84,30 @@ const envSchema = z
         if (val === false || val === "false" || val === "0") return false;
         return true;
       }),
+    WRITING_ASSIST_PROVIDER: z
+      .string()
+      .optional()
+      .default("off")
+      .transform((val) => val.trim().toLowerCase())
+      .pipe(z.enum(["off", "gemini", "anthropic", "mock"])),
+    WRITING_ASSIST_API_KEY: z.string().optional().default(""),
   })
   .superRefine((data, ctx) => {
-    // If EMAIL_PROVIDER is resend, enforce required variables
+    // 1. Production Safety Rule: EMAIL_PROVIDER=mock is impossible in production
+    if (
+      process.env.NODE_ENV === "production" &&
+      process.env.PLAYWRIGHT_TEST !== "true" &&
+      process.env.PLAYWRIGHT_TEST !== "1" &&
+      data.EMAIL_PROVIDER === "mock"
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "EMAIL_PROVIDER cannot be 'mock' in production environment",
+        path: ["EMAIL_PROVIDER"],
+      });
+    }
+
+    // 2. If EMAIL_PROVIDER is resend, enforce required variables
     if (data.EMAIL_PROVIDER === "resend") {
       if (!data.RESEND_API_KEY || data.RESEND_API_KEY.trim() === "") {
         ctx.addIssue({
@@ -113,6 +137,17 @@ const envSchema = z
         }
       }
     }
+
+    // 3. If WRITING_ASSIST_PROVIDER is gemini or anthropic, require API key
+    if (data.WRITING_ASSIST_PROVIDER === "gemini" || data.WRITING_ASSIST_PROVIDER === "anthropic") {
+      if (!data.WRITING_ASSIST_API_KEY || data.WRITING_ASSIST_API_KEY.trim() === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `WRITING_ASSIST_API_KEY is required when WRITING_ASSIST_PROVIDER is '${data.WRITING_ASSIST_PROVIDER}'`,
+          path: ["WRITING_ASSIST_API_KEY"],
+        });
+      }
+    }
   });
 
 export type EnvConfig = z.infer<typeof envSchema>;
@@ -121,6 +156,9 @@ let cachedEnv: EnvConfig | null = null;
 
 export function validateEnv(customSource?: Record<string, string | undefined>): EnvConfig {
   const raw = customSource ?? {
+    DATABASE_URL: process.env.DATABASE_URL,
+    AUTH_SECRET: process.env.AUTH_SECRET,
+    APP_TIMEZONE: process.env.APP_TIMEZONE,
     EMAIL_PROVIDER: process.env.EMAIL_PROVIDER,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME,
@@ -137,6 +175,9 @@ export function validateEnv(customSource?: Record<string, string | undefined>): 
     NOTIFY_SUPER_ADMINS_ON_CLOSE: process.env.NOTIFY_SUPER_ADMINS_ON_CLOSE,
     NOTIFY_ADMIN_ON_SESSION_COMPLETE: process.env.NOTIFY_ADMIN_ON_SESSION_COMPLETE,
     REQUIRE_LOCATION_ON_LOGIN: process.env.REQUIRE_LOCATION_ON_LOGIN,
+    NOTE_EMAIL_ENABLED: process.env.NOTE_EMAIL_ENABLED,
+    WRITING_ASSIST_PROVIDER: process.env.WRITING_ASSIST_PROVIDER,
+    WRITING_ASSIST_API_KEY: process.env.WRITING_ASSIST_API_KEY,
   };
 
   const parsed = envSchema.safeParse(raw);
@@ -148,16 +189,16 @@ export function validateEnv(customSource?: Record<string, string | undefined>): 
   }
 
   // Guard against sending real emails during automated tests
-  const isTestEnvironment =
+  if (
     process.env.NODE_ENV === "test" ||
-    Boolean(process.env.PLAYWRIGHT_TEST) ||
-    Boolean(process.env.VITEST) ||
-    Boolean(process.env.JEST_WORKER_ID);
-
-  if (isTestEnvironment && parsed.data.EMAIL_PROVIDER === "resend" && !parsed.data.ALLOW_REAL_EMAIL_TESTS) {
-    throw new Error(
-      "Automated tests must NEVER send real email. Set EMAIL_PROVIDER=mock or ALLOW_REAL_EMAIL_TESTS=true."
-    );
+    process.env.PLAYWRIGHT_TEST === "true" ||
+    process.env.CI === "true"
+  ) {
+    if (parsed.data.EMAIL_PROVIDER === "resend" && !parsed.data.ALLOW_REAL_EMAIL_TESTS) {
+      throw new Error(
+        "CRITICAL SAFETY GUARD: Automated test run detected with EMAIL_PROVIDER=resend. Real email delivery is blocked to prevent accidental emails to clinical staff."
+      );
+    }
   }
 
   return parsed.data;
@@ -170,11 +211,13 @@ export function getEnv(): EnvConfig {
   return cachedEnv;
 }
 
-export function resetEnvCache(): void {
+export function resetCachedEnv(): void {
   cachedEnv = null;
 }
 
-export function getFormattedSender(env?: EnvConfig): string {
-  const currentEnv = env ?? getEnv();
-  return `${currentEnv.EMAIL_FROM_NAME} <${currentEnv.EMAIL_FROM_ADDRESS}>`;
+export const resetEnvCache = resetCachedEnv;
+
+export function getFormattedSender(customEnv?: EnvConfig): string {
+  const env = customEnv || getEnv();
+  return `${env.EMAIL_FROM_NAME} <${env.EMAIL_FROM_ADDRESS}>`;
 }

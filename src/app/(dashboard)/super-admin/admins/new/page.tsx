@@ -1,11 +1,27 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/session";
+import { getScope } from "@/lib/scope";
+import { db } from "@/db";
+import { branches } from "@/db/schema";
+import { eq, asc } from "drizzle-orm";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { CreateAdminForm } from "./create-admin-form";
 import { ArrowLeft } from "lucide-react";
 
 export default async function NewAdminPage() {
   const currentUser = await requireRole("super_admin");
+  const scope = await getScope(currentUser);
+
+  // Fetch only active branches
+  const activeBranches = await db
+    .select({
+      id: branches.id,
+      name: branches.name,
+      isActive: branches.isActive,
+    })
+    .from(branches)
+    .where(eq(branches.isActive, true))
+    .orderBy(asc(branches.name));
 
   return (
     <DashboardShell user={currentUser} title="Create Administrator">
@@ -26,7 +42,10 @@ export default async function NewAdminPage() {
           </p>
         </div>
 
-        <CreateAdminForm />
+        <CreateAdminForm
+          branches={activeBranches}
+          defaultBranchId={scope.activeBranchId}
+        />
       </div>
     </DashboardShell>
   );

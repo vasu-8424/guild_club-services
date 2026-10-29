@@ -198,11 +198,11 @@ export function Sidebar({ role, userName }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile Toggle Button (Floating) */}
-      <div className="lg:hidden fixed bottom-4 right-4 z-50">
+      {/* Mobile Toggle Button (Floating with safe area padding) */}
+      <div className="lg:hidden fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 z-50">
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="flex h-12 w-12 items-center justify-center rounded-none bg-[#0B7A63] text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-[#0B7A63]"
+          className="flex h-12 w-12 min-h-[44px] min-w-[44px] items-center justify-center rounded-none bg-[#0B7A63] text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-[#0B7A63] cursor-pointer"
           aria-label="Toggle navigation menu"
         >
           {mobileOpen ? <Icons.Close className="h-6 w-6" /> : <Icons.Menu className="h-6 w-6" />}

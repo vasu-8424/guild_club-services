@@ -8,11 +8,18 @@ import { RowActionsMenu, RowActionMenuItem } from "@/components/ui/row-actions-m
 import { ResetPasswordModal } from "@/components/auth/reset-password-modal";
 import { ResendCredentialsModal } from "@/components/auth/resend-credentials-modal";
 import { DeleteUserModal } from "@/components/auth/delete-user-modal";
+import { EditAdminBranchesModal } from "@/components/admin/edit-admin-branches-modal";
 import {
   resetAdminPasswordAction,
   deleteAdminAction,
   toggleAdminStatusAction,
 } from "@/lib/actions/admin-actions";
+
+interface BranchOption {
+  id: string;
+  name: string;
+  isActive: boolean;
+}
 
 interface AdminRowActionsProps {
   admin: {
@@ -23,14 +30,27 @@ interface AdminRowActionsProps {
     deletedAt: Date | null;
   };
   currentUserId: string;
+  branches?: BranchOption[];
+  assignedBranchIds?: string[];
 }
 
-export function AdminRowActions({ admin, currentUserId }: AdminRowActionsProps) {
+export function AdminRowActions({
+  admin,
+  currentUserId,
+  branches = [],
+  assignedBranchIds = [],
+}: AdminRowActionsProps) {
   const router = useRouter();
   const [showResetModal, setShowResetModal] = React.useState(false);
   const [showResendModal, setShowResendModal] = React.useState(false);
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+  const [showEditBranchesModal, setShowEditBranchesModal] = React.useState(false);
+  const [currentBranchIds, setCurrentBranchIds] = React.useState<string[]>(assignedBranchIds);
   const [isToggling, setIsToggling] = React.useState(false);
+
+  React.useEffect(() => {
+    setCurrentBranchIds(assignedBranchIds);
+  }, [assignedBranchIds]);
 
   const isSelf = admin.id === currentUserId;
   const isDeleted = admin.deletedAt !== null;
@@ -63,6 +83,13 @@ export function AdminRowActions({ admin, currentUserId }: AdminRowActionsProps) 
   };
 
   const menuItems: RowActionMenuItem[] = [
+    {
+      key: "edit-branches",
+      label: "Edit branches",
+      icon: <Icons.Buildings />,
+      onClick: () => setShowEditBranchesModal(true),
+      "data-testid": `edit-branches-btn-${admin.id}`,
+    },
     {
       key: "resend-credentials",
       label: "Resend credentials",
@@ -153,6 +180,18 @@ export function AdminRowActions({ admin, currentUserId }: AdminRowActionsProps) 
         userEmail={admin.email}
         roleLabel="admin"
         onDelete={deleteAdminAction}
+      />
+
+      <EditAdminBranchesModal
+        isOpen={showEditBranchesModal}
+        onClose={() => setShowEditBranchesModal(false)}
+        adminId={admin.id}
+        adminName={admin.name}
+        branches={branches}
+        assignedBranchIds={currentBranchIds}
+        onSaved={(newIds) => {
+          if (newIds) setCurrentBranchIds(newIds);
+        }}
       />
     </>
   );

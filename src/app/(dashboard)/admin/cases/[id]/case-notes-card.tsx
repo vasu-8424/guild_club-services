@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { addNoteAction } from "@/lib/actions/case-actions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { WritingAssist } from "@/components/writing-assist/writing-assist";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { FileText, Send, AlertCircle, CheckCircle } from "lucide-react";
 import { Icons } from "@/components/ui/icons";
@@ -131,6 +132,11 @@ export function CaseNotesCard({ caseId, notes }: CaseNotesCardProps) {
             value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
             required
+          />
+          <WritingAssist
+            text={newNote}
+            onApplyText={(val) => setNewNote(val)}
+            context="session_note"
           />
 
           <Button

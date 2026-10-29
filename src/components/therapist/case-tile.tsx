@@ -28,7 +28,7 @@ interface CaseTileProps {
   onTileClick: (caseItem: CaseTileData) => void;
 }
 
-export function CaseTile({ caseItem, onTileClick }: CaseTileProps) {
+function CaseTileComponent({ caseItem, onTileClick }: CaseTileProps) {
   const session = caseItem.todaySession;
 
   // Verify all 3 items saved on the server
@@ -171,3 +171,5 @@ export function CaseTile({ caseItem, onTileClick }: CaseTileProps) {
     </div>
   );
 }
+
+export const CaseTile = React.memo(CaseTileComponent);

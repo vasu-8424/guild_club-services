@@ -244,6 +244,7 @@ export const rooms = pgTable(
       table.branchId,
       sql`lower(trim("room_no"))`
     ),
+    index("rooms_branch_id_idx").on(table.branchId),
   ]
 );
 
@@ -292,6 +293,9 @@ export const cases = pgTable(
       .on(table.roomId)
       .where(sql`"status" <> 'completed' AND "room_id" IS NOT NULL`),
     index("cases_branch_id_idx").on(table.branchId),
+    index("cases_client_id_idx").on(table.clientId),
+    index("cases_therapist_id_idx").on(table.currentTherapistId),
+    index("cases_room_id_idx").on(table.roomId),
   ]
 );
 
@@ -413,6 +417,8 @@ export const sessions = pgTable(
       .on(table.caseId, table.sessionDate)
       .where(sql`"session_date" IS NOT NULL`),
     index("sessions_branch_id_idx").on(table.branchId),
+    index("sessions_case_id_idx").on(table.caseId),
+    index("sessions_therapist_id_idx").on(table.therapistId),
   ]
 );
 
