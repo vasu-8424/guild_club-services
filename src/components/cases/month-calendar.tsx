@@ -18,6 +18,7 @@ import {
   updateTodaySessionNoteAction,
 } from "@/lib/actions/therapist-session-new-actions";
 import { getTodayIST } from "@/lib/date-utils";
+import { SignaturePad } from "@/components/therapist/signature-pad";
 
 export interface CalendarSessionItem {
   id: string;
@@ -67,6 +68,8 @@ export function MonthCalendar({
 
   // Record Form state
   const [noteText, setNoteText] = useState("");
+  const [presentConditionText, setPresentConditionText] = useState("");
+  const [signatureBase64, setSignatureBase64] = useState<string | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [photoContentType, setPhotoContentType] = useState<string | null>(null);
   const [photoName, setPhotoName] = useState<string | null>(null);
@@ -240,6 +243,8 @@ export function MonthCalendar({
         return;
       }
       setNoteText("");
+      setPresentConditionText("");
+      setSignatureBase64(null);
       setPhotoDataUrl(null);
       setFormError(null);
       setActiveModal({ type: "record", dateStr: day.dateStr });
@@ -253,8 +258,16 @@ export function MonthCalendar({
   // Submit session
   const handleSaveSession = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (presentConditionText.trim().length < 10) {
+      setFormError("Present condition today must be at least 10 characters.");
+      return;
+    }
     if (noteText.trim().length < 10) {
       setFormError("Session note must be at least 10 characters.");
+      return;
+    }
+    if (!signatureBase64) {
+      setFormError("Patient signature is required every day.");
       return;
     }
 
@@ -263,7 +276,9 @@ export function MonthCalendar({
 
     const res = await recordDailySessionAction({
       caseId,
+      presentCondition: presentConditionText.trim(),
       note: noteText.trim(),
+      signatureBase64,
       photoBase64: photoDataUrl || undefined,
       photoContentType: photoContentType || undefined,
       photoFilename: photoName || undefined,
@@ -503,22 +518,47 @@ export function MonthCalendar({
             )}
 
             <form onSubmit={handleSaveSession} className="space-y-4">
+              {/* 1. Present Condition Today */}
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-stone-700 block">
-                  How did today's session go? <span className="text-red-500">*</span>
+                  1. Present condition today <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  data-testid="present-condition-input"
+                  value={presentConditionText}
+                  onChange={(e) => setPresentConditionText(e.target.value)}
+                  rows={2}
+                  placeholder="Patient's condition today (minimum 10 characters)..."
+                  className="w-full border border-stone-300 p-2.5 text-xs focus:outline-hidden focus:border-[#0B7A63] rounded-none bg-white"
+                  required
+                />
+                <p className="text-[10px] text-stone-400">
+                  Minimum 10 characters required.
+                </p>
+              </div>
+
+              {/* 2. Session Note */}
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-stone-700 block">
+                  2. Session note <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   data-testid="session-note-input"
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
-                  rows={4}
+                  rows={3}
                   placeholder="Record exercises performed, patient responses, and notes (minimum 10 characters)..."
-                  className="w-full border border-stone-300 p-2.5 text-xs focus:outline-none focus:border-[#0B7A63] rounded-none bg-white"
+                  className="w-full border border-stone-300 p-2.5 text-xs focus:outline-hidden focus:border-[#0B7A63] rounded-none bg-white"
                   required
                 />
                 <p className="text-[10px] text-stone-400">
                   Minimum 10 characters required. Editable until midnight IST.
                 </p>
+              </div>
+
+              {/* 3. Patient Signature */}
+              <div className="space-y-1">
+                <SignaturePad onChange={(dataUrl) => setSignatureBase64(dataUrl)} />
               </div>
 
               {/* Optional Photo */}

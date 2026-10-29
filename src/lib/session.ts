@@ -21,6 +21,7 @@ export interface CurrentUser {
   temporaryPasswordPrompt: boolean;
   deletedAt: Date | null;
   sessionVersion: number;
+  loginRecordId?: string | null;
 }
 
 /**
@@ -69,7 +70,10 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       return null;
     }
 
-    return dbUser;
+    return {
+      ...dbUser,
+      loginRecordId: payload.loginRecordId || null,
+    };
   } catch (error) {
     console.error("Failed to fetch current user from database:", error);
     return null;

@@ -1,6 +1,6 @@
+import "dotenv/config";
 import dotenv from "dotenv";
-dotenv.config({ path: ".env.test" });
-dotenv.config();
+dotenv.config({ path: ".env.test", override: true });
 
 // Enforce mock provider and test environment
 process.env.EMAIL_PROVIDER = "mock";
@@ -8,7 +8,7 @@ process.env.ALLOW_REAL_EMAIL_TESTS = "false";
 (process.env as Record<string, string>).NODE_ENV = "test";
 
 import { db } from "../src/db";
-import { users, clients, cases, sessions, inAppNotifications, caseEvents, emailQueue } from "../src/db/schema";
+import { users, clients, cases, sessions, inAppNotifications, caseEvents, emailQueue, branches } from "../src/db/schema";
 import { eq, and, or, sql, desc, isNull, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { mockEmailProvider } from "../src/lib/notifications/providers/mock";
@@ -51,7 +51,16 @@ async function runTestSuite() {
   const therapistEmail = `test.therapist.${ts}@guildclubservices.com`;
   const testPassword = "SecretPassword@2026!";
 
-  console.log("1. Setting up Test Users...");
+  console.log("1. Setting up Test Users and Branch...");
+  const [testBranch] = await db
+    .insert(branches)
+    .values({
+      name: `Test Branch ${ts}`,
+      isActive: true,
+    })
+    .returning();
+  const testBranchId = testBranch.id;
+
   const [saUser] = await db
     .insert(users)
     .values({
@@ -280,6 +289,7 @@ async function runTestSuite() {
     .values({
       caseNumber: caseNum,
       clientId,
+      branchId: testBranchId,
       category: "Individual Therapy",
       priority: "urgent",
       description: "Test Case Description",
@@ -302,6 +312,7 @@ async function runTestSuite() {
   for (let s = 1; s <= 3; s++) {
     await db.insert(sessions).values({
       caseId: caseRow.id,
+      branchId: testBranchId,
       therapistId: therapistUser.id,
       scheduledAt: new Date(),
       status: "held",
@@ -392,6 +403,7 @@ async function runTestSuite() {
     .values({
       caseNumber: caseNum2,
       clientId,
+      branchId: testBranchId,
       category: "Couples Therapy",
       priority: "medium",
       description: "Test Case 2",
@@ -599,6 +611,7 @@ async function runTestSuite() {
     .values({
       caseNumber: caseNum3,
       clientId,
+      branchId: testBranchId,
       category: "Child Assessment",
       priority: "high",
       description: "Test Deactivated",

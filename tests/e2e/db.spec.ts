@@ -3,7 +3,7 @@ import { neon, Pool } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { assertTestDatabase } from "../helpers/seed-test-data";
 import { recordEvent } from "../../src/lib/events";
-import { cases, clients, caseEvents } from "../../src/db/schema";
+import { cases, clients, caseEvents, branches } from "../../src/db/schema";
 import { execSync } from "child_process";
 
 test.describe("F. Database Schema, Integrity & Events", () => {
@@ -109,10 +109,12 @@ test.describe("F. Database Schema, Integrity & Events", () => {
       .returning();
 
     const [adminUser] = await sql`SELECT id FROM users WHERE role = 'admin' LIMIT 1`;
+    const [branchRow] = await db.select().from(branches).limit(1);
 
     await db.insert(cases).values({
       caseNumber: "GCS-2026-TEST-UNIQUE",
       clientId: testClient.id,
+      branchId: branchRow.id,
       category: "Stress Management",
       priority: "medium",
       description: "First instance",
@@ -125,6 +127,7 @@ test.describe("F. Database Schema, Integrity & Events", () => {
       await db.insert(cases).values({
         caseNumber: "GCS-2026-TEST-UNIQUE", // Duplicate case number!
         clientId: testClient.id,
+        branchId: branchRow.id,
         category: "Stress Management",
         priority: "medium",
         description: "Second duplicate instance",

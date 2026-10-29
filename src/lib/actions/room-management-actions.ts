@@ -8,6 +8,7 @@ import { rooms, cases, branches, clients, users } from "@/db/schema";
 import { requireRole, getCurrentUser } from "@/lib/session";
 import { recordEvent } from "@/lib/events";
 import { formatToISTDateString } from "@/lib/date-utils";
+import { getScope } from "@/lib/scope";
 
 export interface RoomListItem {
   id: string;
@@ -589,6 +590,17 @@ export async function getFreeRoomsForBranchAction(branchId: string): Promise<{
 
     if (!branchId) {
       return { success: true, rooms: [] };
+    }
+
+    if (currentUser.role === "therapist") {
+      try {
+        const scope = await getScope(currentUser, branchId);
+        if (!scope.canAccessBranch(branchId)) {
+          return { success: false, error: "Forbidden: You are not assigned to this branch." };
+        }
+      } catch {
+        return { success: false, error: "Forbidden: You are not assigned to this branch." };
+      }
     }
 
     // Active rooms in this branch

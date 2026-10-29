@@ -19,6 +19,7 @@ import { notifyCaseCreated } from "@/lib/notifications/in-app";
 import { saveStorageFile } from "@/lib/storage";
 import { getDaysAgoIST, getDaysAheadIST, getTodayIST } from "@/lib/date-utils";
 import { and, eq, ne } from "drizzle-orm";
+import { getScope, ScopeError } from "@/lib/scope";
 
 export interface CreateCasePhotoInput {
   base64Data: string; // data:image/jpeg;base64,... or raw base64
@@ -115,7 +116,19 @@ export async function createCaseTherapistAction(
     branchId,
   } = parsed.data;
 
-  // 3. Date boundary validation: past 30 days to future 30 days IST
+  // 3. Verify therapist branch assignment
+  try {
+    const scope = await getScope(currentUser, branchId);
+    scope.assertBranchAccess(branchId);
+  } catch (err: any) {
+    return {
+      success: false,
+      error: "Forbidden: You are not assigned to this branch.",
+      status: 403,
+    };
+  }
+
+  // 4. Date boundary validation: past 30 days to future 30 days IST
   const minDate = getDaysAgoIST(30);
   const maxDate = getDaysAheadIST(30);
   if (startDate < minDate || startDate > maxDate) {
@@ -292,6 +305,7 @@ export async function createCaseTherapistAction(
         patientId,
         caseNumber,
         therapistName: currentUser.name,
+        branchId: room.branchId,
       });
 
       return {

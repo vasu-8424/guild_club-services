@@ -437,16 +437,38 @@ The simplified Admin panel delivers streamlined operational efficiency with zero
 
 ### 🩺 Therapist Checklist
 - [ ] **Sign In**: Login with Therapist credentials. Verify redirection to `/therapist/dashboard`.
+- [ ] **Branch Display & Switcher**:
+  - [ ] Single assigned branch: renders as an assigned branch badge/label without dropdown.
+  - [ ] Multiple assigned branches: topbar displays branch switcher limited strictly to assigned branches.
+- [ ] **Create Case (`/therapist/cases/new`)**:
+  - [ ] Select Branch first (limited to therapist's assigned branches).
+  - [ ] Select Room (only free rooms in that branch are selectable).
+  - [ ] Verify server rejects any branch the therapist is not assigned to (`403 Forbidden`).
 - [ ] **Caseload Privacy**:
-  - [ ] Confirm only cases assigned to this therapist are listed.
-  - [ ] Verify API `/api/dashboard/people` and `/movements` return 403 Forbidden.
-- [ ] **Accept / Decline Workflow**:
-  - [ ] Accept a pending case invitation. Verify status updates to `accepted`.
-  - [ ] Decline a case invitation with a rationale. Verify case returns to unassigned and admin is notified.
+  - [ ] Confirm only cases assigned to or created by this therapist in the selected branch are listed.
+  - [ ] Verify cases and rooms from other branches or other therapists are completely hidden.
+- [ ] **Progress Reports & Clinical Photos**:
+  - [ ] Confirm reports, photos, and files are accessible only for cases within the therapist's assigned scope.
 - [ ] **Clinical Actions (`/therapist/cases/[id]`)**:
   - [ ] Add confidential clinical notes.
   - [ ] Schedule and mark a therapy session as "held".
   - [ ] Close case with clinical outcome (`successful`, `unsuccessful`, `referred`).
-- [ ] **Date-Wise Historical Review**:
-  - [ ] Select past dates to verify previous session notes and held appointments without ability to modify closed records.
+
+---
+
+## 🧪 Automated Test Verification Suites
+
+Run the automated verification test suites:
+
+```bash
+# 1. Run Feature 1 (Credentials & Direct Email) & Feature 2 (Notifications & Grouping) Suite (64 tests)
+npx tsx scripts/test-feature1-feature2.ts
+
+# 2. Run Branch-Based Access, Room Checks & Isolation Suite (24 tests)
+npx tsx scripts/test-branch-scoping.ts
+
+# 3. Full TypeScript Compile & Type Check
+npx tsc --noEmit
+```
+
 

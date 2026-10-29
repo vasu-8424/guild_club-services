@@ -1,30 +1,36 @@
 "use server";
 
 import { desc, eq, and } from "drizzle-orm";
+import { cookies } from "next/headers";
 import { db } from "@/db";
 import { loginRecords, type LoginLocationStatus } from "@/db/schema";
 import { getCurrentUser } from "@/lib/session";
 import { formatDateTimeIST } from "@/lib/date-utils";
+import { recordEvent } from "@/lib/events";
 import { getEnv } from "@/lib/env";
 
-export interface RecordLocationInput {
+export interface SaveSignInLocationInput {
   recordId?: string;
   latitude?: number | string | null;
   longitude?: number | string | null;
   accuracy?: number | null;
-  status: LoginLocationStatus;
+  status: "captured" | "denied" | "unavailable";
 }
 
-export interface RecordLocationResult {
+export interface SaveSignInLocationResult {
   success: boolean;
-  status: LoginLocationStatus;
+  status: "captured" | "denied" | "unavailable" | "pending";
   recordId?: string;
   error?: string;
 }
 
-export async function recordLoginLocationAction(
-  input: RecordLocationInput
-): Promise<RecordLocationResult> {
+/**
+ * Server Action for saving therapist sign-in location.
+ * The board stays locked until sign_in_location_status is 'captured'.
+ */
+export async function saveSignInLocationAction(
+  input: SaveSignInLocationInput
+): Promise<SaveSignInLocationResult> {
   const user = await getCurrentUser();
   if (!user) {
     return { success: false, status: "unavailable", error: "Unauthorized" };
@@ -34,16 +40,24 @@ export async function recordLoginLocationAction(
     let targetRecordId = input.recordId;
 
     if (!targetRecordId) {
-      // Find the most recent login record for this user
-      const [latest] = await db
-        .select({ id: loginRecords.id })
-        .from(loginRecords)
-        .where(eq(loginRecords.userId, user.id))
-        .orderBy(desc(loginRecords.loggedInAt))
-        .limit(1);
-
-      if (latest) {
-        targetRecordId = latest.id;
+      if (user.loginRecordId) {
+        targetRecordId = user.loginRecordId;
+      } else {
+        const cookieStore = await cookies();
+        const cookieId = cookieStore.get("gcs_latest_login_id")?.value;
+        if (cookieId) {
+          targetRecordId = cookieId;
+        } else {
+          const [latest] = await db
+            .select({ id: loginRecords.id })
+            .from(loginRecords)
+            .where(eq(loginRecords.userId, user.id))
+            .orderBy(desc(loginRecords.signedInAt))
+            .limit(1);
+          if (latest) {
+            targetRecordId = latest.id;
+          }
+        }
       }
     }
 
@@ -55,26 +69,32 @@ export async function recordLoginLocationAction(
       };
     }
 
-    const latStr =
-      input.latitude !== undefined && input.latitude !== null
-        ? String(input.latitude)
-        : null;
-    const lngStr =
-      input.longitude !== undefined && input.longitude !== null
-        ? String(input.longitude)
-        : null;
+    const hasCoords =
+      input.status === "captured" &&
+      input.latitude !== undefined &&
+      input.latitude !== null &&
+      input.longitude !== undefined &&
+      input.longitude !== null;
+
+    const latStr = hasCoords ? String(input.latitude) : null;
+    const lngStr = hasCoords ? String(input.longitude) : null;
     const accuracy =
-      input.accuracy !== undefined && input.accuracy !== null
+      hasCoords && input.accuracy !== undefined && input.accuracy !== null
         ? Math.round(Number(input.accuracy))
         : null;
 
     await db
       .update(loginRecords)
       .set({
+        signInLatitude: latStr,
+        signInLongitude: lngStr,
+        signInAccuracyMeters: accuracy,
+        signInLocationStatus: input.status,
+        // Also update legacy fields for backward compatibility
         latitude: latStr,
         longitude: lngStr,
         accuracyMeters: accuracy,
-        locationStatus: input.status,
+        locationStatus: input.status === "captured" ? "captured" : input.status === "denied" ? "denied" : "unavailable",
       })
       .where(
         and(
@@ -83,13 +103,27 @@ export async function recordLoginLocationAction(
         )
       );
 
+    // Audit event: therapist_location_captured
+    // NOTE: Exact coordinates are never placed in audit events or logs.
+    await recordEvent(db, {
+      eventType: "therapist_location_captured",
+      actorId: user.id,
+      actorRole: user.role,
+      targetUserId: user.id,
+      metadata: {
+        loginRecordId: targetRecordId,
+        status: input.status,
+        timestamp: new Date().toISOString(),
+      },
+    });
+
     return {
       success: true,
       status: input.status,
       recordId: targetRecordId,
     };
   } catch (error) {
-    console.error("Failed to update login record location:", error);
+    console.error("Failed to update sign-in location:", error);
     return {
       success: false,
       status: input.status,
@@ -98,6 +132,9 @@ export async function recordLoginLocationAction(
   }
 }
 
+// Backward compatible alias
+export const recordLoginLocationAction = saveSignInLocationAction;
+
 export interface FormattedLoginRecord {
   id: string;
   loggedInAt: string;
@@ -105,13 +142,25 @@ export interface FormattedLoginRecord {
   loggedOutAt: string | null;
   formattedLoggedOutAt: string | null;
   duration: string | null;
+  // Location info (Only visible to Admin and Super Admin; stripped for therapists)
   locationStatus: LoginLocationStatus;
+  signInLocationStatus: "captured" | "denied" | "unavailable" | "pending";
+  signInLatitude: string | null;
+  signInLongitude: string | null;
+  signInAccuracyMeters: number | null;
+  signInMapUrl: string | null;
+  signOutLocationStatus: "captured" | "denied" | "unavailable" | "not_captured" | null;
+  signOutLatitude: string | null;
+  signOutLongitude: string | null;
+  signOutAccuracyMeters: number | null;
+  signOutMapUrl: string | null;
+  // Legacy aliases
   latitude: string | null;
   longitude: string | null;
   accuracyMeters: number | null;
+  mapUrl: string | null;
   ipAddress: string | null;
   userAgent: string | null;
-  mapUrl: string | null;
 }
 
 export async function getTherapistLoginHistoryAction(
@@ -136,22 +185,39 @@ export async function getTherapistLoginHistoryAction(
       .select()
       .from(loginRecords)
       .where(eq(loginRecords.userId, targetUserId))
-      .orderBy(desc(loginRecords.loggedInAt))
+      .orderBy(desc(loginRecords.signedInAt))
       .limit(50);
 
+    const isPrivileged = currentUser.role === "admin" || currentUser.role === "super_admin";
+
     const records: FormattedLoginRecord[] = rawRecords.map((r) => {
-      let mapUrl: string | null = null;
-      if (r.latitude && r.longitude) {
-        mapUrl = `https://www.openstreetmap.org/?mlat=${encodeURIComponent(
-          r.latitude
-        )}&mlon=${encodeURIComponent(r.longitude)}#map=17/${encodeURIComponent(
-          r.latitude
-        )}/${encodeURIComponent(r.longitude)}`;
+      // Build OpenStreetMap links (visible ONLY to Admin / Super Admin)
+      let signInMapUrl: string | null = null;
+      const sLat = r.signInLatitude || r.latitude;
+      const sLng = r.signInLongitude || r.longitude;
+      if (isPrivileged && sLat && sLng) {
+        signInMapUrl = `https://www.openstreetmap.org/?mlat=${encodeURIComponent(
+          sLat
+        )}&mlon=${encodeURIComponent(sLng)}#map=17/${encodeURIComponent(
+          sLat
+        )}/${encodeURIComponent(sLng)}`;
       }
 
+      let signOutMapUrl: string | null = null;
+      if (isPrivileged && r.signOutLatitude && r.signOutLongitude) {
+        signOutMapUrl = `https://www.openstreetmap.org/?mlat=${encodeURIComponent(
+          r.signOutLatitude
+        )}&mlon=${encodeURIComponent(r.signOutLongitude)}#map=17/${encodeURIComponent(
+          r.signOutLatitude
+        )}/${encodeURIComponent(r.signOutLongitude)}`;
+      }
+
+      const effectiveSignInDate = r.signedInAt || r.loggedInAt;
+      const effectiveSignOutDate = r.signedOutAt || r.loggedOutAt;
+
       let duration: string | null = "Active session";
-      if (r.loggedOutAt) {
-        const diffMs = r.loggedOutAt.getTime() - r.loggedInAt.getTime();
+      if (effectiveSignOutDate && effectiveSignInDate) {
+        const diffMs = effectiveSignOutDate.getTime() - effectiveSignInDate.getTime();
         const diffMinutes = Math.max(1, Math.round(diffMs / (1000 * 60)));
         const hours = Math.floor(diffMinutes / 60);
         const mins = diffMinutes % 60;
@@ -160,20 +226,30 @@ export async function getTherapistLoginHistoryAction(
 
       return {
         id: r.id,
-        loggedInAt: r.loggedInAt.toISOString(),
-        formattedLoggedInAt: formatDateTimeIST(r.loggedInAt),
-        loggedOutAt: r.loggedOutAt ? r.loggedOutAt.toISOString() : null,
-        formattedLoggedOutAt: r.loggedOutAt
-          ? formatDateTimeIST(r.loggedOutAt)
+        loggedInAt: effectiveSignInDate.toISOString(),
+        formattedLoggedInAt: formatDateTimeIST(effectiveSignInDate),
+        loggedOutAt: effectiveSignOutDate ? effectiveSignOutDate.toISOString() : null,
+        formattedLoggedOutAt: effectiveSignOutDate
+          ? formatDateTimeIST(effectiveSignOutDate)
           : null,
         duration,
         locationStatus: r.locationStatus,
-        latitude: r.latitude,
-        longitude: r.longitude,
-        accuracyMeters: r.accuracyMeters,
-        ipAddress: r.ipAddress,
-        userAgent: r.userAgent,
-        mapUrl,
+        signInLocationStatus: r.signInLocationStatus,
+        signInLatitude: isPrivileged ? sLat : null,
+        signInLongitude: isPrivileged ? sLng : null,
+        signInAccuracyMeters: isPrivileged ? (r.signInAccuracyMeters ?? r.accuracyMeters) : null,
+        signInMapUrl,
+        signOutLocationStatus: r.signOutLocationStatus,
+        signOutLatitude: isPrivileged ? r.signOutLatitude : null,
+        signOutLongitude: isPrivileged ? r.signOutLongitude : null,
+        signOutAccuracyMeters: isPrivileged ? r.signOutAccuracyMeters : null,
+        signOutMapUrl,
+        latitude: isPrivileged ? sLat : null,
+        longitude: isPrivileged ? sLng : null,
+        accuracyMeters: isPrivileged ? (r.signInAccuracyMeters ?? r.accuracyMeters) : null,
+        mapUrl: signInMapUrl,
+        ipAddress: isPrivileged ? r.ipAddress : null,
+        userAgent: isPrivileged ? r.userAgent : null,
       };
     });
 

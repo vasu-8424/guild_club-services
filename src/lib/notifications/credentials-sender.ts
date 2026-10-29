@@ -65,7 +65,7 @@ export function renderCredentialsEmail(options: {
 
   const passwordDisplay = (includePassword !== false && password)
     ? password
-    : (password || null);
+    : null;
 
   const credentialsBoxHtml = `
     <!-- High-Clarity Account Credentials Box -->
@@ -90,7 +90,7 @@ export function renderCredentialsEmail(options: {
           <td style="padding: 7px 0; font-weight: 600; color: #64748b; vertical-align: middle;">Access Password:</td>
           <td style="padding: 7px 0;">
             <span style="display: inline-block; background: #ffffff; border: 1px solid #0B7A63; padding: 6px 14px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 16px; font-weight: 800; color: #0f172a; letter-spacing: 0.8px;">
-              ${passwordDisplay || "Shared securely by administrator"}
+              ${passwordDisplay || "Will be securely shared with you directly by the administrator"}
             </span>
           </td>
         </tr>
@@ -233,7 +233,7 @@ YOUR GUILD CLUB SERVICES LOGIN CREDENTIALS
 =====================================================
 Portal URL:       ${loginUrl}
 Login ID / Email: ${toEmail}
-Access Password:  ${passwordDisplay || "(Shared securely by administrator)"}
+Access Password:  ${passwordDisplay || "(Will be securely shared with you directly by the administrator)"}
 Role:             ${roleDisplay}
 Created By:       ${createdByName}
 =====================================================

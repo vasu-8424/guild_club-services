@@ -3,9 +3,11 @@ import { requireRole } from "@/lib/session";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { CreateTherapistForm } from "./create-therapist-form";
 import { ArrowLeft } from "lucide-react";
+import { getScope } from "@/lib/scope";
 
 export default async function NewTherapistPage() {
   const currentUser = await requireRole("admin", "super_admin");
+  const scope = await getScope(currentUser);
 
   return (
     <DashboardShell user={currentUser} title="Register Therapist">
@@ -22,11 +24,14 @@ export default async function NewTherapistPage() {
             Register New Practitioner
           </h1>
           <p className="text-sm text-slate-500">
-            Create a clinician account with case capacity limits and clinical specializations.
+            Create a clinician account with branch assignment, case capacity limits, and clinical specializations.
           </p>
         </div>
 
-        <CreateTherapistForm />
+        <CreateTherapistForm
+          branches={scope.allowedBranches}
+          defaultBranchId={scope.activeBranchId || scope.allowedBranches[0]?.id}
+        />
       </div>
     </DashboardShell>
   );

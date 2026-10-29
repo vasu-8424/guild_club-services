@@ -19,6 +19,8 @@ import { queueEmail } from "@/lib/email";
 import { triggerOpportunisticQueueProcess } from "@/lib/notifications";
 import { notifyCaseClosed } from "@/lib/notifications/in-app";
 import { generateCaseNumber } from "@/lib/case-number";
+import { getScope } from "@/lib/scope";
+import { getTodayIST, formatToISTDateString } from "@/lib/date-utils";
 import {
   createCaseSchema,
   assignCaseSchema,
@@ -80,7 +82,18 @@ export async function createCaseAction(
     priority,
     initialNotes,
     assignedTherapistId,
+    branchId: inputBranchId,
   } = parsed.data;
+
+  const scope = await getScope(currentUser);
+  const targetBranchId = inputBranchId || scope.activeBranchId;
+  if (!targetBranchId) {
+    return {
+      success: false,
+      error: "Branch is required. Please select an active branch.",
+    };
+  }
+  scope.assertBranchAccess(targetBranchId);
 
   try {
     const result = await db.transaction(async (tx) => {
@@ -108,6 +121,7 @@ export async function createCaseAction(
         .values({
           caseNumber,
           clientId: newClient.id,
+          branchId: targetBranchId,
           category,
           priority,
           description: presentingIssues,
@@ -727,6 +741,8 @@ export async function closeCaseAction(
         status: cases.status,
         currentTherapistId: cases.currentTherapistId,
         createdBy: cases.createdBy,
+        startDate: cases.startDate,
+        createdAt: cases.createdAt,
       })
       .from(cases)
       .where(eq(cases.id, caseId))
@@ -738,9 +754,39 @@ export async function closeCaseAction(
 
     if (
       currentUser.role === "therapist" &&
-      targetCase.currentTherapistId !== currentUser.id
+      targetCase.currentTherapistId !== currentUser.id &&
+      targetCase.createdBy !== currentUser.id
     ) {
       return { success: false, error: "You are not assigned to this case." };
+    }
+
+    // Closing rule: Cannot close a case on the same day created unless today's session is recorded
+    const todayIST = getTodayIST();
+    const createdDateIST = formatToISTDateString(targetCase.createdAt);
+    const isCreatedToday =
+      createdDateIST === todayIST ||
+      (targetCase.startDate && targetCase.startDate === todayIST);
+
+    if (isCreatedToday) {
+      const [todaySession] = await db
+        .select({ id: sessions.id })
+        .from(sessions)
+        .where(
+          and(
+            eq(sessions.caseId, caseId),
+            eq(sessions.sessionDate, todayIST),
+            eq(sessions.status, "held")
+          )
+        )
+        .limit(1);
+
+      if (!todaySession) {
+        return {
+          success: false,
+          error:
+            "A case cannot be closed on the same day it was created unless that day's session is recorded.",
+        };
+      }
     }
 
     const closedAt = new Date();

@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { sessions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getStorageFile, type SessionFileType } from "@/lib/storage";
+import { getScope } from "@/lib/scope";
 
 interface RouteParams {
   params: Promise<{
@@ -42,12 +43,20 @@ export async function GET(
     );
   }
 
+  const scope = await getScope(user);
+  if (!scope.canAccessBranch(session.branchId)) {
+    return NextResponse.json(
+      { error: "Session record not found." },
+      { status: 404 }
+    );
+  }
+
   // 3. Authorization: Super Admin and Admin can access any session;
-  // Therapist can only access sessions assigned to them
+  // Therapist can only access sessions assigned to them (returning 404 to avoid information disclosure)
   if (user.role === "therapist" && session.therapistId !== user.id) {
     return NextResponse.json(
-      { error: "Forbidden: You are not authorized to view files for this session." },
-      { status: 403 }
+      { error: "Session record not found." },
+      { status: 404 }
     );
   }
 
@@ -65,7 +74,7 @@ export async function GET(
   } else if (type === "out-time-photo") {
     fileKey = session.outTimePhotoKey;
   } else if (type === "signature") {
-    fileKey = session.patientSignatureKey;
+    fileKey = session.signatureKey || session.patientSignatureKey;
   } else {
     return NextResponse.json(
       { error: "Invalid file type requested." },

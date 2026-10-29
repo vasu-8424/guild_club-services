@@ -11,6 +11,7 @@ import type { IconProps } from "@phosphor-icons/react";
 
 import { getTherapistNotesAction } from "@/lib/actions/admin-notes-actions";
 import { logoutAction } from "@/lib/actions/auth-actions";
+import { LogoutButton } from "./logout-button";
 
 interface SidebarProps {
   role: UserRole;
@@ -142,11 +143,6 @@ export function Sidebar({ role, userName }: SidebarProps) {
               {
                 title: "Rooms",
                 href: "/admin/rooms",
-                icon: Icons.Door,
-              },
-              {
-                title: "Branches",
-                href: "/admin/branches",
                 icon: Icons.Door,
               },
               {
@@ -361,28 +357,21 @@ export function Sidebar({ role, userName }: SidebarProps) {
             </div>
 
             {!collapsed ? (
-              <form action={logoutAction}>
-                <button
-                  data-testid="sidebar-logout-button"
-                  type="submit"
-                  title="Sign out of account"
-                  className="flex items-center gap-1.5 px-2 py-1 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors cursor-pointer rounded-none"
-                >
-                  <Icons.SignOut className="h-3.5 w-3.5" />
-                  <span>Logout</span>
-                </button>
-              </form>
+              <LogoutButton
+                role={role}
+                testId="sidebar-logout-button"
+                className="flex items-center gap-1.5 px-2 py-1 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors cursor-pointer rounded-none"
+                label="Logout"
+              />
             ) : (
-              <form action={logoutAction} className="mt-1">
-                <button
-                  data-testid="sidebar-logout-button-collapsed"
-                  type="submit"
-                  title="Sign out of account"
+              <div className="mt-1">
+                <LogoutButton
+                  role={role}
+                  iconOnly={true}
+                  testId="sidebar-logout-button-collapsed"
                   className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer rounded-none"
-                >
-                  <Icons.SignOut className="h-4 w-4" />
-                </button>
-              </form>
+                />
+              </div>
             )}
           </div>
         </div>

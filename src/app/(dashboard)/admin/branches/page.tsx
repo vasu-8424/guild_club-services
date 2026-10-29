@@ -8,7 +8,7 @@ export const metadata = {
 };
 
 export default async function AdminBranchesPage() {
-  await requireRole("admin", "super_admin");
+  await requireRole("super_admin");
 
   const res = await getBranchesAction(true);
   const branches = res.success ? res.branches : [];

@@ -1,11 +1,11 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import { eq, sql, desc } from "drizzle-orm";
+import { eq, sql, desc, and, isNull } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { users, loginRecords } from "@/db/schema";
+import { users, loginRecords, userBranches } from "@/db/schema";
 import {
   signSessionToken,
   setSessionCookie,
@@ -144,7 +144,93 @@ export async function loginAction(data: LoginInput): Promise<AuthActionResult> {
     // Reset rate limit counter on successful credentials
     resetRateLimit(rateLimitKey);
 
-    // 6. Create session JWT and set secure httpOnly cookie
+    let therapistLoginRecordId: string | null = null;
+
+    // 6.5 For therapists, create a login_record and audit event BEFORE signing token
+    if (user.role === "therapist") {
+      const userAgent = headerList.get("user-agent") || "unknown";
+
+      // Determine active / assigned branch
+      let branchIdToRecord: string | null = null;
+      try {
+        const cookieStore = await cookies();
+        const branchCookie = cookieStore.get("selected_branch_id")?.value;
+        if (branchCookie) {
+          branchIdToRecord = branchCookie;
+        } else {
+          const [assigned] = await db
+            .select({ branchId: userBranches.branchId })
+            .from(userBranches)
+            .where(
+              and(
+                eq(userBranches.userId, user.id),
+                isNull(userBranches.removedAt)
+              )
+            )
+            .limit(1);
+          if (assigned?.branchId) {
+            branchIdToRecord = assigned.branchId;
+          }
+        }
+      } catch (e) {
+        console.warn("Could not determine therapist branch on login:", e);
+      }
+
+      const [record] = await db
+        .insert(loginRecords)
+        .values({
+          userId: user.id,
+          branchId: branchIdToRecord,
+          signedInAt: new Date(),
+          loggedInAt: new Date(),
+          signInLocationStatus: "pending",
+          locationStatus: "unavailable",
+          ipAddress: clientIp,
+          userAgent,
+        })
+        .returning({ id: loginRecords.id });
+
+      if (record?.id) {
+        therapistLoginRecordId = record.id;
+
+        await recordEvent(db, {
+          eventType: "therapist_signed_in",
+          actorId: user.id,
+          actorRole: user.role,
+          targetUserId: user.id,
+          metadata: {
+            loginRecordId: record.id,
+            branchId: branchIdToRecord,
+            ipAddress: clientIp,
+            timestamp: new Date().toISOString(),
+          },
+        });
+
+        // Also record legacy therapist_login for existing consumers
+        await recordEvent(db, {
+          eventType: "therapist_login",
+          actorId: user.id,
+          actorRole: user.role,
+          targetUserId: user.id,
+          metadata: {
+            loginRecordId: record.id,
+            ipAddress: clientIp,
+            timestamp: new Date().toISOString(),
+          },
+        });
+
+        const cookieStore = await cookies();
+        cookieStore.set("gcs_latest_login_id", record.id, {
+          httpOnly: false,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/",
+          maxAge: 86400,
+        });
+      }
+    }
+
+    // 6. Create session JWT and set secure httpOnly cookie (including loginRecordId)
     const token = await signSessionToken({
       userId: user.id,
       email: user.email,
@@ -153,47 +239,10 @@ export async function loginAction(data: LoginInput): Promise<AuthActionResult> {
       mustChangePassword: user.mustChangePassword,
       isActive: user.isActive,
       sessionVersion: user.sessionVersion,
+      loginRecordId: therapistLoginRecordId,
     });
 
     await setSessionCookie(token);
-
-    // 6.5 For therapists, create a login_record and audit event
-    if (user.role === "therapist") {
-      const userAgent = headerList.get("user-agent") || "unknown";
-      const [record] = await db
-        .insert(loginRecords)
-        .values({
-          userId: user.id,
-          loggedInAt: new Date(),
-          locationStatus: "unavailable",
-          ipAddress: clientIp,
-          userAgent,
-        })
-        .returning({ id: loginRecords.id });
-
-      await recordEvent(db, {
-        eventType: "therapist_login",
-        actorId: user.id,
-        actorRole: user.role,
-        targetUserId: user.id,
-        metadata: {
-          loginRecordId: record?.id,
-          ipAddress: clientIp,
-          timestamp: new Date().toISOString(),
-        },
-      });
-
-      if (record?.id) {
-        const cookieStore = await cookies();
-        cookieStore.set("gcs_latest_login_id", record.id, {
-          httpOnly: false,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          path: "/",
-          maxAge: 3600,
-        });
-      }
-    }
 
     // 7. Route to destination based on password change status or role
     const destination = user.mustChangePassword
@@ -344,30 +393,97 @@ export async function changePasswordAction(
   }
 }
 
+export interface LogoutLocationData {
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+  accuracyMeters?: number | null;
+  locationStatus?: "captured" | "denied" | "unavailable" | "not_captured";
+}
+
 /**
  * Server Action for signing out.
- * Records the logout timestamp for therapist/user activity audit.
+ * Records the logout timestamp and optional sign-out coordinates.
  */
-export async function logoutAction() {
+export async function logoutAction(locationData?: LogoutLocationData | FormData) {
+  const loc =
+    locationData && !(locationData instanceof FormData)
+      ? locationData
+      : undefined;
   try {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
     if (sessionCookie?.value) {
       const session = await verifySessionToken(sessionCookie.value);
       if (session?.userId) {
-        // Find latest login record and record logout timestamp
-        const [latestRecord] = await db
-          .select({ id: loginRecords.id })
-          .from(loginRecords)
-          .where(eq(loginRecords.userId, session.userId))
-          .orderBy(desc(loginRecords.loggedInAt))
-          .limit(1);
+        // Find latest login record
+        let targetRecordId = session.loginRecordId;
+        if (!targetRecordId) {
+          const cookieRecordId = cookieStore.get("gcs_latest_login_id")?.value;
+          if (cookieRecordId) {
+            targetRecordId = cookieRecordId;
+          } else {
+            const [latest] = await db
+              .select({ id: loginRecords.id })
+              .from(loginRecords)
+              .where(eq(loginRecords.userId, session.userId))
+              .orderBy(desc(loginRecords.signedInAt))
+              .limit(1);
+            targetRecordId = latest?.id || null;
+          }
+        }
 
-        if (latestRecord) {
+        const now = new Date();
+        const hasCoords =
+          loc?.latitude !== undefined &&
+          loc?.latitude !== null &&
+          loc?.longitude !== undefined &&
+          loc?.longitude !== null;
+        const status =
+          loc?.locationStatus ||
+          (hasCoords ? "captured" : "not_captured");
+
+        if (targetRecordId) {
           await db
             .update(loginRecords)
-            .set({ loggedOutAt: new Date() })
-            .where(eq(loginRecords.id, latestRecord.id));
+            .set({
+              loggedOutAt: now,
+              signedOutAt: now,
+              signOutLatitude: hasCoords ? String(loc!.latitude) : null,
+              signOutLongitude: hasCoords ? String(loc!.longitude) : null,
+              signOutAccuracyMeters: loc?.accuracyMeters
+                ? Math.round(Number(loc.accuracyMeters))
+                : null,
+              signOutLocationStatus: status,
+            })
+            .where(eq(loginRecords.id, targetRecordId));
+        }
+
+        if (session.role === "therapist") {
+          if (hasCoords) {
+            await recordEvent(db, {
+              eventType: "therapist_sign_out_location_captured",
+              actorId: session.userId,
+              actorRole: session.role,
+              targetUserId: session.userId,
+              metadata: {
+                loginRecordId: targetRecordId,
+                status: "captured",
+                timestamp: now.toISOString(),
+              },
+            });
+          }
+
+          await recordEvent(db, {
+            eventType: "therapist_signed_out",
+            actorId: session.userId,
+            actorRole: session.role,
+            targetUserId: session.userId,
+            metadata: {
+              loginRecordId: targetRecordId,
+              signOutLocationStatus: status,
+              timestamp: now.toISOString(),
+            },
+          });
         }
 
         await recordEvent(db, {
@@ -376,7 +492,7 @@ export async function logoutAction() {
           actorRole: session.role,
           targetUserId: session.userId,
           metadata: {
-            timestamp: new Date().toISOString(),
+            timestamp: now.toISOString(),
           },
         });
       }

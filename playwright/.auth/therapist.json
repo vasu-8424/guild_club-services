@@ -1,13 +1,23 @@
 {
   "cookies": [
     {
-      "name": "gcs_session",
-      "value": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiJmZmZhMjkyOS0yNjk5LTRjZWMtODJmYS0zMzU4MzZkOWE2NjMiLCJlbWFpbCI6InRlc3QudGhlcmFwaXN0QGd1aWxkY2x1Yi5jb20iLCJuYW1lIjoiRHIuIFRlc3QgVGhlcmFwaXN0IEFjdGl2ZSIsInJvbGUiOiJ0aGVyYXBpc3QiLCJtdXN0Q2hhbmdlUGFzc3dvcmQiOmZhbHNlLCJpc0FjdGl2ZSI6dHJ1ZSwic2Vzc2lvblZlcnNpb24iOjEsImlhdCI6MTc5MjkyODU0MSwiZXhwIjoxNzkzNTMzMzQxfQ.ybiRXrmyu_ex1J4hGtHCZ19wzzUvqa7wi8dCKdgGUYA",
+      "name": "gcs_latest_login_id",
+      "value": "54f68bd6-e36b-4cb8-a761-c4b00008cab5",
       "domain": "localhost",
       "path": "/",
-      "expires": 1793533341.354162,
+      "expires": 1793299844.703513,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "gcs_session",
+      "value": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiJhYzU2Yjk5Ny0yYWM1LTQzYjItODFhZC0zZmZjMzdlMDU0MmEiLCJlbWFpbCI6InFhLnRoZXJhcGlzdDEubWFpbkBndWlsZGNsdWIuY29tIiwibmFtZSI6IkRyLiBRQSBUaGVyYXBpc3QgT25lIiwicm9sZSI6InRoZXJhcGlzdCIsIm11c3RDaGFuZ2VQYXNzd29yZCI6ZmFsc2UsImlzQWN0aXZlIjp0cnVlLCJzZXNzaW9uVmVyc2lvbiI6MSwibG9naW5SZWNvcmRJZCI6IjU0ZjY4YmQ2LWUzNmItNGNiOC1hNzYxLWM0YjAwMDA4Y2FiNSIsImlhdCI6MTc5MzIxMzQ0NCwiZXhwIjoxNzkzODE4MjQ0fQ.DGZ82qCJkA_d4uqw1YRiHsFAFPa1Bqm5g1aWK_rbpHs",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1793818244.703685,
       "httpOnly": true,
-      "secure": false,
+      "secure": true,
       "sameSite": "Lax"
     }
   ],

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireApiRole } from "@/lib/session";
+import { getScope } from "@/lib/scope";
 import { db } from "@/db";
 import { cases } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -24,7 +25,16 @@ export async function GET(
     return NextResponse.json({ error: "Case not found" }, { status: 404 });
   }
 
-  if (user.role === "therapist" && foundCase.currentTherapistId !== user.id) {
+  const scope = await getScope(user);
+  if (!scope.canAccessBranch(foundCase.branchId)) {
+    return NextResponse.json({ error: "Case not found" }, { status: 404 });
+  }
+
+  if (
+    user.role === "therapist" &&
+    foundCase.currentTherapistId !== user.id &&
+    foundCase.createdBy !== user.id
+  ) {
     return NextResponse.json({ error: "Forbidden: Not assigned to this case" }, { status: 403 });
   }
 

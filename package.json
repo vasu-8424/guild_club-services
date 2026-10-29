@@ -18,6 +18,9 @@
     "test:stage2": "playwright test stage2",
     "test:stage3": "playwright test stage3",
     "test:all": "playwright test",
+    "test:branch": "playwright test --project=branch-access",
+    "test:board": "playwright test --project=therapist-board",
+    "test:notify": "playwright test --project=notifications",
     "test:e2e:ui": "playwright test --ui",
     "test:report": "playwright show-report playwright-report"
   },

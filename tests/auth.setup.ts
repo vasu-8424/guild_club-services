@@ -26,8 +26,8 @@ setup("reset database and initialize role sessions", async ({ page }) => {
   // 3. Admin Session Setup
   await page.context().clearCookies();
   await page.goto("/login");
-  await page.fill('[data-testid="login-email-input"]', seeded.admin.email);
-  await page.fill('[data-testid="login-password-input"]', seeded.admin.password);
+  await page.fill('[data-testid="login-email-input"]', seeded.adminMain.email);
+  await page.fill('[data-testid="login-password-input"]', seeded.adminMain.password);
   await page.click('[data-testid="login-submit-button"]');
   await expect(page).toHaveURL(/\/admin\/dashboard/, { timeout: 30000 });
   await page.context().storageState({ path: path.join(authDir, "admin.json") });
@@ -35,8 +35,8 @@ setup("reset database and initialize role sessions", async ({ page }) => {
   // 4. Therapist Session Setup
   await page.context().clearCookies();
   await page.goto("/login");
-  await page.fill('[data-testid="login-email-input"]', seeded.therapist.email);
-  await page.fill('[data-testid="login-password-input"]', seeded.therapist.password);
+  await page.fill('[data-testid="login-email-input"]', seeded.therapist1.email);
+  await page.fill('[data-testid="login-password-input"]', seeded.therapist1.password);
   await page.click('[data-testid="login-submit-button"]');
   await expect(page).toHaveURL(/\/therapist\/dashboard/, { timeout: 30000 });
   await page.context().storageState({ path: path.join(authDir, "therapist.json") });

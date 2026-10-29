@@ -3,6 +3,7 @@ import { requireApiRole } from "@/lib/session";
 import { db } from "@/db";
 import { cases, sessions, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { getScope } from "@/lib/scope";
 import { recordEvent } from "@/lib/events";
 import { queueEmail } from "@/lib/email";
 import { scheduleSessionSchema } from "@/lib/validators";
@@ -37,7 +38,12 @@ export async function POST(
       return NextResponse.json({ error: "Case not found" }, { status: 404 });
     }
 
-    if (user.role === "therapist" && targetCase.currentTherapistId !== user.id) {
+    const scope = await getScope(user);
+    if (!scope.canAccessBranch(targetCase.branchId)) {
+      return NextResponse.json({ error: "Case not found" }, { status: 404 });
+    }
+
+    if (user.role === "therapist" && targetCase.currentTherapistId !== user.id && targetCase.createdBy !== user.id) {
       return NextResponse.json({ error: "Forbidden: Not assigned to this case" }, { status: 403 });
     }
 
@@ -51,6 +57,7 @@ export async function POST(
         .insert(sessions)
         .values({
           caseId: id,
+          branchId: targetCase.branchId,
           therapistId: targetCase.currentTherapistId ?? user.id,
           scheduledAt: new Date(parsed.data.scheduledAt),
           notes: parsed.data.notes,

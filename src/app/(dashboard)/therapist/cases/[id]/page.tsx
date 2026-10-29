@@ -13,6 +13,7 @@ import {
   progressReportVersions,
 } from "@/db/schema";
 import { requireRole } from "@/lib/session";
+import { getScope } from "@/lib/scope";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { MonthCalendar, type CalendarSessionItem } from "@/components/cases/month-calendar";
 import { CaseDetailTabContainer } from "@/components/cases/case-detail-tab-container";
@@ -79,8 +80,17 @@ export default async function TherapistCaseDetailPage({
     notFound();
   }
 
-  // 2. Strict authorization: Therapist can ONLY view their own cases
-  if (caseRecord.currentTherapistId !== currentUser.id) {
+  // 2. Strict authorization: Therapist can ONLY view their own cases in an allowed branch
+  const isOwner =
+    caseRecord.currentTherapistId === currentUser.id ||
+    caseRecord.createdBy === currentUser.id;
+
+  if (!isOwner) {
+    redirect("/therapist/dashboard");
+  }
+
+  const scope = await getScope(currentUser);
+  if (!scope.canAccessBranch(caseRecord.branchId)) {
     redirect("/therapist/dashboard");
   }
 

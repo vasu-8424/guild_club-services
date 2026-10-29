@@ -12,6 +12,7 @@ import {
   progressReportVersions,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/session";
+import { getScope } from "@/lib/scope";
 import {
   CaseProgressReport,
   type ProgressReportData,
@@ -66,6 +67,7 @@ export default async function CaseReportPage({ params }: CaseReportPageProps) {
       clientName: clients.fullName,
       clientAge: clients.age,
       clientGender: clients.gender,
+      branchId: cases.branchId,
       branchName: branches.name,
     })
     .from(cases)
@@ -79,7 +81,13 @@ export default async function CaseReportPage({ params }: CaseReportPageProps) {
     notFound();
   }
 
-  // 2. Authorization check: Therapist can only see their own cases
+  // 2. Authorization check: branch must be within user's allowed scope
+  const scope = await getScope(currentUser);
+  if (!scope.canAccessBranch(caseRecord.branchId)) {
+    notFound();
+  }
+
+  // Therapist can only see their own cases
   const isOwner =
     currentUser.role === "therapist" &&
     (caseRecord.currentTherapistId === currentUser.id ||

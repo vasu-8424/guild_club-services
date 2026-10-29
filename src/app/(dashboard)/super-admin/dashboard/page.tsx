@@ -1,9 +1,11 @@
 import { requireRole } from "@/lib/session";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { db } from "@/db";
-import { users, cases } from "@/db/schema";
-import { eq, inArray, sql } from "drizzle-orm";
+import { users, cases, userBranches } from "@/db/schema";
+import { eq, and, isNull, inArray, sql } from "drizzle-orm";
 import { parseDateFilter } from "@/lib/date-utils";
+import { getScope } from "@/lib/scope";
+import { BranchPickerCard } from "@/components/layout/branch-picker-card";
 import {
   getDashboardSummary,
   getPeopleSummary,
@@ -22,6 +24,7 @@ interface SuperAdminDashboardPageProps {
     date?: string | string[];
     from?: string | string[];
     to?: string | string[];
+    branch?: string;
   }>;
 }
 
@@ -31,8 +34,26 @@ export default async function SuperAdminDashboard({
   const user = await requireRole("super_admin");
   const rawParams = searchParams ? await searchParams : {};
   const filter = parseDateFilter(rawParams);
+  const branchParam = typeof rawParams.branch === "string" ? rawParams.branch : undefined;
 
-  // 1. Fetch core summaries and chart datasets in parallel
+  const scope = await getScope(user, branchParam);
+
+  // If Super Admin hasn't selected a branch, show the branch picker card
+  if (!scope.hasSelectedBranch || !scope.activeBranchId) {
+    return (
+      <DashboardShell user={user} title="Super Administrator Portal">
+        <BranchPickerCard
+          branches={scope.allowedBranches}
+          title="Select a Branch to View Analytics"
+          description="Super Administrator views data by picking a branch first. Choose an active branch to explore metrics, activity logs, and case trends."
+        />
+      </DashboardShell>
+    );
+  }
+
+  const activeBranchId = scope.activeBranchId;
+
+  // 1. Fetch core summaries and chart datasets in parallel, scoped to selected branch
   const [
     summary,
     people,
@@ -52,20 +73,42 @@ export default async function SuperAdminDashboard({
     getPeopleSummary(user, filter),
     getCaseMovements(user, filter),
     db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(users)
-      .where(eq(users.role, "admin")),
+      .select({ count: sql<number>`count(DISTINCT ${userBranches.userId})::int` })
+      .from(userBranches)
+      .innerJoin(users, eq(users.id, userBranches.userId))
+      .where(
+        and(
+          eq(userBranches.branchId, activeBranchId),
+          isNull(userBranches.removedAt),
+          eq(users.role, "admin"),
+          isNull(users.deletedAt)
+        )
+      ),
     db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(users)
-      .where(eq(users.role, "therapist")),
+      .select({ count: sql<number>`count(DISTINCT ${userBranches.userId})::int` })
+      .from(userBranches)
+      .innerJoin(users, eq(users.id, userBranches.userId))
+      .where(
+        and(
+          eq(userBranches.branchId, activeBranchId),
+          isNull(userBranches.removedAt),
+          eq(users.role, "therapist"),
+          isNull(users.deletedAt)
+        )
+      ),
     db
       .select({ count: sql<number>`count(*)::int` })
       .from(cases)
-      .where(inArray(cases.status, ["assigned", "accepted", "in_progress"])),
+      .where(
+        and(
+          eq(cases.branchId, activeBranchId),
+          inArray(cases.status, ["assigned", "accepted", "in_progress"])
+        )
+      ),
     db
       .select({ count: sql<number>`count(*)::int` })
-      .from(cases),
+      .from(cases)
+      .where(eq(cases.branchId, activeBranchId)),
     getActivityHeatmapData(filter.endDate),
     getPipelineFunnelData(filter),
     getDailyTrendData(filter),
@@ -74,13 +117,14 @@ export default async function SuperAdminDashboard({
     getRecentlyClosedCasesAction(5),
   ]);
 
-  // 2. Status breakdown for charts
+  // 2. Status breakdown for charts scoped to branch
   const statusRows = await db
     .select({
       status: cases.status,
       count: sql<number>`count(*)::int`,
     })
     .from(cases)
+    .where(eq(cases.branchId, activeBranchId))
     .groupBy(cases.status);
 
   const statusLabelMap: Record<string, string> = {
@@ -97,13 +141,14 @@ export default async function SuperAdminDashboard({
     value: r.count,
   }));
 
-  // 3. Category breakdown for charts
+  // 3. Category breakdown for charts scoped to branch
   const categoryRows = await db
     .select({
       category: cases.category,
       count: sql<number>`count(*)::int`,
     })
     .from(cases)
+    .where(eq(cases.branchId, activeBranchId))
     .groupBy(cases.category)
     .orderBy(sql`count(*) DESC`)
     .limit(6);

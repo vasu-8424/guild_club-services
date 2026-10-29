@@ -2,8 +2,9 @@
 
 import { db } from "@/db";
 import { inAppNotifications, users, cases } from "@/db/schema";
-import { eq, and, desc, sql, isNull, inArray } from "drizzle-orm";
+import { eq, and, desc, or, isNull, sql, inArray } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/session";
+import { getScope } from "@/lib/scope";
 import { revalidatePath } from "next/cache";
 import { getEmailProvider, processNotificationQueue } from "@/lib/notifications";
 
@@ -13,6 +14,23 @@ export interface GetNotificationsParams {
   outcome?: string;
   page?: number;
   pageSize?: number;
+  branchId?: string | null;
+}
+
+/**
+ * Build a branch-aware WHERE condition for in_app_notifications:
+ * - Shows notifications where branchId matches the selected branch OR branchId IS NULL (account-level).
+ */
+function buildBranchCondition(activeBranchId: string | null) {
+  if (!activeBranchId) {
+    // No branch selected: show only account-level (null branch) notifications
+    return isNull(inAppNotifications.branchId);
+  }
+  // Show branch-specific + account-level
+  return or(
+    eq(inAppNotifications.branchId, activeBranchId),
+    isNull(inAppNotifications.branchId)
+  );
 }
 
 export async function getNotificationsAction(params: GetNotificationsParams = {}) {
@@ -31,10 +49,25 @@ export async function getNotificationsAction(params: GetNotificationsParams = {}
     outcome,
     page = 1,
     pageSize = 10,
+    branchId: paramBranchId,
   } = params;
 
+  // Resolve active branch
+  let activeBranchId = paramBranchId !== undefined ? paramBranchId : null;
+  if (activeBranchId === undefined) {
+    try {
+      const scope = await getScope(user);
+      activeBranchId = scope.activeBranchId;
+    } catch {
+      activeBranchId = null;
+    }
+  }
+
   // Base security: only user's own notifications
-  const conditions = [eq(inAppNotifications.userId, user.id)];
+  const conditions = [
+    eq(inAppNotifications.userId, user.id),
+    buildBranchCondition(activeBranchId)!,
+  ];
 
   if (tab === "unread") {
     conditions.push(eq(inAppNotifications.isRead, false));
@@ -73,14 +106,15 @@ export async function getNotificationsAction(params: GetNotificationsParams = {}
     .limit(pageSize)
     .offset(offset);
 
-  // Unread count total for this user
+  // Unread count for branch (branch-specific + account-level)
   const [unreadRow] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(inAppNotifications)
     .where(
       and(
         eq(inAppNotifications.userId, user.id),
-        eq(inAppNotifications.isRead, false)
+        eq(inAppNotifications.isRead, false),
+        buildBranchCondition(activeBranchId)!
       )
     );
 
@@ -99,7 +133,7 @@ export async function getNotificationsAction(params: GetNotificationsParams = {}
   };
 }
 
-export async function getLatestNotificationsAction() {
+export async function getLatestNotificationsAction(branchId?: string | null) {
   const user = await getCurrentUser();
   if (!user || !user.isActive || user.deletedAt !== null) {
     return {
@@ -109,10 +143,23 @@ export async function getLatestNotificationsAction() {
     };
   }
 
+  // Resolve active branch
+  let activeBranchId = branchId !== undefined ? branchId : null;
+  if (branchId === undefined) {
+    try {
+      const scope = await getScope(user);
+      activeBranchId = scope.activeBranchId;
+    } catch {
+      activeBranchId = null;
+    }
+  }
+
+  const branchCondition = buildBranchCondition(activeBranchId)!;
+
   const notifications = await db
     .select()
     .from(inAppNotifications)
-    .where(eq(inAppNotifications.userId, user.id))
+    .where(and(eq(inAppNotifications.userId, user.id), branchCondition))
     .orderBy(desc(inAppNotifications.createdAt))
     .limit(5);
 
@@ -122,7 +169,8 @@ export async function getLatestNotificationsAction() {
     .where(
       and(
         eq(inAppNotifications.userId, user.id),
-        eq(inAppNotifications.isRead, false)
+        eq(inAppNotifications.isRead, false),
+        branchCondition
       )
     );
 
@@ -158,11 +206,23 @@ export async function markNotificationReadAction(notificationId: string) {
   return { success: true };
 }
 
-export async function markAllNotificationsReadAction() {
+export async function markAllNotificationsReadAction(branchId?: string | null) {
   const user = await getCurrentUser();
   if (!user) {
     return { success: false, error: "Unauthorized" };
   }
+
+  let activeBranchId = branchId !== undefined ? branchId : null;
+  if (branchId === undefined) {
+    try {
+      const scope = await getScope(user);
+      activeBranchId = scope.activeBranchId;
+    } catch {
+      activeBranchId = null;
+    }
+  }
+
+  const branchCondition = buildBranchCondition(activeBranchId)!;
 
   await db
     .update(inAppNotifications)
@@ -173,7 +233,8 @@ export async function markAllNotificationsReadAction() {
     .where(
       and(
         eq(inAppNotifications.userId, user.id),
-        eq(inAppNotifications.isRead, false)
+        eq(inAppNotifications.isRead, false),
+        branchCondition
       )
     );
 
@@ -181,7 +242,7 @@ export async function markAllNotificationsReadAction() {
   return { success: true };
 }
 
-export async function pollNotificationsAction(params: { since?: string }) {
+export async function pollNotificationsAction(params: { since?: string; branchId?: string | null }) {
   const user = await getCurrentUser();
   if (!user || !user.isActive || user.deletedAt !== null) {
     return {
@@ -191,13 +252,26 @@ export async function pollNotificationsAction(params: { since?: string }) {
     };
   }
 
+  let activeBranchId = params.branchId !== undefined ? params.branchId : null;
+  if (params.branchId === undefined) {
+    try {
+      const scope = await getScope(user);
+      activeBranchId = scope.activeBranchId;
+    } catch {
+      activeBranchId = null;
+    }
+  }
+
+  const branchCondition = buildBranchCondition(activeBranchId)!;
+
   const [unreadRow] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(inAppNotifications)
     .where(
       and(
         eq(inAppNotifications.userId, user.id),
-        eq(inAppNotifications.isRead, false)
+        eq(inAppNotifications.isRead, false),
+        branchCondition
       )
     );
 
@@ -220,7 +294,8 @@ export async function pollNotificationsAction(params: { since?: string }) {
         and(
           eq(inAppNotifications.userId, user.id),
           eq(inAppNotifications.type, "case_closed"),
-          sql`${inAppNotifications.createdAt} > ${sinceDate}`
+          sql`${inAppNotifications.createdAt} > ${sinceDate}`,
+          branchCondition
         )
       )
       .orderBy(desc(inAppNotifications.createdAt))
@@ -243,50 +318,72 @@ export async function pollNotificationsAction(params: { since?: string }) {
   };
 }
 
-export async function getRecentlyClosedCasesAction(limit = 5) {
+export async function getRecentlyClosedCasesAction(limit = 5, branchId?: string | null) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { success: false, data: [] };
+    let activeBranchId = branchId ?? null;
+    let therapistIdFilter: string | null = null;
+    try {
+      const user = await getCurrentUser();
+      if (user) {
+        if (user.role === "therapist") {
+          therapistIdFilter = user.id;
+        }
+        if (!activeBranchId) {
+          try {
+            const scope = await getScope(user);
+            activeBranchId = scope.activeBranchId;
+          } catch {
+            // ignore
+          }
+        }
+      }
+    } catch {
+      // Graceful fallback for non-request environments
     }
+
+    const conditions: any[] = [
+      eq(cases.status, "completed"),
+      sql`${cases.closedAt} IS NOT NULL`,
+    ];
+
+    if (activeBranchId) {
+      conditions.push(eq(cases.branchId, activeBranchId));
+    }
+    if (therapistIdFilter) {
+      conditions.push(eq(cases.currentTherapistId, therapistIdFilter));
+    }
+
+    const rows = await db
+      .select({
+        id: cases.id,
+        caseNumber: cases.caseNumber,
+        outcome: cases.outcome,
+        closedAt: cases.closedAt,
+        therapistName: users.name,
+        therapistId: users.id,
+      })
+      .from(cases)
+      .leftJoin(users, eq(cases.currentTherapistId, users.id))
+      .where(and(...conditions))
+      .orderBy(desc(cases.closedAt))
+      .limit(limit);
+
+    return {
+      success: true,
+      data: rows.map((r) => ({
+        id: r.id,
+        caseNumber: r.caseNumber,
+        outcome: r.outcome ?? "successful",
+        closedAt: r.closedAt ? r.closedAt.toISOString() : null,
+        closedAtIst: r.closedAt
+          ? r.closedAt.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+          : null,
+        therapistName: r.therapistName || "Assigned Practitioner",
+      })),
+    };
   } catch {
-    // Graceful fallback for non-request environments
+    return { success: false, data: [] };
   }
-
-  // Super admins see across all cases; admins see clinic cases
-  const rows = await db
-    .select({
-      id: cases.id,
-      caseNumber: cases.caseNumber,
-      outcome: cases.outcome,
-      closedAt: cases.closedAt,
-      therapistName: users.name,
-      therapistId: users.id,
-    })
-    .from(cases)
-    .leftJoin(users, eq(cases.currentTherapistId, users.id))
-    .where(
-      and(
-        eq(cases.status, "completed"),
-        sql`${cases.closedAt} IS NOT NULL`
-      )
-    )
-    .orderBy(desc(cases.closedAt))
-    .limit(limit);
-
-  return {
-    success: true,
-    data: rows.map((r) => ({
-      id: r.id,
-      caseNumber: r.caseNumber,
-      outcome: r.outcome ?? "successful",
-      closedAt: r.closedAt ? r.closedAt.toISOString() : null,
-      closedAtIst: r.closedAt
-        ? r.closedAt.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
-        : null,
-      therapistName: r.therapistName || "Assigned Practitioner",
-    })),
-  };
 }
 
 export async function sendTestEmailToMyselfAction(): Promise<{
@@ -349,4 +446,3 @@ export async function retryNotificationsAction(): Promise<{
     };
   }
 }
-

@@ -4,8 +4,9 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { and, eq, ne, isNull, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { users, therapistProfiles, cases } from "@/db/schema";
+import { users, therapistProfiles, cases, userBranches, branches } from "@/db/schema";
 import { requireRole } from "@/lib/session";
+import { getScope } from "@/lib/scope";
 import { recordEvent } from "@/lib/events";
 import { queueEmail } from "@/lib/email";
 import { triggerOpportunisticQueueProcess } from "@/lib/notifications";
@@ -59,8 +60,36 @@ export async function createTherapistAction(
     experienceYears,
     maxOpenCases,
     password,
+    branchIds = [],
     emailCredentials = true,
   } = parsed.data;
+
+  const scope = await getScope(currentUser);
+  let targetBranchIds = branchIds;
+  if (targetBranchIds.length === 0) {
+    if (scope.activeBranchId) {
+      targetBranchIds = [scope.activeBranchId];
+    } else if (scope.allowedBranchIds.length > 0) {
+      targetBranchIds = [scope.allowedBranchIds[0]];
+    }
+  }
+
+  if (targetBranchIds.length === 0) {
+    return {
+      success: false,
+      error: "At least one active branch is required.",
+    };
+  }
+
+  // Enforce caller scope: Admins can only assign to their assigned branches
+  for (const bId of targetBranchIds) {
+    if (!scope.allowedBranchIds.includes(bId)) {
+      return {
+        success: false,
+        error: "Forbidden: You cannot assign practitioners to branches outside your management scope.",
+      };
+    }
+  }
 
   // Check email uniqueness among non-deleted users
   const [existing] = await db
@@ -106,6 +135,16 @@ export async function createTherapistAction(
         experienceYears,
         maxOpenCases,
       });
+
+      // Insert user_branches for each assigned branch
+      await tx.insert(userBranches).values(
+        targetBranchIds.map((branchId) => ({
+          userId: newTherapist.id,
+          branchId,
+          roleInBranch: "therapist" as const,
+          assignedBy: currentUser.id,
+        }))
+      );
 
       // Record audit event (WITHOUT PLAIN PASSWORD)
       await recordEvent(tx, {

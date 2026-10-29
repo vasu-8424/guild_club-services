@@ -458,23 +458,36 @@ export function CreateCaseForm({ branches }: CreateCaseFormProps) {
             <label className="text-xs font-semibold text-stone-700">
               Branch <span className="text-red-500">*</span>
             </label>
-            <select
-              data-testid="branch-select"
-              value={branchId}
-              onChange={(e) => setBranchId(e.target.value)}
-              className="w-full border border-stone-300 px-3 py-2 text-xs focus:outline-none focus:border-[#0B7A63] rounded-none bg-white font-medium"
-              required
-            >
-              {branches.length === 0 ? (
-                <option value="">No branches available</option>
-              ) : (
-                branches.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))
-              )}
-            </select>
+            {branches.length === 1 ? (
+              <div
+                data-testid="branch-single-label"
+                className="w-full border border-stone-200 bg-stone-50 px-3 py-2 text-xs font-semibold text-stone-800 rounded-none flex items-center justify-between"
+              >
+                <span>{branches[0].name}</span>
+                <span className="text-[10px] uppercase tracking-wider text-[#0B7A63] font-semibold bg-[#e6f4f1] px-1.5 py-0.5">
+                  Assigned
+                </span>
+                <input type="hidden" name="branchId" value={branches[0].id} />
+              </div>
+            ) : (
+              <select
+                data-testid="branch-select"
+                value={branchId}
+                onChange={(e) => setBranchId(e.target.value)}
+                className="w-full border border-stone-300 px-3 py-2 text-xs focus:outline-none focus:border-[#0B7A63] rounded-none bg-white font-medium"
+                required
+              >
+                {branches.length === 0 ? (
+                  <option value="">No branches available</option>
+                ) : (
+                  branches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))
+                )}
+              </select>
+            )}
           </div>
 
           {/* 2. Room Dropdown */}

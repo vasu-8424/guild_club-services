@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { casePhotos, cases } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getStorageFile } from "@/lib/storage";
+import { getScope } from "@/lib/scope";
 
 interface RouteParams {
   params: Promise<{
@@ -33,6 +34,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       kind: casePhotos.kind,
       currentTherapistId: cases.currentTherapistId,
       createdBy: cases.createdBy,
+      branchId: cases.branchId,
     })
     .from(casePhotos)
     .innerJoin(cases, eq(cases.id, casePhotos.caseId))
@@ -40,6 +42,12 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     .limit(1);
 
   if (!record) {
+    return NextResponse.json({ error: "Photo record not found." }, { status: 404 });
+  }
+
+  // Verify branch access for this photo's case
+  const scope = await getScope(user);
+  if (!scope.canAccessBranch(record.branchId)) {
     return NextResponse.json({ error: "Photo record not found." }, { status: 404 });
   }
 

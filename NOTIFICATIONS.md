@@ -217,6 +217,51 @@ To receive real-time delivery confirmations and automatic bounce / complaint fla
 | **"EMAIL_FROM_ADDRESS must be on the verified domain"** | `EMAIL_FROM_ADDRESS` domain does not match `EMAIL_FROM_DOMAIN` or Resend domain. | Ensure your sender domain matches the domain verified in your Resend dashboard (e.g. `noreply@guildclubservices.com`). |
 | **"RESEND_API_KEY is required"** | `EMAIL_PROVIDER=resend` is set without `RESEND_API_KEY` in `.env`. | Add your valid API key (`re_...`) to `.env` and restart the application. |
 | **"429: Too Many Requests"** | Burst send exceeded Resend's free tier rate limit (2 req/sec). | Our queue processor automatically throttles sends to 1 request per ~600ms and retries on 429 with exponential backoff. |
-| **"Daily limit reached (90 emails)"** | Resend free tier has a daily limit (~100 emails/day). | Remaining emails are safely moved to status `deferred` and dispatched at 00:00 IST the next day, prioritizing account creation and case assignments. |
-| **Emails landing in Spam** | Missing DKIM, SPF, or DMARC DNS records on custom domain. | In the Resend Dashboard under Domains, verify that all DNS records (MX, TXT/DKIM, SPF) show a green "Verified" badge. |
 | **"Automated tests must NEVER send real email"** | Playwright or unit tests ran with `EMAIL_PROVIDER=resend`. | Keep `EMAIL_PROVIDER=mock` in `.env.test`. Automated tests will throw unless `ALLOW_REAL_EMAIL_TESTS=true`. |
+
+---
+
+## 9. Branch-Based Access & Scoping Architecture
+
+Guild Club Services enforces multi-branch scoping across all roles, cases, rooms, and notifications.
+
+### 9.1 Database Schema
+- **`branches`**: Primary table holding branch entities (`id`, `name`, `is_active`, `created_at`). An index enforces case-insensitive name uniqueness among active branches.
+- **`user_branches`**: Maps users (admins & therapists) to branches (`user_id`, `branch_id`, `role_in_branch`, `assigned_by`, `assigned_at`, `removed_at`). A partial unique index guarantees a user can only have one active membership per branch.
+- **`in_app_notifications.branch_id`**: Foreign key to `branches.id` (nullable).
+  - `branch_id IS NOT NULL`: Notification is strictly scoped to that clinical branch.
+  - `branch_id IS NULL`: Account-level notification (e.g., password reset, welcome credentials) visible in every branch.
+
+### 9.2 Active Branch Selection & Resolution
+The active branch is resolved hierarchically via `getScope(user, branchParam)`:
+1. Explicit parameter or URL search query (`?branch=<id>`).
+2. Persistent cookie: `gcs_selected_branch`.
+3. Fallback: First assigned active branch.
+
+### 9.3 Role-Specific Access Rules
+- **Super Admin**:
+  - Global oversight across all active branches.
+  - If no branch is selected, a global branch picker card allows selecting an active branch.
+- **Admin**:
+  - Only allowed access to branches explicitly assigned in `user_branches` (`removed_at IS NULL`).
+  - Attempting to access an unassigned branch immediately throws `ScopeError(403)`.
+- **Therapist**:
+  - **Single Branch**: When assigned to exactly 1 branch, the branch name is displayed as a badge/label without a switcher dropdown.
+  - **Multiple Branches**: When assigned to multiple branches, a topbar switcher allows toggling only between their assigned branches.
+  - **Create Case**:
+    1. **Branch First**: Restricted to the therapist's assigned active branches (preselected if single branch).
+    2. **Room Next**: Dropdown displays only **FREE** rooms in the selected branch. Room occupancy is re-verified atomically inside the transaction.
+    3. The server rejects any case creation targeting a branch the therapist does not belong to (`403 Forbidden`).
+  - **Caseload Isolation**:
+    - Therapists strictly see only their own cases (where `currentTherapistId = user.id` OR `createdBy = user.id`) in the currently selected branch.
+    - Other therapists' patients, caseloads, notes, and session logs remain invisible.
+    - Progress reports, clinical photos, and PDFs are served only if the case is within the therapist's scope.
+
+### 9.4 Notification Scoping Rules
+- The topbar notification bell displays unread count and dropdown items for the **currently selected branch only**, plus **account-level notices** (`branch_id IS NULL`).
+- When switching branches, notification counts and lists update dynamically to reflect the active branch.
+- Notification actions (`getNotificationsAction`, `getLatestNotificationsAction`, `markAllNotificationsReadAction`) enforce branch condition:
+  ```sql
+  WHERE (branch_id = :activeBranchId OR branch_id IS NULL)
+  ```
+

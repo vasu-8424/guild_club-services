@@ -12,6 +12,8 @@ export interface NotifyCaseClosedParams {
   therapistName: string;
   createdById: string;
   closedAt: Date;
+  /** Branch this case belongs to; drives notification visibility */
+  branchId?: string | null;
 }
 
 /**
@@ -29,6 +31,7 @@ export async function notifyCaseClosed({
   therapistName,
   createdById,
   closedAt,
+  branchId,
 }: NotifyCaseClosedParams): Promise<void> {
   const env = getEnv();
   const closedAtIst = closedAt.toLocaleString("en-IN", {
@@ -146,6 +149,8 @@ export async function notifyCaseClosed({
       priority,
       isRead: false,
       caseId,
+      // Branch-scoped: Super Admins see the specific branch; Admins see their branch
+      branchId: branchId || null,
       data: {
         caseNumber,
         therapistName,
@@ -209,6 +214,7 @@ export async function notifySessionCompleted({
     .select({
       caseNumber: cases.caseNumber,
       createdBy: cases.createdBy,
+      branchId: cases.branchId,
     })
     .from(cases)
     .where(eq(cases.id, caseId))
@@ -304,6 +310,7 @@ export async function notifySessionCompleted({
       priority: "low",
       isRead: false,
       caseId,
+      branchId: targetCase.branchId || null,
       groupedCount: 1,
       lastGroupedAt: now,
       data: {
@@ -323,6 +330,7 @@ export interface NotifyCaseCreatedParams {
   patientId: string;
   caseNumber: string;
   therapistName: string;
+  branchId?: string | null;
 }
 
 /**
@@ -335,6 +343,7 @@ export async function notifyCaseCreated({
   patientId,
   caseNumber,
   therapistName,
+  branchId,
 }: NotifyCaseCreatedParams): Promise<void> {
   const recipients = await tx
     .select({ id: users.id })
@@ -356,6 +365,7 @@ export async function notifyCaseCreated({
       priority: "normal",
       isRead: false,
       caseId,
+      branchId: branchId || null,
       data: {
         patientId,
         caseNumber,
@@ -373,6 +383,7 @@ export interface NotifyProgressReportSubmittedParams {
   caseNumber: string;
   therapistId: string;
   therapistName: string;
+  branchId?: string | null;
 }
 
 /**
@@ -387,6 +398,7 @@ export async function notifyProgressReportSubmitted({
   caseNumber,
   therapistId,
   therapistName,
+  branchId,
 }: NotifyProgressReportSubmittedParams): Promise<void> {
   const recipients = await tx
     .select({ id: users.id })
@@ -439,6 +451,7 @@ export async function notifyProgressReportSubmitted({
         priority: "normal",
         isRead: false,
         caseId,
+        branchId: branchId || null,
         groupedCount: 1,
         lastGroupedAt: now,
         data: {

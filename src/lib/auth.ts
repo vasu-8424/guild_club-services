@@ -25,6 +25,7 @@ export interface SessionPayload {
   mustChangePassword: boolean;
   isActive: boolean;
   sessionVersion: number;
+  loginRecordId?: string | null;
 }
 
 /**

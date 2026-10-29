@@ -5,7 +5,7 @@ import { renderCredentialsEmail } from "../../src/lib/notifications/credentials-
 import { assertTestDatabase } from "../helpers/seed-test-data";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import { users, cases, clients, inAppNotifications, caseEvents } from "../../src/db/schema";
+import { users, cases, clients, inAppNotifications, caseEvents, branches } from "../../src/db/schema";
 import { eq, desc } from "drizzle-orm";
 
 const screenshotDir = path.resolve(process.cwd(), "test-results/screenshots-ui");
@@ -149,6 +149,9 @@ test.describe("Credentials & Notifications Suite", () => {
       })
       .returning();
 
+    // Get Branch ID
+    const [branchRec] = await db.select().from(branches).limit(1);
+
     // Insert active case
     const caseNumber = `GCS-2026-${Math.floor(1000 + Math.random() * 9000)}`;
     const [caseRec] = await db
@@ -156,6 +159,7 @@ test.describe("Credentials & Notifications Suite", () => {
       .values({
         caseNumber,
         clientId: clientRec.id,
+        branchId: branchRec.id,
         category: "individual",
         priority: "medium",
         description: "E2E clinical intake and treatment sessions.",

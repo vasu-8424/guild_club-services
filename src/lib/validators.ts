@@ -82,6 +82,7 @@ export const createAdminSchema = z
       .transform((val) => normalizePhoneNumber(val) ?? ""),
     password: manualPasswordSchema,
     confirmPassword: z.string().min(1, "Please confirm password"),
+    branchIds: z.array(z.string().uuid("Invalid branch ID")).optional(),
     emailCredentials: z.boolean().default(true).optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -173,6 +174,7 @@ export const createTherapistSchema = z
       .default(10),
     password: manualPasswordSchema,
     confirmPassword: z.string().min(1, "Please confirm password"),
+    branchIds: z.array(z.string().uuid("Invalid branch ID")).optional(),
     emailCredentials: z.boolean().default(true).optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -181,6 +183,22 @@ export const createTherapistSchema = z
   });
 
 export type CreateTherapistInput = z.infer<typeof createTherapistSchema>;
+
+export const transferUserSchema = z.object({
+  userId: z.string().uuid("Invalid user ID"),
+  role: z.enum(["admin", "therapist"]),
+  fromBranchId: z.string().uuid("Invalid source branch ID"),
+  toBranchId: z.string().uuid("Invalid target branch ID"),
+  reassignTherapistId: z.string().uuid().optional(),
+});
+export type TransferUserInput = z.infer<typeof transferUserSchema>;
+
+export const assignUserBranchesSchema = z.object({
+  userId: z.string().uuid("Invalid user ID"),
+  role: z.enum(["admin", "therapist"]),
+  branchIds: z.array(z.string().uuid()).min(1, "At least one branch is required"),
+});
+export type AssignUserBranchesInput = z.infer<typeof assignUserBranchesSchema>;
 
 export const editTherapistSchema = z.object({
   id: z.string().uuid("Invalid therapist ID"),
@@ -248,6 +266,7 @@ export const createCaseSchema = z.object({
   priority: casePriorityEnum.default("medium"),
   initialNotes: z.string().trim().optional(),
   assignedTherapistId: z.string().uuid().optional().or(z.literal("")),
+  branchId: z.string().uuid().optional(),
 });
 
 export type CreateCaseInput = z.infer<typeof createCaseSchema>;

@@ -105,6 +105,11 @@ export const reportStatusEnum = pgEnum("report_status", [
   "submitted",
 ]);
 
+export const roleInBranchEnum = pgEnum("role_in_branch", [
+  "admin",
+  "therapist",
+]);
+
 // -----------------------------------------------------------------------------
 // 1. USERS
 // -----------------------------------------------------------------------------
@@ -169,14 +174,52 @@ export const clients = pgTable("clients", {
 // 3.5. BRANCHES
 // -----------------------------------------------------------------------------
 
-export const branches = pgTable("branches", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  name: text("name").notNull(),
-  isActive: boolean("is_active").default(true).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
-    .defaultNow()
-    .notNull(),
-});
+export const branches = pgTable(
+  "branches",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    name: text("name").notNull(),
+    isActive: boolean("is_active").default(true).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("branches_active_name_unique_idx")
+      .on(sql`lower(trim(${table.name}))`)
+      .where(sql`"is_active" = true`),
+  ]
+);
+
+// -----------------------------------------------------------------------------
+// 3.5.5. USER BRANCHES
+// -----------------------------------------------------------------------------
+
+export const userBranches = pgTable(
+  "user_branches",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references((): AnyPgColumn => users.id, { onDelete: "cascade" }),
+    branchId: uuid("branch_id")
+      .notNull()
+      .references((): AnyPgColumn => branches.id, { onDelete: "cascade" }),
+    roleInBranch: roleInBranchEnum("role_in_branch").notNull(),
+    assignedBy: uuid("assigned_by").references((): AnyPgColumn => users.id),
+    assignedAt: timestamp("assigned_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    removedAt: timestamp("removed_at", { withTimezone: true, mode: "date" }),
+  },
+  (table) => [
+    uniqueIndex("user_branches_active_unique_idx")
+      .on(table.userId, table.branchId)
+      .where(sql`"removed_at" IS NULL`),
+    index("user_branches_branch_id_idx").on(table.branchId),
+    index("user_branches_user_id_idx").on(table.userId),
+  ]
+);
 
 // -----------------------------------------------------------------------------
 // 3.6. ROOMS
@@ -234,7 +277,9 @@ export const cases = pgTable(
     startDate: date("start_date"),
     roomNo: text("room_no"),
     roomId: uuid("room_id").references((): AnyPgColumn => rooms.id),
-    branchId: uuid("branch_id").references((): AnyPgColumn => branches.id),
+    branchId: uuid("branch_id")
+      .notNull()
+      .references((): AnyPgColumn => branches.id),
     sex: text("sex"), // 'male' | 'female' | 'other'
     consentObtained: boolean("consent_obtained").default(true),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
@@ -246,6 +291,7 @@ export const cases = pgTable(
     uniqueIndex("one_open_case_per_room")
       .on(table.roomId)
       .where(sql`"status" <> 'completed' AND "room_id" IS NOT NULL`),
+    index("cases_branch_id_idx").on(table.branchId),
   ]
 );
 
@@ -289,7 +335,11 @@ export const loginRecords = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    branchId: uuid("branch_id").references((): AnyPgColumn => branches.id),
     loggedInAt: timestamp("logged_in_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    signedInAt: timestamp("signed_in_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
     latitude: text("latitude"),
@@ -298,9 +348,22 @@ export const loginRecords = pgTable(
     locationStatus: loginLocationStatusEnum("location_status")
       .default("unavailable")
       .notNull(),
+    signInLatitude: text("sign_in_latitude"),
+    signInLongitude: text("sign_in_longitude"),
+    signInAccuracyMeters: integer("sign_in_accuracy_meters"),
+    signInLocationStatus: text("sign_in_location_status")
+      .$type<"captured" | "denied" | "unavailable" | "pending">()
+      .default("pending")
+      .notNull(),
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
     loggedOutAt: timestamp("logged_out_at", { withTimezone: true, mode: "date" }),
+    signedOutAt: timestamp("signed_out_at", { withTimezone: true, mode: "date" }),
+    signOutLatitude: text("sign_out_latitude"),
+    signOutLongitude: text("sign_out_longitude"),
+    signOutAccuracyMeters: integer("sign_out_accuracy_meters"),
+    signOutLocationStatus: text("sign_out_location_status")
+      .$type<"captured" | "denied" | "unavailable" | "not_captured">(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
@@ -308,6 +371,8 @@ export const loginRecords = pgTable(
   (table) => [
     index("login_records_user_id_idx").on(table.userId),
     index("login_records_logged_in_at_idx").on(table.loggedInAt),
+    index("login_records_signed_in_at_idx").on(table.signedInAt),
+    index("login_records_branch_id_idx").on(table.branchId),
   ]
 );
 
@@ -337,13 +402,17 @@ export const sessions = pgTable(
     outTimePhotoKey: text("out_time_photo_key"),
     workDone: text("work_done"),
     patientSignatureKey: text("patient_signature_key"),
+    signatureKey: text("signature_key"),
+    presentConditionSnapshot: text("present_condition_snapshot"),
     photoConsent: boolean("photo_consent").default(true),
+    branchId: uuid("branch_id").references((): AnyPgColumn => branches.id),
     completedAt: timestamp("completed_at", { withTimezone: true, mode: "date" }),
   },
   (table) => [
     uniqueIndex("sessions_case_date_unique_idx")
       .on(table.caseId, table.sessionDate)
       .where(sql`"session_date" IS NOT NULL`),
+    index("sessions_branch_id_idx").on(table.branchId),
   ]
 );
 
@@ -473,6 +542,7 @@ export const inAppNotifications = pgTable(
       .defaultNow()
       .notNull(),
     data: jsonb("data").$type<Record<string, unknown> | null>(),
+    branchId: uuid("branch_id").references((): AnyPgColumn => branches.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
@@ -481,6 +551,7 @@ export const inAppNotifications = pgTable(
     index("in_app_notifications_user_read_idx").on(table.userId, table.isRead),
     index("in_app_notifications_created_idx").on(table.createdAt),
     index("in_app_notifications_user_type_idx").on(table.userId, table.type),
+    index("in_app_notifications_branch_id_idx").on(table.branchId),
   ]
 );
 
@@ -499,6 +570,7 @@ export const adminNotes = pgTable(
       .notNull()
       .references((): AnyPgColumn => users.id),
     message: text("message").notNull(),
+    branchId: uuid("branch_id").references((): AnyPgColumn => branches.id),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
@@ -508,6 +580,7 @@ export const adminNotes = pgTable(
     index("admin_notes_to_user_id_idx").on(table.toUserId),
     index("admin_notes_created_at_idx").on(table.createdAt),
     index("admin_notes_from_user_id_idx").on(table.fromUserId),
+    index("admin_notes_branch_id_idx").on(table.branchId),
   ]
 );
 
@@ -613,6 +686,22 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     relationName: "room_assigned_creator",
   }),
   progressReports: many(progressReports),
+  userBranches: many(userBranches),
+}));
+
+export const userBranchesRelations = relations(userBranches, ({ one }) => ({
+  user: one(users, {
+    fields: [userBranches.userId],
+    references: [users.id],
+  }),
+  branch: one(branches, {
+    fields: [userBranches.branchId],
+    references: [branches.id],
+  }),
+  assignedByUser: one(users, {
+    fields: [userBranches.assignedBy],
+    references: [users.id],
+  }),
 }));
 
 export const therapistRoomAssignmentsRelations = relations(
@@ -698,11 +787,18 @@ export const adminNotesRelations = relations(adminNotes, ({ one }) => ({
     references: [users.id],
     relationName: "admin_notes_received",
   }),
+  branch: one(branches, {
+    fields: [adminNotes.branchId],
+    references: [branches.id],
+  }),
 }));
 
 export const branchesRelations = relations(branches, ({ many }) => ({
   cases: many(cases),
   rooms: many(rooms),
+  sessions: many(sessions),
+  adminNotes: many(adminNotes),
+  userBranches: many(userBranches),
 }));
 
 export const casePhotosRelations = relations(casePhotos, ({ one }) => ({
@@ -731,6 +827,10 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
   therapist: one(users, {
     fields: [sessions.therapistId],
     references: [users.id],
+  }),
+  branch: one(branches, {
+    fields: [sessions.branchId],
+    references: [branches.id],
   }),
 }));
 
@@ -820,6 +920,8 @@ export type NewPasswordResetToken = typeof passwordResetTokens.$inferInsert;
 
 export type ServiceType = (typeof serviceTypeEnum.enumValues)[number];
 export type LoginLocationStatus = (typeof loginLocationStatusEnum.enumValues)[number];
+export type SignInLocationStatus = "captured" | "denied" | "unavailable" | "pending";
+export type SignOutLocationStatus = "captured" | "denied" | "unavailable" | "not_captured";
 export type PhotoKind = (typeof photoKindEnum.enumValues)[number];
 
 export type Branch = typeof branches.$inferSelect;
@@ -872,5 +974,10 @@ export type NewRoom = typeof rooms.$inferInsert;
 
 export type AdminNote = typeof adminNotes.$inferSelect;
 export type NewAdminNote = typeof adminNotes.$inferInsert;
+
+export type RoleInBranch = (typeof roleInBranchEnum.enumValues)[number];
+export type UserBranch = typeof userBranches.$inferSelect;
+export type NewUserBranch = typeof userBranches.$inferInsert;
+
 
 

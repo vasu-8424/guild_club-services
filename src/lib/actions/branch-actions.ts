@@ -94,3 +94,55 @@ export async function toggleBranchStatusAction(
     return { success: false, error: "Failed to update branch status." };
   }
 }
+
+/**
+ * Server Action for switching the user's active branch.
+ */
+export async function switchBranchAction(
+  branchId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { cookies } = await import("next/headers");
+    const { userBranches } = await import("@/db/schema");
+    const { isNull, and } = await import("drizzle-orm");
+    const { getCurrentUser } = await import("@/lib/session");
+    const { SELECTED_BRANCH_COOKIE } = await import("@/lib/scope-constants");
+
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    if (user.role !== "super_admin") {
+      const [assignment] = await db
+        .select()
+        .from(userBranches)
+        .innerJoin(branches, eq(branches.id, userBranches.branchId))
+        .where(
+          and(
+            eq(userBranches.userId, user.id),
+            eq(userBranches.branchId, branchId),
+            isNull(userBranches.removedAt),
+            eq(branches.isActive, true)
+          )
+        )
+        .limit(1);
+
+      if (!assignment) {
+        return { success: false, error: "You are not assigned to this branch." };
+      }
+    }
+
+    const cookieStore = await cookies();
+    cookieStore.set(SELECTED_BRANCH_COOKIE, branchId, {
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+    });
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to switch branch." };
+  }
+}

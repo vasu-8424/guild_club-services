@@ -5,6 +5,7 @@ import {
   sessions,
   rooms,
   loginRecords,
+  userBranches,
   type User,
 } from "@/db/schema";
 import { eq, and, ne, sql, desc, isNull, inArray } from "drizzle-orm";
@@ -37,22 +38,42 @@ export interface AdminDashboardData {
 }
 
 export async function getAdminSimplifiedDashboardData(
-  filter: DateFilterRange
+  filter: DateFilterRange,
+  branchId?: string | null
 ): Promise<AdminDashboardData> {
   const selectedDate = filter.startDate;
   const isPast = filter.isPast;
 
-  // 1. Therapists list (role = 'therapist' and not deleted)
-  const therapistList = await db
-    .select({
-      id: users.id,
-      name: users.name,
-      email: users.email,
-      isActive: users.isActive,
-    })
-    .from(users)
-    .where(and(eq(users.role, "therapist"), isNull(users.deletedAt)))
-    .orderBy(users.name);
+  // 1. Therapists list (role = 'therapist' and not deleted, scoped to branch if branchId provided)
+  const therapistList = branchId
+    ? await db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          isActive: users.isActive,
+        })
+        .from(userBranches)
+        .innerJoin(users, eq(users.id, userBranches.userId))
+        .where(
+          and(
+            eq(userBranches.branchId, branchId),
+            isNull(userBranches.removedAt),
+            eq(users.role, "therapist"),
+            isNull(users.deletedAt)
+          )
+        )
+        .orderBy(users.name)
+    : await db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          isActive: users.isActive,
+        })
+        .from(users)
+        .where(and(eq(users.role, "therapist"), isNull(users.deletedAt)))
+        .orderBy(users.name);
 
   const activeTherapistsCount = therapistList.filter((t) => t.isActive).length;
 
@@ -61,71 +82,81 @@ export async function getAdminSimplifiedDashboardData(
   // If viewing past date: cases created on/before selectedDate AND (closedAt is null or closedAt > selectedDate)
   let activeCasesCount = 0;
   if (!isPast) {
+    const conditions = [ne(cases.status, "completed")];
+    if (branchId) conditions.push(eq(cases.branchId, branchId));
     const [openCasesRes] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(cases)
-      .where(ne(cases.status, "completed"));
+      .where(and(...conditions));
     activeCasesCount = openCasesRes?.count ?? 0;
   } else {
+    const branchSql = branchId ? sql`AND "branch_id" = ${branchId}::uuid` : sql``;
     const [historicalActiveRes] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(cases)
       .where(
         sql`date("created_at" AT TIME ZONE 'Asia/Kolkata') <= ${selectedDate}::date
-          AND ("closed_at" IS NULL OR date("closed_at" AT TIME ZONE 'Asia/Kolkata') > ${selectedDate}::date)`
+          AND ("closed_at" IS NULL OR date("closed_at" AT TIME ZONE 'Asia/Kolkata') > ${selectedDate}::date)
+          ${branchSql}`
       );
     activeCasesCount = historicalActiveRes?.count ?? 0;
   }
 
   // 3. Sessions on selected date
+  const sessionConditions = [eq(sessions.sessionDate, selectedDate)];
+  if (branchId) sessionConditions.push(eq(sessions.branchId, branchId));
   const [sessionsRes] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(sessions)
-    .where(eq(sessions.sessionDate, selectedDate));
+    .where(and(...sessionConditions));
   const sessionsOnDate = sessionsRes?.count ?? 0;
 
   // 4. Rooms (free / total)
-  // Total active rooms
+  // Total active rooms scoped to branch if branchId provided
+  const roomConditions = [eq(rooms.isActive, true)];
+  if (branchId) roomConditions.push(eq(rooms.branchId, branchId));
   const [totalRoomsRes] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(rooms)
-    .where(eq(rooms.isActive, true));
+    .where(and(...roomConditions));
   const roomsTotal = totalRoomsRes?.count ?? 0;
 
   // Currently occupied rooms (pointed to by an open case)
+  const occConditions = [
+    ne(cases.status, "completed"),
+    sql`${cases.roomId} IS NOT NULL`,
+  ];
+  if (branchId) occConditions.push(eq(cases.branchId, branchId));
   const [occupiedRoomsRes] = await db
     .select({ count: sql<number>`count(DISTINCT ${cases.roomId})::int` })
     .from(cases)
-    .where(
-      and(
-        ne(cases.status, "completed"),
-        sql`${cases.roomId} IS NOT NULL`
-      )
-    );
+    .where(and(...occConditions));
   const roomsOccupied = occupiedRoomsRes?.count ?? 0;
   const roomsFree = Math.max(0, roomsTotal - roomsOccupied);
 
   // 5. Open cases with no room assigned
+  const nullConditions = [
+    ne(cases.status, "completed"),
+    isNull(cases.roomId),
+  ];
+  if (branchId) nullConditions.push(eq(cases.branchId, branchId));
   const [nullRoomsRes] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(cases)
-    .where(
-      and(
-        ne(cases.status, "completed"),
-        isNull(cases.roomId)
-      )
-    );
+    .where(and(...nullConditions));
   const nullRoomCasesCount = nullRoomsRes?.count ?? 0;
 
   // 6. Build Therapist Table Data
   // Sessions on date per therapist
+  const therapistSessionConds = [eq(sessions.sessionDate, selectedDate)];
+  if (branchId) therapistSessionConds.push(eq(sessions.branchId, branchId));
   const sessionsPerTherapist = await db
     .select({
       therapistId: sessions.therapistId,
       count: sql<number>`count(*)::int`,
     })
     .from(sessions)
-    .where(eq(sessions.sessionDate, selectedDate))
+    .where(and(...therapistSessionConds))
     .groupBy(sessions.therapistId);
   const sessionsMap = new Map<string, number>();
   sessionsPerTherapist.forEach((s) => sessionsMap.set(s.therapistId, s.count));
@@ -133,23 +164,24 @@ export async function getAdminSimplifiedDashboardData(
   // Active cases per therapist
   let activeCasesPerTherapistMap = new Map<string, number>();
   if (!isPast) {
+    const actConds = [
+      ne(cases.status, "completed"),
+      sql`${cases.currentTherapistId} IS NOT NULL`,
+    ];
+    if (branchId) actConds.push(eq(cases.branchId, branchId));
     const activePerTherapist = await db
       .select({
         therapistId: cases.currentTherapistId,
         count: sql<number>`count(*)::int`,
       })
       .from(cases)
-      .where(
-        and(
-          ne(cases.status, "completed"),
-          sql`${cases.currentTherapistId} IS NOT NULL`
-        )
-      )
+      .where(and(...actConds))
       .groupBy(cases.currentTherapistId);
     activePerTherapist.forEach((a) => {
       if (a.therapistId) activeCasesPerTherapistMap.set(a.therapistId, a.count);
     });
   } else {
+    const branchSql = branchId ? sql`AND "branch_id" = ${branchId}::uuid` : sql``;
     const historicalPerTherapist = await db
       .select({
         therapistId: cases.currentTherapistId,
@@ -159,7 +191,8 @@ export async function getAdminSimplifiedDashboardData(
       .where(
         sql`date("created_at" AT TIME ZONE 'Asia/Kolkata') <= ${selectedDate}::date
           AND ("closed_at" IS NULL OR date("closed_at" AT TIME ZONE 'Asia/Kolkata') > ${selectedDate}::date)
-          AND "current_therapist_id" IS NOT NULL`
+          AND "current_therapist_id" IS NOT NULL
+          ${branchSql}`
       )
       .groupBy(cases.currentTherapistId);
     historicalPerTherapist.forEach((a) => {
@@ -168,18 +201,18 @@ export async function getAdminSimplifiedDashboardData(
   }
 
   // Cases closed on selected date per therapist
+  const closedConds = [
+    sql`date(${cases.closedAt} AT TIME ZONE 'Asia/Kolkata') = ${selectedDate}::date`,
+    sql`${cases.currentTherapistId} IS NOT NULL`,
+  ];
+  if (branchId) closedConds.push(eq(cases.branchId, branchId));
   const closedOnDatePerTherapist = await db
     .select({
       therapistId: cases.currentTherapistId,
       count: sql<number>`count(*)::int`,
     })
     .from(cases)
-    .where(
-      and(
-        sql`date(${cases.closedAt} AT TIME ZONE 'Asia/Kolkata') = ${selectedDate}::date`,
-        sql`${cases.currentTherapistId} IS NOT NULL`
-      )
-    )
+    .where(and(...closedConds))
     .groupBy(cases.currentTherapistId);
   const closedOnDateMap = new Map<string, number>();
   closedOnDatePerTherapist.forEach((c) => {
@@ -187,19 +220,19 @@ export async function getAdminSimplifiedDashboardData(
   });
 
   // Rooms in use per therapist (count of open cases with roomId)
+  const roomUseConds = [
+    ne(cases.status, "completed"),
+    sql`${cases.roomId} IS NOT NULL`,
+    sql`${cases.currentTherapistId} IS NOT NULL`,
+  ];
+  if (branchId) roomUseConds.push(eq(cases.branchId, branchId));
   const roomsInUsePerTherapist = await db
     .select({
       therapistId: cases.currentTherapistId,
       count: sql<number>`count(DISTINCT ${cases.roomId})::int`,
     })
     .from(cases)
-    .where(
-      and(
-        ne(cases.status, "completed"),
-        sql`${cases.roomId} IS NOT NULL`,
-        sql`${cases.currentTherapistId} IS NOT NULL`
-      )
-    )
+    .where(and(...roomUseConds))
     .groupBy(cases.currentTherapistId);
   const roomsInUseMap = new Map<string, number>();
   roomsInUsePerTherapist.forEach((r) => {

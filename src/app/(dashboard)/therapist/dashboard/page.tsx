@@ -1,120 +1,193 @@
 import React from "react";
-import { eq, or, and, desc, inArray } from "drizzle-orm";
+import { cookies } from "next/headers";
+import { eq, or, and, desc, inArray, isNull, lte, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { cases, clients, sessions, progressReports } from "@/db/schema";
+import { cases, clients, sessions, loginRecords } from "@/db/schema";
 import { requireRole } from "@/lib/session";
-import { getEnv } from "@/lib/env";
 import { getTodayIST } from "@/lib/date-utils";
-import { LocationCapture } from "@/components/therapist/location-capture";
-import {
-  TherapistPatientsTable,
-  type TherapistPatientRow,
-} from "@/components/therapist/therapist-patients-table";
+import { getScope } from "@/lib/scope";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { LocationGate } from "@/components/therapist/location-gate";
+import { DailyBoardView } from "@/components/therapist/daily-board-view";
+import type { CaseTileData } from "@/components/therapist/case-tile";
 
 export const metadata = {
-  title: "My Patients | Guild Club Services",
+  title: "Today's Sessions | Guild Club Services",
 };
 
-export default async function TherapistDashboardPage() {
-  const currentUser = await requireRole("therapist");
+interface TherapistDashboardPageProps {
+  searchParams?: Promise<{
+    branch?: string;
+  }>;
+}
 
-  const env = getEnv();
-  const requireLocation = Boolean(env.REQUIRE_LOCATION_ON_LOGIN);
+export default async function TherapistDashboardPage({
+  searchParams,
+}: TherapistDashboardPageProps) {
+  const currentUser = await requireRole("therapist");
+  const rawParams = searchParams ? await searchParams : {};
+  const branchParam = typeof rawParams.branch === "string" ? rawParams.branch : undefined;
+
   const todayIST = getTodayIST();
 
-  // 1. Fetch all cases assigned to or created by this therapist
-  const casesList = await db
+  // 1. Verify Therapist Sign-In Location Status
+  // LOCATION IS REQUIRED TO USE THE BOARD. Direct URLs to the board are also blocked until captured.
+  let activeRecordId = currentUser.loginRecordId;
+  if (!activeRecordId) {
+    try {
+      const cookieStore = await cookies();
+      activeRecordId = cookieStore.get("gcs_latest_login_id")?.value || null;
+    } catch {
+      // ignore
+    }
+  }
+
+  let activeLoginRecord: { id: string; signInLocationStatus: "pending" | "captured" | "denied" | "unavailable" } | null = null;
+
+  if (activeRecordId) {
+    const [rec] = await db
+      .select({
+        id: loginRecords.id,
+        signInLocationStatus: loginRecords.signInLocationStatus,
+      })
+      .from(loginRecords)
+      .where(
+        and(
+          eq(loginRecords.id, activeRecordId),
+          eq(loginRecords.userId, currentUser.id)
+        )
+      )
+      .limit(1);
+    if (rec) activeLoginRecord = rec;
+  }
+
+  if (!activeLoginRecord) {
+    const [latest] = await db
+      .select({
+        id: loginRecords.id,
+        signInLocationStatus: loginRecords.signInLocationStatus,
+      })
+      .from(loginRecords)
+      .where(eq(loginRecords.userId, currentUser.id))
+      .orderBy(desc(loginRecords.signedInAt))
+      .limit(1);
+    if (latest) activeLoginRecord = latest;
+  }
+
+  // If location has not been captured, server strictly renders the Location Gate and blocks the board
+  if (!activeLoginRecord || activeLoginRecord.signInLocationStatus !== "captured") {
+    return (
+      <DashboardShell user={currentUser} title="Today's Sessions">
+        <LocationGate
+          recordId={activeLoginRecord?.id}
+          initialStatus={activeLoginRecord?.signInLocationStatus || "pending"}
+        />
+      </DashboardShell>
+    );
+  }
+
+  // 2. Resolve branch scope
+  const scope = await getScope(currentUser, branchParam);
+
+  // 3. Query active cases belonging to this therapist in the selected branch
+  // Only active cases where startDate <= todayIST appear
+  const caseConditions = [
+    or(
+      eq(cases.currentTherapistId, currentUser.id),
+      eq(cases.createdBy, currentUser.id)
+    ),
+    sql`${cases.status} != 'completed'`,
+    isNull(cases.closedAt),
+    sql`(${cases.startDate} IS NULL OR ${cases.startDate} <= ${todayIST})`,
+  ];
+
+  if (scope.activeBranchId) {
+    caseConditions.push(eq(cases.branchId, scope.activeBranchId));
+  } else if (scope.allowedBranchIds.length > 0) {
+    caseConditions.push(inArray(cases.branchId, scope.allowedBranchIds));
+  } else {
+    caseConditions.push(sql`1=0`);
+  }
+
+  const rawCases = await db
     .select({
       id: cases.id,
-      caseNumber: cases.caseNumber,
       patientId: cases.patientId,
-      problem: cases.problem,
-      description: cases.description,
-      presentCondition: cases.presentCondition,
+      caseNumber: cases.caseNumber,
       service: cases.service,
       category: cases.category,
+      roomNo: cases.roomNo,
       status: cases.status,
-      createdAt: cases.createdAt,
+      presentCondition: cases.presentCondition,
       clientName: clients.fullName,
     })
     .from(cases)
     .innerJoin(clients, eq(cases.clientId, clients.id))
-    .where(
-      or(
-        eq(cases.currentTherapistId, currentUser.id),
-        eq(cases.createdBy, currentUser.id)
-      )
-    )
-    .orderBy(desc(cases.createdAt));
+    .where(and(...caseConditions))
+    .orderBy(cases.patientId);
 
-  // 2. Fetch today's sessions to see which cases have sessions done today
-  const caseIds = casesList.map((c) => c.id);
+  // 4. Query today's sessions for these cases
+  const caseIds = rawCases.map((c) => c.id);
   const todaySessions =
     caseIds.length > 0
       ? await db
-          .select({ caseId: sessions.caseId })
+          .select({
+            id: sessions.id,
+            caseId: sessions.caseId,
+            notes: sessions.notes,
+            presentConditionSnapshot: sessions.presentConditionSnapshot,
+            signatureKey: sessions.signatureKey,
+            sessionDate: sessions.sessionDate,
+            status: sessions.status,
+          })
           .from(sessions)
           .where(
             and(
+              inArray(sessions.caseId, caseIds),
               eq(sessions.sessionDate, todayIST),
               eq(sessions.status, "held")
             )
           )
       : [];
 
-  const todaySessionCaseIds = new Set(todaySessions.map((s) => s.caseId));
+  const todaySessionsMap = new Map<string, (typeof todaySessions)[0]>();
+  todaySessions.forEach((s) => {
+    todaySessionsMap.set(s.caseId, s);
+  });
 
-  // 3. Fetch cases that have at least one submitted progress report
-  const submittedReports =
-    caseIds.length > 0
-      ? await db
-          .select({ caseId: progressReports.caseId })
-          .from(progressReports)
-          .where(
-            and(
-              inArray(progressReports.caseId, caseIds),
-              eq(progressReports.status, "submitted")
-            )
-          )
-      : [];
+  // 5. Construct Tile data
+  const tilesData: CaseTileData[] = rawCases.map((c) => {
+    const session = todaySessionsMap.get(c.id);
+    return {
+      id: c.id,
+      patientId: c.patientId || c.caseNumber,
+      clientName: c.clientName,
+      service: c.service,
+      category: c.category,
+      roomNo: c.roomNo,
+      status: c.status,
+      presentCondition: c.presentCondition,
+      todaySession: session
+        ? {
+            id: session.id,
+            notes: session.notes,
+            presentConditionSnapshot: session.presentConditionSnapshot,
+            signatureKey: session.signatureKey,
+            sessionDate: session.sessionDate || todayIST,
+          }
+        : null,
+    };
+  });
 
-  const submittedReportCaseIds = new Set(submittedReports.map((r) => r.caseId));
-
-  // 4. Transform to rows
-  const patientRows: TherapistPatientRow[] = casesList.map((c) => ({
-    id: c.id,
-    patientId: c.patientId || c.caseNumber,
-    caseNumber: c.caseNumber,
-    clientName: c.clientName,
-    problem: c.problem || c.description || "General Rehabilitation",
-    presentCondition: c.presentCondition || "Intake assessment recorded",
-    service: c.service || c.category,
-    status: c.status,
-    hasTodaySession: todaySessionCaseIds.has(c.id),
-    hasSubmittedReport: submittedReportCaseIds.has(c.id),
-  }));
-
-  // 4. Calculate 3 tiny counters
-  const activePatients = patientRows.filter((p) => p.status !== "completed");
-  const activeCount = activePatients.length;
-  const sessionsDoneToday = activePatients.filter((p) => p.hasTodaySession).length;
-  const pendingSessionsToday = Math.max(0, activeCount - sessionsDoneToday);
+  const branchLabel = scope.activeBranch?.name || "All Branches";
 
   return (
-    <DashboardShell user={currentUser} title="My Patients">
-      <div className="space-y-6 max-w-5xl mx-auto pb-12">
-        {/* Location capture component (triggers geolocation & locked screen if required) */}
-        <LocationCapture requireLocation={requireLocation} />
-        <span data-testid="user-role-badge" className="hidden">therapist</span>
-
-        <TherapistPatientsTable
-          patients={patientRows}
-          activeCount={activeCount}
-          sessionsDoneToday={sessionsDoneToday}
-          pendingSessionsToday={pendingSessionsToday}
-        />
-      </div>
+    <DashboardShell user={currentUser} title="Today's Sessions">
+      <DailyBoardView
+        casesList={tilesData}
+        branchName={branchLabel}
+        todayIST={todayIST}
+      />
     </DashboardShell>
   );
 }

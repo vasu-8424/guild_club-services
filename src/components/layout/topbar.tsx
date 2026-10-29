@@ -4,16 +4,53 @@ import * as React from "react";
 import { NotificationBell } from "./notification-bell";
 import { UserMenu } from "./user-menu";
 import { DateSelector } from "@/components/dashboard/date-selector";
+import { BranchSwitcher } from "./branch-switcher";
 import type { CurrentUser } from "@/lib/session";
 import { usePathname } from "next/navigation";
+
+interface ScopeBranchOption {
+  id: string;
+  name: string;
+  isActive: boolean;
+}
 
 interface TopbarProps {
   user: CurrentUser;
   title?: string;
+  allowedBranches?: ScopeBranchOption[];
+  activeBranchId?: string | null;
 }
 
-export function Topbar({ user, title = "Dashboard" }: TopbarProps) {
+export function Topbar({
+  user,
+  title = "Dashboard",
+  allowedBranches: initialBranches,
+  activeBranchId: initialActiveBranchId,
+}: TopbarProps) {
   const pathname = usePathname();
+  const [branches, setBranches] = React.useState<ScopeBranchOption[]>(
+    initialBranches || []
+  );
+  const [activeBranchId, setActiveBranchId] = React.useState<string | null>(
+    initialActiveBranchId ?? null
+  );
+
+  React.useEffect(() => {
+    if (initialBranches && initialBranches.length > 0) {
+      setBranches(initialBranches);
+      setActiveBranchId(initialActiveBranchId ?? null);
+      return;
+    }
+    fetch("/api/scope")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.allowedBranches) {
+          setBranches(data.allowedBranches);
+          setActiveBranchId(data.activeBranchId);
+        }
+      })
+      .catch(() => {});
+  }, [initialBranches, initialActiveBranchId]);
 
   // Generate plain breadcrumbs based on pathname
   const segments = pathname.split("/").filter(Boolean);
@@ -45,8 +82,18 @@ export function Topbar({ user, title = "Dashboard" }: TopbarProps) {
         </div>
       </div>
 
-      {/* Right: Date Selector, Notifications, User Menu */}
+      {/* Right: Branch Switcher, Date Selector, Notifications, User Menu */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Top bar branch switcher */}
+        <BranchSwitcher
+          allowedBranches={branches}
+          activeBranchId={activeBranchId}
+          role={user.role}
+        />
+
+        {/* Vertical divider */}
+        <div className="h-6 w-px bg-slate-200" />
+
         {/* Date Selector */}
         <DateSelector />
 
