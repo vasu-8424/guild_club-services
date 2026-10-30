@@ -62,10 +62,10 @@ export function Topbar({
   return (
     <header
       data-testid="topbar"
-      className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 shadow-[0_1px_0_rgba(15,23,42,0.04)]"
+      className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-2.5 sm:px-6 shadow-[0_1px_0_rgba(15,23,42,0.04)] overflow-x-auto no-scrollbar"
     >
       {/* Left: Breadcrumbs & Page Title */}
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
         <div className="min-w-0">
           <nav
             aria-label="Breadcrumb"
@@ -75,7 +75,7 @@ export function Topbar({
           </nav>
           <h1
             data-testid="topbar-title"
-            className="text-base sm:text-lg font-semibold text-slate-900 tracking-tight truncate"
+            className="text-sm sm:text-lg font-semibold text-slate-900 tracking-tight truncate hidden xs:block sm:block"
           >
             {title}
           </h1>
@@ -83,7 +83,7 @@ export function Topbar({
       </div>
 
       {/* Right: Branch Switcher, Date Selector, Notifications, User Menu */}
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 ml-auto">
         {/* Top bar branch switcher */}
         <BranchSwitcher
           allowedBranches={branches}
@@ -92,16 +92,18 @@ export function Topbar({
         />
 
         {/* Vertical divider */}
-        <div className="h-6 w-px bg-slate-200" />
+        <div className="h-5 sm:h-6 w-px bg-slate-200 shrink-0" />
 
         {/* Date Selector */}
-        <DateSelector />
+        <div className="hidden sm:block">
+          <DateSelector />
+        </div>
 
         {/* Dynamic Notification Bell with Dropdown & Polling */}
         <NotificationBell userRole={user.role} />
 
         {/* Vertical divider */}
-        <div className="h-6 w-px bg-slate-200" />
+        <div className="h-5 sm:h-6 w-px bg-slate-200 shrink-0" />
 
         {/* User Profile Menu with Logout & Change Password */}
         <UserMenu
