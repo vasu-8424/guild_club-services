@@ -202,9 +202,9 @@ export function CloseCaseModal({
       {isOpen && (
         <div
           data-testid="close-case-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm p-4 overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
         >
-          <div className="bg-white border-2 border-stone-900 w-full max-w-2xl shadow-2xl rounded-none my-8 flex flex-col max-h-[92vh]">
+          <div className="bg-white border-2 border-stone-900 w-full max-w-2xl shadow-2xl rounded-none my-4 sm:my-8 flex flex-col max-h-[min(90dvh,calc(100dvh-2rem))]">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 bg-stone-50">
               <div>
@@ -457,17 +457,17 @@ export function CloseCaseModal({
               </div>
 
               {/* Submit Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-200">
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-4 border-t border-stone-200">
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="px-4 py-2 border border-stone-300 text-stone-700 hover:bg-stone-100 text-xs font-semibold uppercase tracking-wider rounded-none"
+                  className="px-4 py-2.5 min-h-[44px] sm:min-h-[36px] border border-stone-300 text-stone-700 hover:bg-stone-100 text-xs font-semibold uppercase tracking-wider rounded-none text-center cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-red-700 hover:bg-red-800 text-white px-5 py-2 text-xs font-semibold uppercase tracking-wider rounded-none transition-colors"
+                  className="bg-red-700 hover:bg-red-800 text-white px-5 py-2.5 min-h-[44px] sm:min-h-[36px] text-xs font-semibold uppercase tracking-wider rounded-none transition-colors text-center cursor-pointer"
                 >
                   Review & Close Case
                 </button>

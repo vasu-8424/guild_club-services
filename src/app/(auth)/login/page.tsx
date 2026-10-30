@@ -213,7 +213,7 @@ function LoginForm() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     <Icons.View className="h-4 w-4" />

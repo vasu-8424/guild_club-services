@@ -120,7 +120,7 @@ export function CreateTherapistForm({
   }
 
   return (
-    <Card className="max-w-xl mx-auto shadow-sm">
+    <Card className="max-w-xl mx-auto shadow-sm rounded-none border border-slate-200 border-t-2 border-t-[#0B7A63]">
       <CardHeader>
         <CardTitle>Register Clinical Therapist</CardTitle>
         <CardDescription>
@@ -131,7 +131,7 @@ export function CreateTherapistForm({
         {error && (
           <div
             data-testid="therapist-error-message"
-            className="mb-5 flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800"
+            className="mb-5 flex items-start gap-2.5 rounded-none border border-rose-300 bg-rose-50 p-3 text-xs text-rose-800"
           >
             <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
             <span>{error}</span>

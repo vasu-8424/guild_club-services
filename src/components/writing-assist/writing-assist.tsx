@@ -164,14 +164,14 @@ export function WritingAssist({
   return (
     <div className="w-full mt-1.5 space-y-2 select-none" data-testid="writing-assist-container">
       {/* Top Action Row: Check Writing Button & Mode Toggle */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
         {/* Segmented Mode Control */}
-        <div className="inline-flex flex-wrap items-center p-0.5 border border-slate-200 bg-slate-50 text-[11px] font-semibold text-slate-600 gap-0.5">
+        <div className="inline-flex items-center p-0.5 border border-slate-200 bg-slate-50 text-[11px] font-semibold text-slate-600 gap-0.5 overflow-x-auto no-scrollbar max-w-full">
           <button
             type="button"
             data-testid="writing-mode-grammar"
             onClick={() => setMode("fix_grammar")}
-            className={`px-2.5 py-1 min-h-[32px] sm:min-h-[28px] transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 min-h-[32px] sm:min-h-[28px] whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
               mode === "fix_grammar"
                 ? "bg-white text-[#0B7A63] shadow-xs font-bold"
                 : "text-slate-500 hover:text-slate-800"
@@ -183,7 +183,7 @@ export function WritingAssist({
             type="button"
             data-testid="writing-mode-suggestions"
             onClick={() => setMode("suggest_improvements")}
-            className={`px-2.5 py-1 min-h-[32px] sm:min-h-[28px] transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 min-h-[32px] sm:min-h-[28px] whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
               mode === "suggest_improvements"
                 ? "bg-white text-[#0B7A63] shadow-xs font-bold"
                 : "text-slate-500 hover:text-slate-800"
@@ -195,7 +195,7 @@ export function WritingAssist({
             type="button"
             data-testid="writing-mode-summarize"
             onClick={() => setMode("summarize")}
-            className={`px-2.5 py-1 min-h-[32px] sm:min-h-[28px] transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 min-h-[32px] sm:min-h-[28px] whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
               mode === "summarize"
                 ? "bg-white text-[#0B7A63] shadow-xs font-bold"
                 : "text-slate-500 hover:text-slate-800"
@@ -207,7 +207,7 @@ export function WritingAssist({
             type="button"
             data-testid="writing-mode-simplify"
             onClick={() => setMode("simplify")}
-            className={`px-2.5 py-1 min-h-[32px] sm:min-h-[28px] transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 min-h-[32px] sm:min-h-[28px] whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
               mode === "simplify"
                 ? "bg-white text-[#0B7A63] shadow-xs font-bold"
                 : "text-slate-500 hover:text-slate-800"
@@ -219,7 +219,7 @@ export function WritingAssist({
             type="button"
             data-testid="writing-mode-shorten"
             onClick={() => setMode("shorten")}
-            className={`px-2.5 py-1 min-h-[32px] sm:min-h-[28px] transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 min-h-[32px] sm:min-h-[28px] whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
               mode === "shorten"
                 ? "bg-white text-[#0B7A63] shadow-xs font-bold"
                 : "text-slate-500 hover:text-slate-800"
@@ -230,7 +230,7 @@ export function WritingAssist({
         </div>
 
         {/* Check Writing Action Button (Minimum 44px tap target on mobile) */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
           {isLoading && (
             <button
               type="button"
@@ -337,12 +337,12 @@ export function WritingAssist({
               )}
 
               {/* Actions Button Bar */}
-              <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
                   data-testid="cancel-writing-assist-btn"
                   onClick={handleKeepOriginal}
-                  className="px-3 py-2 min-h-[44px] sm:min-h-[36px] border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer"
+                  className="px-3 py-2 min-h-[44px] sm:min-h-[36px] w-full sm:w-auto text-center border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -350,7 +350,7 @@ export function WritingAssist({
                   type="button"
                   data-testid="keep-my-version-btn"
                   onClick={handleKeepOriginal}
-                  className="px-3 py-2 min-h-[44px] sm:min-h-[36px] border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer"
+                  className="px-3 py-2 min-h-[44px] sm:min-h-[36px] w-full sm:w-auto text-center border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer"
                 >
                   Keep my version
                 </button>
@@ -358,7 +358,7 @@ export function WritingAssist({
                   type="button"
                   data-testid="use-corrected-text-btn"
                   onClick={handleUseCorrectedText}
-                  className="px-4 py-2 min-h-[44px] sm:min-h-[36px] bg-[#0B7A63] hover:bg-[#086350] text-white text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer flex items-center gap-1.5 shadow-sm"
+                  className="px-4 py-2 min-h-[44px] sm:min-h-[36px] w-full sm:w-auto bg-[#0B7A63] hover:bg-[#086350] text-white text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                 >
                   <Check className="h-3.5 w-3.5" />
                   <span>Use corrected text</span>
@@ -380,16 +380,14 @@ function renderHighlightedDiff(original: string, updated: string): React.ReactNo
     return <span>{updated}</span>;
   }
 
-  const origWords = original.split(/\s+/);
-  const updWords = updated.split(/\s+/);
-
-  // If texts differ significantly or are similar length, show clear visual highlights
   return (
     <div className="space-y-2">
-      <div className="text-slate-900">{updated}</div>
-      <div className="text-[11px] text-slate-400 border-t border-slate-200 pt-1.5 flex items-center gap-2">
-        <span className="font-semibold">Original:</span>
-        <span className="line-through text-slate-400">{original}</span>
+      <div className="text-slate-900 font-medium leading-relaxed">
+        <span className="text-[#0B7A63] font-semibold">{updated}</span>
+      </div>
+      <div className="text-[11px] text-slate-500 border-t border-slate-200 pt-1.5 flex items-start gap-2">
+        <span className="font-semibold text-slate-400 uppercase tracking-wider shrink-0">Original:</span>
+        <span className="line-through text-slate-400 break-words">{original}</span>
       </div>
     </div>
   );

@@ -232,8 +232,8 @@ export function DataTable<T extends Record<string, any>>({
 
         {/* Pagination Footer */}
         {filteredData.length > pageSize && (
-          <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/70 px-4 py-2.5 text-xs text-slate-500">
-            <div>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-200 bg-slate-50/70 px-4 py-2.5 text-xs text-slate-500">
+            <div className="text-center sm:text-left">
               Showing{" "}
               <span className="font-semibold text-slate-800">
                 {(currentPage - 1) * pageSize + 1}
@@ -249,7 +249,7 @@ export function DataTable<T extends Record<string, any>>({
               records
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar max-w-full">
               <button
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}

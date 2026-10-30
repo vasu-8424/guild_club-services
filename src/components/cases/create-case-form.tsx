@@ -298,7 +298,7 @@ export function CreateCaseForm({ branches }: CreateCaseFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-8 max-w-3xl mx-auto bg-white border border-stone-200 p-8 shadow-xs rounded-none"
+      className="space-y-8 max-w-3xl mx-auto bg-white border border-stone-200 p-4 sm:p-6 lg:p-8 shadow-xs rounded-none"
     >
       <div className="border-b border-stone-200 pb-4">
         <h1 className="text-2xl font-bold uppercase tracking-tight text-stone-900">

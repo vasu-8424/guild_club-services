@@ -73,6 +73,9 @@ export function SignaturePad({
     e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
   ) => {
     if (readOnly) return;
+    if ("touches" in e && e.cancelable) {
+      e.preventDefault();
+    }
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -88,6 +91,9 @@ export function SignaturePad({
     e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
   ) => {
     if (!isDrawing || readOnly) return;
+    if ("touches" in e && e.cancelable) {
+      e.preventDefault();
+    }
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -99,7 +105,12 @@ export function SignaturePad({
     setHasDrawn(true);
   };
 
-  const stopDrawing = () => {
+  const stopDrawing = (
+    e?: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
+    if ("touches" in (e || {}) && (e as any)?.cancelable) {
+      (e as any).preventDefault();
+    }
     if (!isDrawing) return;
     setIsDrawing(false);
     const canvas = canvasRef.current;

@@ -114,16 +114,16 @@ export function DateSelector() {
         size="sm"
         data-testid="dashboard-date-selector"
         onClick={() => setIsOpen(!isOpen)}
-        leadingIcon={<Icons.Calendar className="text-[#0B7A63]" />}
-        trailingIcon={<Icons.CaretDown className="text-slate-400" />}
+        leadingIcon={<Icons.Calendar className="text-[#0B7A63] shrink-0" />}
+        trailingIcon={<Icons.CaretDown className="text-slate-400 shrink-0" />}
         aria-expanded={isOpen}
       >
-        <span className="font-semibold text-slate-900 max-w-[170px] sm:max-w-xs truncate">
+        <span className="font-semibold text-slate-900 max-w-[75px] xs:max-w-[110px] sm:max-w-xs truncate">
           {filter.filterLabel}
         </span>
         {filter.isPast && (
-          <span className="ml-1.5 inline-flex items-center rounded-none bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800 uppercase tracking-wider">
-            History
+          <span className="ml-1 inline-flex items-center rounded-none bg-amber-100 px-1 py-0.5 text-[9px] sm:text-[10px] font-bold text-amber-800 uppercase tracking-wider shrink-0">
+            Past
           </span>
         )}
       </Button>
@@ -132,7 +132,7 @@ export function DateSelector() {
       {isOpen && (
         <div
           data-testid="date-selector-dropdown"
-          className="absolute right-0 z-50 mt-2 w-80 rounded-none border border-slate-300 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.12)] animate-in fade-in-0 zoom-in-95 duration-100"
+          className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-none border border-slate-300 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.12)] animate-in fade-in-0 zoom-in-95 duration-100"
         >
           <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3">
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 uppercase tracking-wider">

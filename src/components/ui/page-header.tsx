@@ -55,8 +55,8 @@ export function PageHeader({
       )}
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-slate-900">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-slate-900 truncate">
             {title}
           </h1>
           {description && (
@@ -64,7 +64,11 @@ export function PageHeader({
           )}
         </div>
 
-        {action && <div className="flex items-center gap-2.5 shrink-0">{action}</div>}
+        {action && (
+          <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto sm:shrink-0">
+            {action}
+          </div>
+        )}
       </div>
 
       {children && <div className="pt-2">{children}</div>}

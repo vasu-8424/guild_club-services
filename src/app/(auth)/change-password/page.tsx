@@ -52,12 +52,12 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-radial from-slate-100 via-slate-50 to-slate-200 px-4 py-12 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-md shadow-amber-500/20">
-            <KeyRound className="h-7 w-7" />
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-none bg-[#0B7A63] text-white shadow-xs">
+            <KeyRound className="h-6 w-6" />
           </div>
           <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-900">
             Password Change Required
@@ -68,9 +68,9 @@ export default function ChangePasswordPage() {
           </p>
         </div>
 
-        {/* Form Card */}
-        <div className="rounded-xl border border-slate-200/80 bg-white p-6 sm:p-7 shadow-xs">
-          <div className="mb-5 flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+        {/* Form Card: Sharp corners, top teal accent */}
+        <div className="rounded-none border border-slate-200 border-t-2 border-t-[#0B7A63] bg-white p-6 sm:p-7 shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+          <div className="mb-5 flex items-start gap-2.5 rounded-none border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800">
             <ShieldAlert className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
             <span>
               Your account has the <strong className="font-semibold">must_change_password</strong> policy active. All access is restricted until you update your credentials.
@@ -80,7 +80,7 @@ export default function ChangePasswordPage() {
           {generalError && (
             <div
               data-testid="change-password-error-message"
-              className="mb-5 flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800"
+              className="mb-5 flex items-start gap-2.5 rounded-none border border-rose-300 bg-rose-50 p-3 text-xs text-rose-800"
             >
               <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
               <span>{generalError}</span>

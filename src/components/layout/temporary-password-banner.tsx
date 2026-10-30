@@ -23,17 +23,17 @@ export function TemporaryPasswordBanner({ user }: TemporaryPasswordBannerProps) 
       data-testid="temporary-password-banner"
       className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-xs text-amber-900 flex items-center justify-between gap-3 shadow-2xs relative z-20 animate-in fade-in duration-200"
     >
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="flex items-center gap-2 min-w-0 flex-1">
         <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-none bg-amber-200 text-amber-800">
           <Icons.Security className="h-3.5 w-3.5" />
         </div>
-        <p className="font-medium truncate">
+        <p className="font-medium text-xs leading-normal">
           <span>For security, please change your temporary password.</span>{" "}
           <Link
             href="/change-password"
-            className="font-bold underline hover:text-amber-950 ml-1 inline-flex items-center gap-1"
+            className="font-bold underline hover:text-amber-950 inline-flex items-center gap-0.5 whitespace-nowrap"
           >
-            Profile &gt; Change password &rarr;
+            Change password &rarr;
           </Link>
         </p>
       </div>

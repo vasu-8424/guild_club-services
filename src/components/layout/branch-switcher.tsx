@@ -55,11 +55,11 @@ export function BranchSwitcher({
     return (
       <div
         data-testid="branch-switcher"
-        className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-800 tracking-tight"
-        title="Assigned Branch"
+        className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-800 tracking-tight max-w-[120px] sm:max-w-none"
+        title={`Assigned Branch: ${singleBranch ? singleBranch.name : "None"}`}
       >
         <svg
-          className="h-3.5 w-3.5 text-slate-500"
+          className="h-3.5 w-3.5 text-slate-500 shrink-0"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -71,7 +71,7 @@ export function BranchSwitcher({
             d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
           />
         </svg>
-        <span>{singleBranch ? singleBranch.name : "No Assigned Branch"}</span>
+        <span className="truncate">{singleBranch ? singleBranch.name : "No Branch"}</span>
       </div>
     );
   }
@@ -92,7 +92,7 @@ export function BranchSwitcher({
           disabled={isPending}
           value={activeBranchId || ""}
           onChange={(e) => handleSelectBranch(e.target.value)}
-          className={`h-8 appearance-none bg-white border border-slate-200 px-3 pr-8 text-xs font-medium tracking-tight text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0B7A63] focus:border-[#0B7A63] rounded-none cursor-pointer transition-colors ${
+          className={`h-8 max-w-[110px] sm:max-w-[200px] appearance-none bg-white border border-slate-200 pl-2.5 pr-7 sm:px-3 sm:pr-8 text-xs font-medium tracking-tight text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#0B7A63] focus:border-[#0B7A63] rounded-none cursor-pointer transition-colors truncate ${
             !activeBranchId ? "border-amber-400 text-amber-800 bg-amber-50" : ""
           } ${isPending ? "opacity-50 cursor-wait" : ""}`}
         >

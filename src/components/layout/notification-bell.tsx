@@ -139,7 +139,7 @@ export function NotificationBell({ userRole = "admin" }: NotificationBellProps) 
       {toast && (
         <div
           data-testid="closed-case-toast"
-          className="fixed bottom-6 right-6 z-50 max-w-sm bg-slate-900 text-white p-3.5 border-l-4 border-[#0B7A63] shadow-xl flex items-start gap-3 rounded-none animate-in fade-in slide-in-from-bottom-4"
+          className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-50 w-[calc(100vw-2rem)] max-w-sm bg-slate-900 text-white p-3.5 border-l-4 border-[#0B7A63] shadow-xl flex items-start gap-3 rounded-none animate-in fade-in slide-in-from-bottom-4"
         >
           <div className="p-1 bg-emerald-500/20 text-emerald-400 shrink-0">
             <Icons.Check className="h-4 w-4" />
@@ -197,7 +197,7 @@ export function NotificationBell({ userRole = "admin" }: NotificationBellProps) 
       {isOpen && (
         <div
           data-testid="notification-dropdown"
-          className="absolute right-0 mt-2 w-80 sm:w-96 rounded-none bg-white border border-slate-200 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-100"
+          className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-sm sm:w-96 rounded-none bg-white border border-slate-200 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-100"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-100 bg-slate-50/70">

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Guild Club Services</string>
+    <string name="title_activity_main">Guild Club Services</string>
+    <string name="package_name">com.guildclub.services</string>
+    <string name="custom_url_scheme">com.guildclub.services</string>
+</resources>

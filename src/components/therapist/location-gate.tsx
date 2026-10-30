@@ -95,7 +95,7 @@ export function LocationGate({ recordId, initialStatus = "pending" }: LocationGa
       data-testid="location-gate"
       className="min-h-[80vh] flex items-center justify-center p-4 bg-stone-100"
     >
-      <div className="w-full max-w-xl bg-white border-2 border-stone-900 rounded-none shadow-2xl p-6 sm:p-8">
+      <div className="w-full max-w-xl bg-white border-2 border-stone-900 rounded-none shadow-2xl p-4 sm:p-6 lg:p-8">
         {/* Header Icon */}
         <div className="flex items-center gap-3 border-b border-stone-200 pb-4 mb-6">
           <div className="p-3 bg-emerald-100 text-[#0B7A63] border border-emerald-300">

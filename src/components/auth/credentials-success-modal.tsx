@@ -84,10 +84,10 @@ export function CredentialsSuccessModal({
   };
 
   return (
-    <Card className="max-w-xl mx-auto border-emerald-200 shadow-md">
-      <CardHeader className="bg-emerald-50/60 rounded-t-2xl border-b border-emerald-100 pb-5">
+    <Card className="max-w-xl mx-auto rounded-none border border-slate-200 border-t-2 border-t-[#0B7A63] shadow-md">
+      <CardHeader className="bg-emerald-50/60 rounded-none border-b border-emerald-100 pb-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-none bg-emerald-100 text-[#0B7A63] border border-emerald-300">
             <CheckCircle className="h-6 w-6" />
           </div>
           <div>
@@ -107,15 +107,17 @@ export function CredentialsSuccessModal({
         {emailWarning && (
           <div
             data-testid="credentials-email-warning"
-            className="flex items-start gap-2.5 rounded-none border border-amber-300 bg-amber-50 p-3.5 text-xs text-amber-900"
+            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-none border border-amber-300 bg-amber-50 p-3.5 text-xs text-amber-900"
           >
-            <ShieldAlert className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
-            <div className="flex-1">
-              <span className="font-semibold block mb-0.5">Email Delivery Alert:</span>
-              <span>{emailWarning}</span>
-              {resendStatus && (
-                <span className="block mt-1 font-semibold text-emerald-800">{resendStatus}</span>
-              )}
+            <div className="flex items-start gap-2.5 flex-1 min-w-0">
+              <ShieldAlert className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+              <div>
+                <span className="font-semibold block mb-0.5">Email Delivery Alert:</span>
+                <span className="break-words">{emailWarning}</span>
+                {resendStatus && (
+                  <span className="block mt-1 font-semibold text-emerald-800">{resendStatus}</span>
+                )}
+              </div>
             </div>
             {userId && (
               <Button
@@ -125,7 +127,7 @@ export function CredentialsSuccessModal({
                 onClick={handleResend}
                 isLoading={isResending}
                 data-testid="resend-credentials-btn"
-                className="shrink-0 text-xs"
+                className="w-full sm:w-auto shrink-0 text-xs"
               >
                 Resend credentials
               </Button>
@@ -134,7 +136,7 @@ export function CredentialsSuccessModal({
         )}
 
         {/* Security Warning Notice */}
-        <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900">
+        <div className="flex items-start gap-2.5 rounded-none border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900">
           <ShieldAlert className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
           <div>
             <span className="font-semibold block mb-0.5">One-time Credential View:</span>
@@ -145,7 +147,7 @@ export function CredentialsSuccessModal({
         </div>
 
         {/* Credentials Display Box */}
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+        <div className="rounded-none border border-slate-200 bg-slate-50 p-4 space-y-3">
           {/* Email Row */}
           <div>
             <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
@@ -154,7 +156,7 @@ export function CredentialsSuccessModal({
                 type="button"
                 onClick={copyEmail}
                 data-testid="copy-email-button"
-                className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 font-medium text-xs"
+                className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 font-medium text-xs cursor-pointer"
               >
                 {copiedEmail ? (
                   <>
@@ -171,7 +173,7 @@ export function CredentialsSuccessModal({
             </div>
             <code
               data-testid="credentials-email"
-              className="block rounded-lg bg-white p-2.5 font-mono text-sm font-medium text-slate-900 border border-slate-200 select-all"
+              className="block rounded-none bg-white p-2.5 font-mono text-sm font-medium text-slate-900 border border-slate-200 select-all"
             >
               {email}
             </code>
@@ -186,7 +188,7 @@ export function CredentialsSuccessModal({
                   type="button"
                   onClick={copyPassword}
                   data-testid="copy-password-button"
-                  className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 font-medium text-xs"
+                  className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 font-medium text-xs cursor-pointer"
                 >
                   {copiedPassword ? (
                     <>
@@ -203,7 +205,7 @@ export function CredentialsSuccessModal({
               </div>
               <code
                 data-testid="credentials-password"
-                className="block rounded-lg bg-white p-2.5 font-mono text-sm font-semibold text-slate-900 border border-slate-200 select-all"
+                className="block rounded-none bg-white p-2.5 font-mono text-sm font-semibold text-slate-900 border border-slate-200 select-all"
               >
                 {password}
               </code>

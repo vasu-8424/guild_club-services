@@ -63,7 +63,7 @@ export function UserMenu({ user }: UserMenuProps) {
         data-testid="user-menu-button"
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2.5 rounded-none p-1 text-sm transition-all duration-150 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#0B7A63] cursor-pointer"
+        className="flex items-center gap-2 rounded-none px-1.5 py-1 min-h-[44px] min-w-[44px] justify-center sm:justify-start text-sm transition-all duration-150 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#0B7A63] cursor-pointer"
         aria-expanded={isOpen}
       >
         <Avatar
@@ -85,7 +85,7 @@ export function UserMenu({ user }: UserMenuProps) {
       {isOpen && (
         <div
           data-testid="user-menu-dropdown"
-          className="absolute right-0 mt-2 w-64 origin-top-right rounded-none border border-slate-300 bg-white p-1.5 shadow-[0_4px_12px_rgba(15,23,42,0.08)] z-50 animate-in fade-in zoom-in-95 duration-100"
+          className="absolute right-0 mt-2 w-64 max-w-[calc(100vw-2rem)] origin-top-right rounded-none border border-slate-300 bg-white p-1.5 shadow-[0_4px_12px_rgba(15,23,42,0.08)] z-50 animate-in fade-in zoom-in-95 duration-100"
         >
           {/* User profile info header */}
           <div className="border-b border-slate-100 px-3 py-2.5 mb-1">

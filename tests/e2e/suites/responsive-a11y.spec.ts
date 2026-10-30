@@ -2,15 +2,29 @@ import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
 test.describe("Suite J: RESPONSIVE AND ACCESSIBILITY", () => {
-  test("[UI-01] Mobile (390px): Login page has no horizontal page scroll", async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/login");
+  const mobileWidths = [320, 360, 375, 390, 412, 430];
 
-    const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
-    const clientWidth = await page.evaluate(() => document.documentElement.clientWidth);
+  for (const width of mobileWidths) {
+    test(`[UI-RESPONSIVE] Width ${width}px: Login page has no horizontal overflow`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto("/login");
 
-    expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 2); // 1-2px tolerance
-  });
+      const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+      const clientWidth = await page.evaluate(() => document.documentElement.clientWidth);
+
+      expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 2); // 1-2px rounding tolerance
+    });
+
+    test(`[UI-RESPONSIVE] Width ${width}px: Change password page has no horizontal overflow`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto("/change-password");
+
+      const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+      const clientWidth = await page.evaluate(() => document.documentElement.clientWidth);
+
+      expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 2);
+    });
+  }
 
   test("[UI-02] Tablet (768px): Login page has no horizontal page scroll", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
@@ -33,6 +47,7 @@ test.describe("Suite J: RESPONSIVE AND ACCESSIBILITY", () => {
   });
 
   test("[UI-04] No overlapping interactive elements on login page (bounding-box overlap check)", async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
     await page.goto("/login");
     const emailInput = await page.locator('[data-testid="login-email-input"]').boundingBox();
     const pwdInput = await page.locator('[data-testid="login-password-input"]').boundingBox();

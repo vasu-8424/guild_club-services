@@ -34,18 +34,18 @@ export function CaseDetailTabContainer({
   return (
     <div className="space-y-4">
       {/* Tab Switcher */}
-      <div className="flex border-b border-stone-200 bg-white">
+      <div className="flex border-b border-stone-200 bg-white overflow-x-auto no-scrollbar max-w-full">
         <button
           type="button"
           data-testid="tab-calendar"
           onClick={() => setActiveTab("calendar")}
-          className={`flex items-center gap-2 px-6 py-3 text-xs font-semibold uppercase tracking-wider transition-colors border-b-2 rounded-none cursor-pointer ${
+          className={`flex items-center gap-2 px-4 sm:px-6 py-3 text-xs font-semibold uppercase tracking-wider transition-colors border-b-2 rounded-none cursor-pointer whitespace-nowrap shrink-0 ${
             activeTab === "calendar"
               ? "border-[#0B7A63] text-[#0B7A63] bg-teal-50/20"
               : "border-transparent text-stone-500 hover:text-stone-800 hover:border-stone-300"
           }`}
         >
-          <CalendarIcon className="w-4 h-4" />
+          <CalendarIcon className="w-4 h-4 shrink-0" />
           <span>Treatment Calendar</span>
         </button>
 
@@ -53,13 +53,13 @@ export function CaseDetailTabContainer({
           type="button"
           data-testid="tab-progress-report"
           onClick={() => setActiveTab("report")}
-          className={`flex items-center gap-2 px-6 py-3 text-xs font-semibold uppercase tracking-wider transition-colors border-b-2 rounded-none cursor-pointer ${
+          className={`flex items-center gap-2 px-4 sm:px-6 py-3 text-xs font-semibold uppercase tracking-wider transition-colors border-b-2 rounded-none cursor-pointer whitespace-nowrap shrink-0 ${
             activeTab === "report"
               ? "border-[#0B7A63] text-[#0B7A63] bg-teal-50/20"
               : "border-transparent text-stone-500 hover:text-stone-800 hover:border-stone-300"
           }`}
         >
-          <FileText className="w-4 h-4" />
+          <FileText className="w-4 h-4 shrink-0" />
           <span>Progress Report</span>
           {initialReports.length > 0 && (
             <span className="ml-1 px-1.5 py-0.2 bg-stone-100 text-stone-700 text-[10px] font-mono border border-stone-200">

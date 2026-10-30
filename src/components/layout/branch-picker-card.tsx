@@ -45,7 +45,7 @@ export function BranchPickerCard({
   return (
     <div
       data-testid="branch-picker-card"
-      className="bg-white border border-slate-200 p-8 shadow-sm rounded-none my-6"
+      className="bg-white border border-slate-200 p-4 sm:p-6 lg:p-8 shadow-sm rounded-none my-6"
     >
       <div className="max-w-2xl">
         <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-xs font-semibold text-[#0B7A63] tracking-wide uppercase mb-3">

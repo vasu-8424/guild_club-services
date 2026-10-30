@@ -348,8 +348,8 @@ export function TherapistPatientsTable({
 
         {/* 5. Pagination Bar */}
         {filteredPatients.length > pageSize && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-stone-200 bg-stone-50 text-xs text-stone-600">
-            <span>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-stone-200 bg-stone-50 text-xs text-stone-600">
+            <span className="text-center sm:text-left">
               Showing {(currentPage - 1) * pageSize + 1} to{" "}
               {Math.min(currentPage * pageSize, filteredPatients.length)} of{" "}
               {filteredPatients.length} patients
@@ -360,7 +360,8 @@ export function TherapistPatientsTable({
                 data-testid="prev-page-btn"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => p - 1)}
-                className="p-1 border border-stone-300 disabled:opacity-30 rounded-none hover:bg-stone-100"
+                className="p-1 min-h-[36px] min-w-[36px] flex items-center justify-center border border-stone-300 disabled:opacity-30 rounded-none hover:bg-stone-100 cursor-pointer"
+                aria-label="Previous page"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -372,7 +373,8 @@ export function TherapistPatientsTable({
                 data-testid="next-page-btn"
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => p + 1)}
-                className="p-1 border border-stone-300 disabled:opacity-30 rounded-none hover:bg-stone-100"
+                className="p-1 min-h-[36px] min-w-[36px] flex items-center justify-center border border-stone-300 disabled:opacity-30 rounded-none hover:bg-stone-100 cursor-pointer"
+                aria-label="Next page"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>

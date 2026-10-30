@@ -160,7 +160,7 @@ export function PatientSignaturePad({
         <label className="block text-xs font-semibold text-slate-700">
           Patient sign
         </label>
-        <div className="relative rounded-xl border border-slate-200 bg-white p-3 flex items-center justify-center min-h-[120px] shadow-xs">
+        <div className="relative rounded-none border border-slate-200 bg-white p-3 flex items-center justify-center min-h-[120px] shadow-xs">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={existingSignatureUrl}

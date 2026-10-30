@@ -139,7 +139,7 @@ export function BranchReportButton({ branchId, className = "" }: BranchReportBut
       {showLongWaitNotice && (
         <div
           data-testid="branch-report-preparing-notice"
-          className="fixed bottom-4 right-4 max-w-sm bg-slate-900 text-white p-3.5 rounded-none shadow-lg text-xs z-50 flex items-start gap-2.5 border-l-4 border-[#0B7A63]"
+          className="fixed bottom-20 right-4 sm:bottom-4 z-50 w-[calc(100vw-2rem)] max-w-sm bg-slate-900 text-white p-3.5 rounded-none shadow-lg text-xs flex items-start gap-2.5 border-l-4 border-[#0B7A63]"
         >
           <RefreshCw className="h-4 w-4 animate-spin text-emerald-400 shrink-0 mt-0.5" />
           <div>

@@ -123,14 +123,14 @@ export function PasswordInputWithStrength({
           placeholder={placeholder}
           required={required}
           data-testid={testId}
-          className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 pr-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all font-mono"
+          className="w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 pr-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0B7A63] focus:outline-none focus:ring-1 focus:ring-[#0B7A63] transition-all font-mono"
         />
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
           data-testid={`${testId}-toggle`}
           tabIndex={-1}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+          className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
           title={showPassword ? "Hide password" : "Show password"}
         >
           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -156,7 +156,7 @@ export function PasswordInputWithStrength({
               {strength.label}
             </span>
           </div>
-          <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-slate-100 rounded-none overflow-hidden">
             <div
               className={`h-full transition-all duration-300 ${strength.color}`}
               style={{ width: `${strength.percentage}%` }}
