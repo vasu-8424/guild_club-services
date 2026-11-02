@@ -595,7 +595,7 @@ export function CreateCaseForm({ branches }: CreateCaseFormProps) {
                 type="file"
                 data-testid="joining-photo-input"
                 accept="image/*"
-                capture="environment"
+
                 onChange={handlePhotoUpload}
                 className="hidden"
               />

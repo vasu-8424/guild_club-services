@@ -541,7 +541,7 @@ export function SessionDetailDrawer({
                     ref={inFileInputRef}
                     type="file"
                     accept="image/*"
-                    capture="environment"
+
                     data-testid="in-time-photo-input"
                     className="hidden"
                     onChange={handleInTimeUpload}
@@ -659,7 +659,7 @@ export function SessionDetailDrawer({
                     ref={outFileInputRef}
                     type="file"
                     accept="image/*"
-                    capture="environment"
+
                     data-testid="out-time-photo-input"
                     className="hidden"
                     onChange={handleOutTimeUpload}

@@ -132,7 +132,7 @@ export function DateSelector() {
       {isOpen && (
         <div
           data-testid="date-selector-dropdown"
-          className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-none border border-slate-300 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.12)] animate-in fade-in-0 zoom-in-95 duration-100"
+          className="fixed sm:absolute inset-x-3 sm:inset-x-auto top-20 sm:top-auto sm:right-0 z-50 mt-2 sm:w-80 max-h-[85vh] overflow-y-auto rounded-none border border-slate-300 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.12)] animate-in fade-in-0 zoom-in-95 duration-100"
         >
           <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3">
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 uppercase tracking-wider">

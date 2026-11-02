@@ -396,7 +396,7 @@ export function CloseCaseModal({
                         type="file"
                         data-testid="close-photo-input"
                         accept="image/*"
-                        capture="environment"
+
                         onChange={handlePhotoUpload}
                         className="hidden"
                       />
