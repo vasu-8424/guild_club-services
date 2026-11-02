@@ -50,3 +50,4 @@ export function scrollInputIntoViewOnFocus(e: React.FocusEvent<HTMLElement>) {
     }
   }, 300);
 }
+

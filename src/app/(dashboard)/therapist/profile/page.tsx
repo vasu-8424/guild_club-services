@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import { requireRole } from "@/lib/session";
 import { db } from "@/db";
 import { users, therapistProfiles } from "@/db/schema";
@@ -83,11 +84,16 @@ export default async function TherapistProfilePage() {
 
         {/* App Settings Card */}
         <div className="bg-white border border-stone-200 rounded-none shadow-xs overflow-hidden">
-          <div className="px-4 py-3 border-b border-stone-200 bg-stone-50 flex items-center gap-2">
-            <Settings className="w-4 h-4 text-[#0B7A63]" />
-            <h3 className="text-[14px] font-bold uppercase tracking-wide text-stone-900">
-              App Settings & System
-            </h3>
+          <div className="px-4 py-3 border-b border-stone-200 bg-stone-50 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Settings className="w-4 h-4 text-[#0B7A63]" />
+              <h3 className="text-[14px] font-bold uppercase tracking-wide text-stone-900">
+                App Settings & System
+              </h3>
+            </div>
+            <div className="w-6 h-6 rounded-full overflow-hidden border border-amber-500/30 bg-slate-900 shadow-xs">
+              <Image src="/logo.png" alt="Guild Club Services System Emblem" width={24} height={24} className="h-full w-full object-cover" />
+            </div>
           </div>
 
           <div className="p-4 space-y-3 divide-y divide-stone-100">

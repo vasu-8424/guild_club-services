@@ -28,8 +28,13 @@ export const metadata: Metadata = {
     "A secure, unified therapy case management portal for super administrators, clinic managers, and licensed therapists.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/icon-192.svg",
-    apple: "/icon-192.svg",
+    icon: [
+      { url: "/favicon.png", sizes: "64x64", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
   appleWebApp: {
     capable: true,

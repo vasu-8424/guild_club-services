@@ -2,11 +2,13 @@
 // STRICT COMPLIANCE: Cache ONLY static app shell & icons.
 // NEVER cache patient data, photos, signatures, reports, or authenticated API routes.
 
-const CACHE_NAME = "guild-club-shell-v1";
+const CACHE_NAME = "guild-club-shell-v2";
 const SHELL_ASSETS = [
   "/offline",
-  "/icon-192.svg",
-  "/icon-512.svg",
+  "/logo.png",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/favicon.png",
 ];
 
 self.addEventListener("install", (event) => {
@@ -63,3 +65,4 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
+

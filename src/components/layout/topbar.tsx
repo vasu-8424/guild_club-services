@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { NotificationBell } from "./notification-bell";
 import { BranchSwitcher } from "./branch-switcher";
@@ -98,6 +99,11 @@ export function Topbar({
     >
       {/* Left: Optional Back Arrow + Title & Multi-Branch Chip */}
       <div className="flex items-center gap-2.5 min-w-0 flex-1">
+        {!isInnerPage && (
+          <div data-testid="topbar-logo" className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-amber-500/30 bg-slate-900 shadow-xs mr-0.5">
+            <Image src="/logo.png" alt="Guild Club Services" width={32} height={32} priority className="h-full w-full object-cover" />
+          </div>
+        )}
         {isInnerPage && (
           <button
             type="button"

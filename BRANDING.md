@@ -66,3 +66,4 @@
 - Inputs: Minimum `16px` font size (`text-base`) to prevent iOS automatic zoom.
 - Keyboard Handling: Sticky action bars float above keyboard using `visualViewport` listener.
 - Bottom Sheet Confirmations: Replaces destructive modals on mobile.
+

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { getServiceLabel, getOutcomeLabel } from "@/lib/services";
 import { formatDisplayDate, formatDateTimeIST } from "@/lib/date-utils";
@@ -94,11 +95,15 @@ export function CaseProgressReport({ data }: { data: ProgressReportData }) {
         {/* a) Header: Patient ID, patient name, age, sex, service, problem, branch, room, start date, end date or "Ongoing", and status. */}
         <div className="page-break-avoid mb-6">
           <div className="flex items-start justify-between border-b-2 border-stone-900 pb-4 mb-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-lg tracking-tight uppercase text-stone-900">
-                  Guild Club Services
-                </span>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full overflow-hidden border border-amber-500/30 bg-slate-900 shrink-0">
+                <Image src="/logo.png" alt="Guild Club Seal" width={48} height={48} priority className="h-full w-full object-cover" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-lg tracking-tight uppercase text-stone-900">
+                    Guild Club Services
+                  </span>
                 <span className="text-xs bg-[#0B7A63] text-white px-2 py-0.5 font-semibold uppercase tracking-wider">
                   Clinical Progress Report
                 </span>
@@ -107,6 +112,7 @@ export function CaseProgressReport({ data }: { data: ProgressReportData }) {
                 Patient Rehabilitation & Clinical Assessment
               </p>
             </div>
+          </div>
 
             <div className="text-right">
               <span className="text-[10px] text-stone-500 block uppercase font-bold tracking-wider">

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { loginAction } from "@/lib/actions/auth-actions";
 import { Button } from "@/components/ui/button";
@@ -65,8 +66,8 @@ function LoginForm() {
 
         {/* Top Brand Logo */}
         <div className="flex items-center gap-3 relative z-10">
-          <div className="flex h-10 w-10 items-center justify-center rounded-none bg-[#0B7A63] text-white shadow-xs">
-            <Icons.Analytics className="h-6 w-6" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full overflow-hidden shadow-md border border-amber-500/20 bg-slate-900 shrink-0">
+            <Image src="/logo.png" alt="Guild Club Services" width={48} height={48} priority className="h-full w-full object-cover" />
           </div>
           <div>
             <span className="text-lg font-semibold tracking-tight text-white block">
@@ -122,8 +123,8 @@ function LoginForm() {
         <div className="mx-auto w-full max-w-md space-y-6">
           {/* Mobile Header (Shown only on small screens) */}
           <div className="lg:hidden text-center mb-6">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-none bg-[#0B7A63] text-white shadow-xs mb-3">
-              <Icons.Analytics className="h-6 w-6" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full overflow-hidden shadow-lg border-2 border-amber-500/30 bg-slate-900 mb-3">
+              <Image src="/logo.png" alt="Guild Club Services" width={64} height={64} priority className="h-full w-full object-cover" />
             </div>
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
               Guild Club Services

@@ -41,3 +41,4 @@ This guide describes how to install **Guild Club Services** on Android devices a
 ## 3. Offline Mode & Data Security
 - When an internet connection is unavailable, Guild Club Services displays a friendly offline page.
 - **Privacy & Compliance**: In accordance with healthcare data regulations, **no patient records, medical condition photos, clinical notes, or signatures are ever stored or cached on the device**. Only static app shell assets and brand icons are saved for rapid loading.
+

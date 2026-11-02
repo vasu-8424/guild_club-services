@@ -249,3 +249,4 @@ export function BottomTabBar({ role }: BottomTabBarProps) {
     </nav>
   );
 }
+
