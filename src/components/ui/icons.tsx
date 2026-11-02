@@ -60,6 +60,8 @@ import {
   Sparkle,
   Envelope,
   Copy,
+  Bell,
+  DotsThreeCircle,
   type IconProps,
 } from "@phosphor-icons/react";
 
@@ -82,6 +84,8 @@ export const Icons = {
   Reports: (props: IconProps) => <ChartBar weight="duotone" size={20} {...props} />,
   Room: (props: IconProps) => <Door weight="duotone" size={20} {...props} />,
   Settings: (props: IconProps) => <Gear weight="duotone" size={20} {...props} />,
+  Bell: (props: IconProps) => <Bell weight="duotone" size={20} {...props} />,
+  More: (props: IconProps) => <DotsThreeCircle weight="duotone" size={20} {...props} />,
   SignOut: (props: IconProps) => <SignOut weight="duotone" size={20} {...props} />,
 
   // Stat Card & Metric Icons

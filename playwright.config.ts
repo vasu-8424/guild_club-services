@@ -119,6 +119,16 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
       dependencies: ["setup"],
     },
+    {
+      name: "mobile-ux",
+      testDir: "./tests/e2e/suites",
+      testMatch: /mobile-ux-redesign\.spec\.ts/,
+      use: {
+        isMobile: true,
+        hasTouch: true,
+      },
+      dependencies: ["setup"],
+    },
   ],
   webServer: {
     command: "npx tsx scripts/start-test-server.ts",

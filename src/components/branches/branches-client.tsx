@@ -87,14 +87,14 @@ export function BranchesClient({ initialBranches }: BranchesClientProps) {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-12">
+    <div className="space-y-4 max-w-xl mx-auto pb-12 w-full">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-stone-200 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-200 pb-3">
         <div>
-          <h1 className="text-2xl font-bold uppercase tracking-tight text-stone-900">
+          <h1 className="text-[24px] font-semibold tracking-tight text-stone-900 leading-tight">
             Branches
           </h1>
-          <p className="text-xs text-stone-500 mt-1">
+          <p className="text-[13px] text-stone-500 mt-0.5">
             Clinical facilities and therapy practice locations
           </p>
         </div>
@@ -104,42 +104,47 @@ export function BranchesClient({ initialBranches }: BranchesClientProps) {
             type="button"
             data-testid="add-branch-btn"
             onClick={() => setIsAdding(true)}
-            className="inline-flex items-center gap-2 bg-[#0B7A63] hover:bg-[#096350] text-white px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-none transition-colors"
+            className="w-full sm:w-auto min-h-[48px] h-[48px] inline-flex items-center justify-center gap-2 bg-[#0B7A63] hover:bg-[#096350] active:bg-[#064e3e] text-white px-5 text-base font-semibold uppercase tracking-wider rounded-none transition-colors select-none touch-manipulation shadow-xs cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-5 h-5" />
             <span>Add Branch</span>
           </button>
         )}
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 text-red-800 text-xs">
+        <div className="p-3.5 bg-red-50 border border-red-200 text-red-800 text-[13px] font-medium">
           {error}
         </div>
       )}
 
       {/* Add Branch Inline Panel */}
       {isAdding && (
-        <div className="bg-stone-50 border border-stone-200 p-4 rounded-none">
-          <form onSubmit={handleAdd} className="flex flex-col sm:flex-row items-center gap-3">
-            <input
-              type="text"
-              data-testid="branch-name-input"
-              value={newBranchName}
-              onChange={(e) => setNewBranchName(e.target.value)}
-              placeholder="Enter branch name (e.g. North Center)"
-              className="flex-1 w-full border border-stone-300 px-3 py-2 text-xs focus:outline-none focus:border-[#0B7A63] rounded-none bg-white"
-              autoFocus
-              required
-            />
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="bg-white border border-stone-300 p-4 rounded-none shadow-xs">
+          <form onSubmit={handleAdd} className="space-y-3">
+            <div>
+              <label className="block text-[14px] font-semibold text-stone-700 uppercase tracking-wide mb-1">
+                Branch Name
+              </label>
+              <input
+                type="text"
+                data-testid="branch-name-input"
+                value={newBranchName}
+                onChange={(e) => setNewBranchName(e.target.value)}
+                placeholder="Enter branch name (e.g. Wellknox Banjara Hills)"
+                className="w-full min-h-[48px] border border-stone-300 px-3.5 py-3 text-base focus:outline-none focus:border-[#0B7A63] rounded-none bg-white"
+                autoFocus
+                required
+              />
+            </div>
+            <div className="flex items-center gap-2.5">
               <button
                 type="submit"
                 disabled={loading || !newBranchName.trim()}
                 data-testid="save-new-branch-btn"
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 bg-[#0B7A63] hover:bg-[#096350] text-white px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-none disabled:opacity-50"
+                className="flex-1 min-h-[48px] h-[48px] inline-flex items-center justify-center gap-2 bg-[#0B7A63] hover:bg-[#096350] active:bg-[#064e3e] text-white px-4 text-base font-semibold uppercase tracking-wider rounded-none disabled:opacity-50 cursor-pointer select-none touch-manipulation"
               >
-                <Check className="w-3.5 h-3.5" />
+                <Check className="w-5 h-5" />
                 <span>Save</span>
               </button>
               <button
@@ -148,9 +153,9 @@ export function BranchesClient({ initialBranches }: BranchesClientProps) {
                   setIsAdding(false);
                   setNewBranchName("");
                 }}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 border border-stone-300 text-stone-700 hover:bg-stone-100 px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-none"
+                className="min-h-[48px] h-[48px] px-5 border border-stone-300 text-stone-700 hover:bg-stone-100 text-[14px] font-semibold uppercase tracking-wider rounded-none cursor-pointer select-none touch-manipulation"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4 mr-1 inline" />
                 <span>Cancel</span>
               </button>
             </div>
@@ -158,86 +163,87 @@ export function BranchesClient({ initialBranches }: BranchesClientProps) {
         </div>
       )}
 
-      {/* Branches Table */}
-      <div className="bg-white border border-stone-200 rounded-none shadow-xs overflow-hidden">
-        <table className="w-full text-left text-xs border-collapse" data-testid="branches-table">
-          <thead>
-            <tr className="bg-stone-100 border-b border-stone-200 text-stone-700 uppercase font-semibold">
-              <th className="py-3 px-4">Branch Name</th>
-              <th className="py-3 px-4 w-32">Status</th>
-              <th className="py-3 px-4 w-44 text-right">Actions</th>
+      {/* Branches Stacked Cards */}
+      <div className="w-full">
+        <table className="w-full block" data-testid="branches-table">
+          <thead className="sr-only">
+            <tr>
+              <th>Branch Name</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-stone-200">
+          <tbody className="block space-y-3">
             {branchesList.length === 0 ? (
-              <tr>
-                <td colSpan={3} className="py-8 text-center text-stone-500">
-                  No branches found.
-                </td>
+              <tr className="block p-8 text-center text-stone-500 bg-white border border-stone-200">
+                <td className="block">No branches found.</td>
               </tr>
             ) : (
               branchesList.map((branch) => (
                 <tr
                   key={branch.id}
                   data-testid="branch-row"
-                  className="hover:bg-stone-50 transition-colors"
+                  className="block rounded-none border border-stone-200 bg-white p-4 shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:border-[#0B7A63] transition-colors"
                 >
-                  <td className="py-3 px-4">
+                  <td className="block mb-3">
                     {editingId === branch.id ? (
-                      <div className="flex items-center gap-2">
+                      <div className="space-y-2">
                         <input
                           type="text"
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
-                          className="border border-stone-300 px-2 py-1 text-xs focus:outline-none focus:border-[#0B7A63] rounded-none w-full max-w-sm"
+                          className="border border-stone-300 px-3.5 py-2.5 text-base focus:outline-none focus:border-[#0B7A63] rounded-none w-full"
                           autoFocus
                         />
-                        <button
-                          type="button"
-                          onClick={() => handleSaveRename(branch.id)}
-                          data-testid={`save-rename-branch-${branch.id}`}
-                          className="p-1 text-emerald-700 hover:text-emerald-900"
-                          title="Save rename"
-                        >
-                          <Check className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingId(null)}
-                          className="p-1 text-stone-500 hover:text-stone-700"
-                          title="Cancel"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleSaveRename(branch.id)}
+                            data-testid={`save-rename-branch-${branch.id}`}
+                            className="min-h-[44px] h-[44px] px-4 bg-emerald-700 text-white text-[13px] font-semibold uppercase tracking-wider rounded-none inline-flex items-center gap-1.5"
+                          >
+                            <Check className="w-4 h-4" />
+                            <span>Save</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingId(null)}
+                            className="min-h-[44px] h-[44px] px-4 border border-stone-300 text-stone-700 text-[13px] font-semibold uppercase tracking-wider rounded-none inline-flex items-center gap-1.5"
+                          >
+                            <X className="w-4 h-4" />
+                            <span>Cancel</span>
+                          </button>
+                        </div>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 font-medium text-stone-900">
-                        <Building2 className="w-4 h-4 text-stone-400" />
-                        <span data-testid={`branch-name-${branch.id}`}>{branch.name}</span>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5 font-semibold text-[17px] text-stone-900">
+                          <Building2 className="w-5 h-5 text-[#0B7A63] shrink-0" />
+                          <span data-testid={`branch-name-${branch.id}`}>{branch.name}</span>
+                        </div>
+                        {branch.isActive ? (
+                          <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 uppercase tracking-wider rounded-none shrink-0">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-bold bg-stone-100 text-stone-600 border border-stone-300 uppercase tracking-wider rounded-none shrink-0">
+                            Inactive
+                          </span>
+                        )}
                       </div>
                     )}
                   </td>
-                  <td className="py-3 px-4">
-                    {branch.isActive ? (
-                      <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                        Active
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold bg-stone-100 text-stone-600 border border-stone-300">
-                        Inactive
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
+
+                  <td className="block pt-2 border-t border-stone-100">
+                    <div className="flex items-center justify-end gap-2.5">
                       {editingId !== branch.id && (
                         <button
                           type="button"
                           data-testid={`rename-branch-btn-${branch.id}`}
                           onClick={() => handleStartRename(branch)}
-                          className="px-2.5 py-1 text-xs font-semibold text-stone-700 border border-stone-300 hover:bg-stone-100 rounded-none inline-flex items-center gap-1"
+                          className="min-h-[44px] h-[44px] px-3.5 text-[13px] font-semibold text-stone-700 border border-stone-300 hover:bg-stone-100 rounded-none inline-flex items-center gap-1.5 select-none touch-manipulation cursor-pointer"
                         >
-                          <Edit2 className="w-3 h-3" />
+                          <Edit2 className="w-3.5 h-3.5" />
                           <span>Rename</span>
                         </button>
                       )}
@@ -245,10 +251,10 @@ export function BranchesClient({ initialBranches }: BranchesClientProps) {
                         type="button"
                         data-testid={`toggle-branch-status-btn-${branch.id}`}
                         onClick={() => handleToggleStatus(branch)}
-                        className={`px-2.5 py-1 text-xs font-semibold border rounded-none ${
+                        className={`min-h-[44px] h-[44px] px-4 text-[13px] font-semibold border rounded-none select-none touch-manipulation cursor-pointer ${
                           branch.isActive
-                            ? "text-red-700 border-red-200 hover:bg-red-50"
-                            : "text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+                            ? "text-rose-700 border-rose-300 hover:bg-rose-50"
+                            : "text-emerald-700 border-emerald-300 hover:bg-emerald-50"
                         }`}
                       >
                         {branch.isActive ? "Deactivate" : "Activate"}

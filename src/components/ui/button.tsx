@@ -13,7 +13,7 @@ export type ButtonVariant =
   | "link"
   | "icon";
 
-export type ButtonSize = "sm" | "md" | "lg" | "icon" | "icon-sm";
+export type ButtonSize = "sm" | "md" | "lg" | "icon" | "icon-sm" | "xl";
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -62,7 +62,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     // Strict single-source layout rules
     const baseLayout =
-      "btn relative inline-flex flex-row items-center justify-center box-border shrink-0 min-w-0 select-none font-semibold rounded-none tracking-tight whitespace-nowrap leading-none transition-all duration-150 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0B7A63] focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed";
+      "btn relative inline-flex flex-row items-center justify-center box-border shrink-0 min-w-0 select-none font-semibold rounded-none tracking-tight whitespace-nowrap leading-none transition-all duration-150 cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0B7A63] focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed";
 
     const variantStyles: Record<ButtonVariant, string> = {
       // Primary: solid deep teal with 2px darker bottom border
@@ -102,13 +102,14 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         "bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 hover:border-[#0B7A63] hover:text-[#0B7A63] active:bg-slate-100 shadow-[0_1px_0_rgba(15,23,42,0.04)]",
     };
 
-    // Strict fixed heights, horizontal padding only, no vertical padding
+    // Strict fixed heights, touch target min 48px, horizontal padding only, no vertical padding
     const sizeStyles: Record<ButtonSize, string> = {
-      sm: "h-[36px] px-3 gap-[6px] text-[14px]",
-      md: "h-[44px] px-4 gap-[8px] text-[14px] sm:text-[15px]",
-      lg: "h-[48px] px-5 gap-[8px] text-[15px]",
-      icon: "h-[40px] w-[40px] p-0 gap-0 text-[14px]",
-      "icon-sm": "h-[36px] w-[36px] p-0 gap-0 text-[13px]",
+      sm: "min-h-[48px] h-[48px] px-3.5 gap-[6px] text-[14px]",
+      md: "min-h-[48px] h-[48px] px-4 gap-[8px] text-[14px] sm:text-[15px]",
+      lg: "min-h-[52px] h-[52px] px-5 gap-[8px] text-[15px]",
+      xl: "min-h-[52px] h-[52px] w-full px-5 gap-[8px] text-[16px]",
+      icon: "min-h-[48px] min-w-[48px] h-[48px] w-[48px] p-0 gap-0 text-[14px]",
+      "icon-sm": "min-h-[48px] min-w-[48px] h-[48px] w-[48px] p-0 gap-0 text-[13px]",
     };
 
     // Icon sizing: 16px for small, 18px for medium/large

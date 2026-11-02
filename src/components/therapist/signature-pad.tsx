@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { RotateCcw, PenTool } from "lucide-react";
+import { RotateCcw, PenTool, Trash2 } from "lucide-react";
 
 interface SignaturePadProps {
   onChange: (dataUrl: string | null) => void;
@@ -17,23 +17,27 @@ export function SignaturePad({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasDrawn, setHasDrawn] = useState(false);
+  const [history, setHistory] = useState<ImageData[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
 
     // Set canvas dimensions
-    canvas.width = canvas.offsetWidth || 360;
-    canvas.height = 140;
+    const width = canvas.offsetWidth || 360;
+    const height = 240;
+    canvas.width = width;
+    canvas.height = height;
 
     // Fill white background so exported PNG is crisp
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, width, height);
 
     ctx.strokeStyle = "#111827";
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 3;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
@@ -41,12 +45,28 @@ export function SignaturePad({
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.onload = () => {
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, width, height);
         setHasDrawn(true);
       };
       img.src = initialSignatureUrl;
+    } else {
+      const blank = ctx.getImageData(0, 0, width, height);
+      setHistory([blank]);
+      setHistoryIndex(0);
     }
   }, [initialSignatureUrl]);
+
+  const saveCanvasState = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return;
+
+    const currentState = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const newHistory = history.slice(0, historyIndex + 1);
+    setHistory([...newHistory, currentState]);
+    setHistoryIndex(newHistory.length);
+  };
 
   const getCoordinates = (
     e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
@@ -78,7 +98,7 @@ export function SignaturePad({
     }
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
 
     const { x, y } = getCoordinates(e);
@@ -96,68 +116,102 @@ export function SignaturePad({
     }
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
 
     const { x, y } = getCoordinates(e);
     ctx.lineTo(x, y);
     ctx.stroke();
-    setHasDrawn(true);
   };
 
-  const stopDrawing = (
-    e?: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
-  ) => {
-    if ("touches" in (e || {}) && (e as any)?.cancelable) {
-      (e as any).preventDefault();
-    }
+  const stopDrawing = () => {
     if (!isDrawing) return;
     setIsDrawing(false);
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    setHasDrawn(true);
+    saveCanvasState();
 
-    // Export PNG
-    const dataUrl = canvas.toDataURL("image/png");
-    onChange(dataUrl);
+    const canvas = canvasRef.current;
+    if (canvas) {
+      onChange(canvas.toDataURL("image/png"));
+    }
   };
 
-  const clearCanvas = () => {
-    if (readOnly) return;
+  const clear = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
 
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     setHasDrawn(false);
+
+    const blank = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    setHistory([blank]);
+    setHistoryIndex(0);
     onChange(null);
   };
 
+  const undo = () => {
+    if (historyIndex <= 0) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return;
+
+    const prevIndex = historyIndex - 1;
+    const prevState = history[prevIndex];
+    ctx.putImageData(prevState, 0, 0);
+    setHistoryIndex(prevIndex);
+
+    if (prevIndex === 0) {
+      setHasDrawn(false);
+      onChange(null);
+    } else {
+      setHasDrawn(true);
+      onChange(canvas.toDataURL("image/png"));
+    }
+  };
+
   return (
-    <div className="space-y-2">
+    <div className="w-full space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-xs font-bold uppercase tracking-wider text-stone-800 flex items-center gap-1.5">
-          <PenTool className="w-3.5 h-3.5 text-stone-600" />
-          <span>Patient Signature <span className="text-red-500">*</span></span>
+        <label className="text-[14px] font-semibold text-stone-700 tracking-wide uppercase flex items-center gap-1.5">
+          <PenTool className="w-4 h-4 text-stone-500" />
+          <span>Patient Signature</span>
         </label>
         {!readOnly && (
-          <button
-            type="button"
-            data-testid="clear-signature-btn"
-            onClick={clearCanvas}
-            className="inline-flex items-center gap-1 text-[11px] font-semibold text-stone-600 hover:text-stone-900 border border-stone-300 hover:border-stone-400 bg-stone-50 px-2 py-0.5 rounded-none transition-colors cursor-pointer"
-          >
-            <RotateCcw className="w-3 h-3" />
-            <span>Clear</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={undo}
+              disabled={historyIndex <= 0}
+              data-testid="signature-undo-btn"
+              className="min-h-[44px] h-[44px] px-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-stone-600 hover:text-stone-900 border border-stone-200 bg-white hover:bg-stone-50 rounded-none disabled:opacity-40"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Undo</span>
+            </button>
+            <button
+              type="button"
+              onClick={clear}
+              data-testid="signature-clear-btn"
+              disabled={!hasDrawn}
+              className="min-h-[44px] h-[44px] px-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-rose-700 hover:text-rose-800 border border-stone-200 bg-white hover:bg-stone-50 rounded-none disabled:opacity-40"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Clear</span>
+            </button>
+          </div>
         )}
       </div>
 
-      <div className="border-2 border-stone-800 bg-white shadow-inner relative touch-none">
+      <div className="border border-stone-300 rounded-none bg-white relative overflow-hidden shadow-xs">
         <canvas
           ref={canvasRef}
-          data-testid="signature-pad"
+          data-testid="signature-canvas"
+          className="w-full h-[240px] min-h-[240px] cursor-crosshair bg-white touch-none"
+          style={{ touchAction: "none" }}
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}
@@ -165,18 +219,13 @@ export function SignaturePad({
           onTouchStart={startDrawing}
           onTouchMove={draw}
           onTouchEnd={stopDrawing}
-          className={`w-full block bg-white ${readOnly ? "cursor-not-allowed" : "cursor-crosshair"}`}
-          style={{ height: "140px", touchAction: "none" }}
         />
         {!hasDrawn && !readOnly && (
-          <div className="absolute inset-0 pointer-events-none flex items-center justify-center text-xs text-stone-400 font-sans tracking-wide">
-            Sign with finger, stylus, or mouse here
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center text-[14px] text-stone-400 font-medium">
+            Sign here with finger or stylus
           </div>
         )}
       </div>
-      <p className="text-[10px] text-stone-500">
-        Saved securely as private clinical record (PNG under 500 KB).
-      </p>
     </div>
   );
 }

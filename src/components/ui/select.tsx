@@ -32,7 +32,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={selectId}
-            className="block text-xs font-semibold uppercase tracking-wider text-slate-700"
+            className="block text-[14px] font-semibold tracking-wide uppercase text-slate-700"
           >
             {label}
           </label>
@@ -42,7 +42,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             id={selectId}
             ref={ref}
             className={cn(
-              "w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 transition-colors shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:border-slate-400 focus:border-[#0B7A63] focus:outline-none focus:ring-1 focus:ring-[#0B7A63] disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500",
+              "w-full min-h-[48px] rounded-none border border-slate-300 bg-white px-3.5 py-3 text-base text-slate-900 transition-colors shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:border-slate-400 focus:border-[#0B7A63] focus:outline-none focus:ring-1 focus:ring-[#0B7A63] disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500",
               error && "border-rose-500 focus:border-rose-600 focus:ring-rose-500/20",
               className
             )}
@@ -68,13 +68,13 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
                 ? `${props["data-testid"]}-error`
                 : undefined
             }
-            className="text-xs text-rose-600 font-medium"
+            className="text-[13px] text-rose-600 font-medium"
           >
             {error}
           </p>
         )}
         {helperText && !error && (
-          <p className="text-xs text-slate-500">{helperText}</p>
+          <p className="text-[13px] text-slate-500">{helperText}</p>
         )}
       </div>
     );

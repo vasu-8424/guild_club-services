@@ -11,6 +11,7 @@ export interface StatCardProps {
     value: string;
     isPositive?: boolean;
   };
+  status?: string;
   onClick?: () => void;
   className?: string;
   "data-testid"?: string;
@@ -23,6 +24,7 @@ export function StatCard({
   hint,
   icon,
   trend,
+  status,
   onClick,
   className,
   "data-testid": testId,
@@ -47,32 +49,32 @@ export function StatCard({
           : undefined
       }
       className={cn(
-        "relative rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all duration-150",
+        "relative min-h-[120px] rounded-none border border-slate-200 bg-white p-4 shadow-[0_1px_0_rgba(15,23,42,0.04)] transition-all duration-150 flex flex-col justify-between select-none touch-manipulation",
         isClickable &&
-          "cursor-pointer hover:border-teal-500/50 hover:shadow-md active:translate-y-px focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-1",
+          "cursor-pointer hover:border-[#0B7A63] hover:shadow-xs active:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#0B7A63]",
         className
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-medium text-slate-500 tracking-wide uppercase">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[13px] font-semibold text-slate-700 tracking-wide uppercase leading-tight line-clamp-2">
           {label}
         </p>
         {icon && (
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-600 border border-slate-200/60">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-slate-50 text-slate-700 border border-slate-200">
             {icon}
           </div>
         )}
       </div>
 
-      <div className="mt-2 flex items-baseline gap-2">
-        <span className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900">
+      <div className="my-1.5 flex items-baseline gap-2">
+        <span className="text-[32px] sm:text-[36px] font-bold tabular-nums tracking-tight text-slate-900 leading-none">
           {value}
         </span>
         {trend && (
           <span
             className={cn(
-              "text-xs font-medium",
-              trend.isPositive ? "text-emerald-600" : "text-rose-600"
+              "text-[13px] font-semibold",
+              trend.isPositive ? "text-emerald-700" : "text-rose-700"
             )}
           >
             {trend.value}
@@ -80,9 +82,14 @@ export function StatCard({
         )}
       </div>
 
-      {hint && (
-        <p className="mt-1.5 text-xs text-slate-500 truncate">{hint}</p>
-      )}
+      <div className="flex items-center justify-between gap-1 text-[13px] text-slate-500">
+        {hint && <p className="truncate leading-tight">{hint}</p>}
+        {status && (
+          <span className="shrink-0 text-[12px] font-bold uppercase tracking-wider text-[#0B7A63]">
+            {status}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

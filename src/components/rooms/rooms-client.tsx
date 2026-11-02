@@ -275,7 +275,7 @@ export function RoomsClient({ initialRooms, branches }: RoomsClientProps) {
         <Button
           data-testid="add-room-button"
           variant="primary"
-          size="sm"
+          size="md"
           leadingIcon={<Icons.Plus />}
           onClick={() => {
             setShowAddModal(true);
@@ -284,125 +284,142 @@ export function RoomsClient({ initialRooms, branches }: RoomsClientProps) {
             setBulkError(null);
             setBulkSummary(null);
           }}
+          className="w-full sm:w-auto min-h-[48px] h-[48px] text-base font-semibold"
         >
           + Add Room
         </Button>
       </div>
 
       {/* Controls: Search, Branch Filter, Status Filter */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="space-y-2.5">
         {/* Search */}
-        <div className="relative">
+        <div className="relative w-full">
+          <Icons.Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" />
           <input
             type="text"
             data-testid="room-search-input"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by room, patient, or therapist..."
-            className="w-full border border-slate-300 px-3 py-2 text-xs text-slate-900 rounded-none bg-white focus:outline-none focus:border-[#0B7A63]"
+            className="w-full min-h-[48px] pl-10 pr-9 py-3 text-base text-slate-900 border border-slate-300 rounded-none bg-white focus:outline-none focus:border-[#0B7A63]"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 min-h-[36px] min-w-[36px] flex items-center justify-center text-slate-400 hover:text-slate-600 cursor-pointer"
             >
-              <Icons.Close className="h-3.5 w-3.5" />
+              <Icons.Close className="h-4 w-4" />
             </button>
           )}
         </div>
 
-        {/* Branch Filter */}
-        <div>
-          <select
-            data-testid="branch-filter-select"
-            value={branchFilter}
-            onChange={(e) => setBranchFilter(e.target.value)}
-            className="w-full border border-slate-300 px-3 py-2 text-xs text-slate-700 rounded-none bg-white font-medium focus:outline-none focus:border-[#0B7A63]"
-          >
-            <option value="all">All Branches</option>
-            {branches.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <div className="grid grid-cols-2 gap-2.5">
+          {/* Branch Filter */}
+          <div>
+            <select
+              data-testid="branch-filter-select"
+              value={branchFilter}
+              onChange={(e) => setBranchFilter(e.target.value)}
+              className="w-full min-h-[48px] border border-slate-300 px-3 py-3 text-base text-slate-700 rounded-none bg-white font-medium focus:outline-none focus:border-[#0B7A63]"
+            >
+              <option value="all">All Branches</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* Status Filter */}
-        <div>
-          <select
-            data-testid="status-filter-select"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full border border-slate-300 px-3 py-2 text-xs text-slate-700 rounded-none bg-white font-medium focus:outline-none focus:border-[#0B7A63]"
-          >
-            <option value="all">All Statuses</option>
-            <option value="free">FREE</option>
-            <option value="occupied">OCCUPIED</option>
-            <option value="inactive">INACTIVE</option>
-          </select>
+          {/* Status Filter */}
+          <div>
+            <select
+              data-testid="status-filter-select"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full min-h-[48px] border border-slate-300 px-3 py-3 text-base text-slate-700 rounded-none bg-white font-medium focus:outline-none focus:border-[#0B7A63]"
+            >
+              <option value="all">All Statuses</option>
+              <option value="free">FREE</option>
+              <option value="occupied">OCCUPIED</option>
+              <option value="inactive">INACTIVE</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Rooms Table */}
-      <div className="border border-slate-200 bg-white shadow-xs rounded-none overflow-x-auto">
-        <table className="w-full text-left text-xs border-collapse" data-testid="rooms-table">
-          <thead>
-            <tr className="bg-slate-100 border-b border-slate-200 text-slate-700 uppercase font-semibold">
-              <th className="py-3 px-4">Room</th>
-              <th className="py-3 px-4">Branch</th>
-              <th className="py-3 px-4">Status</th>
-              <th className="py-3 px-4">Current Patient</th>
-              <th className="py-3 px-4">Therapist</th>
-              <th className="py-3 px-4">Since</th>
-              <th className="py-3 px-4 text-right">Actions</th>
+      {/* Rooms Stacked Cards */}
+      <div className="w-full">
+        <table className="w-full block border-collapse" data-testid="rooms-table">
+          <thead className="sr-only">
+            <tr>
+              <th>Room</th>
+              <th>Branch</th>
+              <th>Status</th>
+              <th>Current Patient</th>
+              <th>Therapist</th>
+              <th>Since</th>
+              <th>Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200 font-sans text-slate-800">
+          <tbody className="block space-y-3">
             {filteredRooms.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="py-8 px-4 text-center text-slate-500">
-                  No rooms found matching the criteria.
-                </td>
+              <tr className="block p-8 text-center text-slate-500 bg-white border border-slate-200">
+                <td className="block">No rooms found matching the criteria.</td>
               </tr>
             ) : (
               filteredRooms.map((room) => (
                 <tr
                   key={room.id}
                   data-testid={`room-row-${room.id}`}
-                  className="hover:bg-slate-50/70 transition-colors"
+                  className="block rounded-none border border-slate-200 bg-white p-4 shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:border-[#0B7A63] transition-colors"
                 >
-                  <td className="py-3 px-4 font-bold text-slate-900">
-                    {room.roomNo}
+                  <td className="block border-b border-slate-100 pb-2.5 mb-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Icons.Door className="h-5 w-5 text-[#0B7A63]" />
+                        <span className="font-bold text-[18px] text-slate-900">
+                          {room.roomNo}
+                        </span>
+                      </div>
+                      <div>
+                        {room.status === "FREE" ? (
+                          <span
+                            data-testid={`room-status-badge-${room.id}`}
+                            className="inline-flex items-center px-2 py-0.5 text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 uppercase tracking-wider rounded-none"
+                          >
+                            FREE
+                          </span>
+                        ) : room.status === "OCCUPIED" ? (
+                          <span
+                            data-testid={`room-status-badge-${room.id}`}
+                            className="inline-flex items-center px-2 py-0.5 text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300 uppercase tracking-wider rounded-none"
+                          >
+                            OCCUPIED
+                          </span>
+                        ) : (
+                          <span
+                            data-testid={`room-status-badge-${room.id}`}
+                            className="inline-flex items-center px-2 py-0.5 text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-300 uppercase tracking-wider rounded-none"
+                          >
+                            INACTIVE
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </td>
-                  <td className="py-3 px-4 font-medium text-slate-700">
-                    {room.branchName}
+
+                  <td className="flex items-center justify-between text-[14px] text-slate-700 py-1">
+                    <span className="text-[13px] font-medium text-slate-500 uppercase tracking-wide">
+                      Branch
+                    </span>
+                    <span className="font-semibold text-slate-900">{room.branchName}</span>
                   </td>
-                  <td className="py-3 px-4">
-                    {room.status === "FREE" ? (
-                      <span
-                        data-testid={`room-status-badge-${room.id}`}
-                        className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 uppercase tracking-wider rounded-none"
-                      >
-                        FREE
-                      </span>
-                    ) : room.status === "OCCUPIED" ? (
-                      <span
-                        data-testid={`room-status-badge-${room.id}`}
-                        className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold bg-red-100 text-red-800 border border-red-300 uppercase tracking-wider rounded-none"
-                      >
-                        OCCUPIED
-                      </span>
-                    ) : (
-                      <span
-                        data-testid={`room-status-badge-${room.id}`}
-                        className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-300 uppercase tracking-wider rounded-none"
-                      >
-                        INACTIVE
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4">
+
+                  <td className="flex items-center justify-between text-[14px] text-slate-700 py-1">
+                    <span className="text-[13px] font-medium text-slate-500 uppercase tracking-wide">
+                      Patient
+                    </span>
                     {room.currentPatient !== "—" ? (
                       <span className="font-semibold text-slate-900">
                         {room.currentPatient}
@@ -411,18 +428,29 @@ export function RoomsClient({ initialRooms, branches }: RoomsClientProps) {
                       <span className="text-slate-400">—</span>
                     )}
                   </td>
-                  <td className="py-3 px-4">
+
+                  <td className="flex items-center justify-between text-[14px] text-slate-700 py-1">
+                    <span className="text-[13px] font-medium text-slate-500 uppercase tracking-wide">
+                      Therapist
+                    </span>
                     {room.therapist !== "—" ? (
                       <span className="text-slate-800 font-medium">{room.therapist}</span>
                     ) : (
                       <span className="text-slate-400">—</span>
                     )}
                   </td>
-                  <td className="py-3 px-4 font-mono text-[11px] text-slate-600">
-                    {room.since}
+
+                  <td className="flex items-center justify-between text-[14px] text-slate-700 py-1">
+                    <span className="text-[13px] font-medium text-slate-500 uppercase tracking-wide">
+                      Since
+                    </span>
+                    <span className="font-mono text-[12px] text-slate-600">
+                      {room.since}
+                    </span>
                   </td>
-                  <td className="py-3 px-4 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
+
+                  <td className="block pt-3 mt-2 border-t border-slate-100">
+                    <div className="flex items-center justify-end gap-2">
                       {/* Rename (only when free) */}
                       <button
                         type="button"
@@ -433,7 +461,7 @@ export function RoomsClient({ initialRooms, branches }: RoomsClientProps) {
                           setEditRoomNo(room.roomNo);
                           setEditError(null);
                         }}
-                        className={`p-1 text-slate-500 hover:text-slate-800 transition-colors ${
+                        className={`min-h-[44px] h-[44px] px-3.5 border border-slate-300 text-slate-700 hover:bg-slate-100 rounded-none inline-flex items-center gap-1.5 text-[13px] font-semibold select-none touch-manipulation cursor-pointer ${
                           room.status === "OCCUPIED"
                             ? "opacity-30 cursor-not-allowed"
                             : ""
@@ -445,6 +473,7 @@ export function RoomsClient({ initialRooms, branches }: RoomsClientProps) {
                         }
                       >
                         <Icons.PencilSimple className="h-4 w-4" />
+                        <span>Rename</span>
                       </button>
 
                       {/* Deactivate / Activate (deactivate only when free) */}
@@ -453,23 +482,24 @@ export function RoomsClient({ initialRooms, branches }: RoomsClientProps) {
                         data-testid={`toggle-room-btn-${room.id}`}
                         disabled={room.status === "OCCUPIED" && room.isActive}
                         onClick={() => handleToggleActive(room)}
-                        className={`p-1 text-slate-500 hover:text-slate-800 transition-colors ${
+                        className={`min-h-[44px] h-[44px] px-3.5 border rounded-none inline-flex items-center gap-1.5 text-[13px] font-semibold select-none touch-manipulation cursor-pointer ${
                           room.status === "OCCUPIED" && room.isActive
                             ? "opacity-30 cursor-not-allowed"
-                            : ""
-                        }`}
-                        title={
-                          room.status === "OCCUPIED" && room.isActive
-                            ? "Cannot deactivate an occupied room"
                             : room.isActive
-                            ? "Deactivate room"
-                            : "Activate room"
-                        }
+                            ? "text-amber-700 border-amber-300 hover:bg-amber-50"
+                            : "text-emerald-700 border-emerald-300 hover:bg-emerald-50"
+                        }`}
                       >
                         {room.isActive ? (
-                          <Icons.X className="h-4 w-4 text-amber-600" />
+                          <>
+                            <Icons.X className="h-4 w-4" />
+                            <span>Deactivate</span>
+                          </>
                         ) : (
-                          <Icons.Check className="h-4 w-4 text-emerald-600" />
+                          <>
+                            <Icons.Check className="h-4 w-4" />
+                            <span>Activate</span>
+                          </>
                         )}
                       </button>
 
@@ -481,7 +511,7 @@ export function RoomsClient({ initialRooms, branches }: RoomsClientProps) {
                           setDeletingRoom(room);
                           setDeleteError(null);
                         }}
-                        className="p-1 text-red-500 hover:text-red-700 transition-colors"
+                        className="min-h-[44px] h-[44px] px-3 border border-rose-300 text-rose-700 hover:bg-rose-50 rounded-none inline-flex items-center gap-1 text-[13px] font-semibold select-none touch-manipulation cursor-pointer"
                         title="Delete room"
                       >
                         <Icons.Trash className="h-4 w-4" />
@@ -500,32 +530,32 @@ export function RoomsClient({ initialRooms, branches }: RoomsClientProps) {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-3.5"
         >
-          <div className="w-full max-w-md border border-slate-200 bg-white shadow-xl rounded-none">
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 bg-slate-50">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
+          <div className="w-full max-w-md border border-slate-200 bg-white shadow-2xl rounded-none max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5 bg-slate-50 shrink-0">
+              <h2 className="text-[17px] font-bold uppercase tracking-wide text-slate-900">
                 + Add Room
               </h2>
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="text-slate-400 hover:text-slate-700"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-slate-700 cursor-pointer"
               >
-                <Icons.Close className="h-4 w-4" />
+                <Icons.Close className="h-5 w-5" />
               </button>
             </div>
 
             {/* Mode Tabs */}
-            <div className="flex border-b border-slate-200 bg-slate-100">
+            <div className="flex border-b border-slate-200 bg-slate-100 shrink-0">
               <button
                 type="button"
                 data-testid="tab-single-room"
                 onClick={() => setAddMode("single")}
-                className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider ${
+                className={`flex-1 min-h-[48px] py-2.5 text-[14px] font-bold uppercase tracking-wider select-none touch-manipulation cursor-pointer ${
                   addMode === "single"
                     ? "bg-white border-b-2 border-b-[#0B7A63] text-[#0B7A63]"
-                    : "text-slate-500 hover:text-slate-900"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 Single Room
@@ -534,201 +564,201 @@ export function RoomsClient({ initialRooms, branches }: RoomsClientProps) {
                 type="button"
                 data-testid="tab-bulk-room"
                 onClick={() => setAddMode("bulk")}
-                className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider ${
+                className={`flex-1 min-h-[48px] py-2.5 text-[14px] font-bold uppercase tracking-wider select-none touch-manipulation cursor-pointer ${
                   addMode === "bulk"
                     ? "bg-white border-b-2 border-b-[#0B7A63] text-[#0B7A63]"
-                    : "text-slate-500 hover:text-slate-900"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 Add Many (Bulk)
               </button>
             </div>
 
-            {addMode === "single" ? (
-              <form onSubmit={handleSingleSubmit} className="p-5 space-y-4">
-                {singleError && (
-                  <div
-                    data-testid="add-room-error"
-                    className="p-3 text-xs bg-red-50 border border-red-200 text-red-800 rounded-none flex items-start gap-2"
-                  >
-                    <Icons.Alert className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
-                    <span>{singleError}</span>
+            <div className="overflow-y-auto flex-1 p-5">
+              {addMode === "single" ? (
+                <form onSubmit={handleSingleSubmit} className="space-y-4">
+                  {singleError && (
+                    <div
+                      data-testid="add-room-error"
+                      className="p-3 text-[13px] bg-red-50 border border-red-200 text-red-800 rounded-none flex items-start gap-2"
+                    >
+                      <Icons.Alert className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                      <span>{singleError}</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label className="block text-[14px] font-semibold uppercase tracking-wide text-slate-700">
+                      Room Number <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      data-testid="room-number-input"
+                      value={singleRoomNo}
+                      onChange={(e) => setSingleRoomNo(e.target.value)}
+                      placeholder="e.g. Room 101 or 204-A"
+                      required
+                      className="w-full min-h-[48px] border border-slate-300 px-3.5 py-3 text-base text-slate-900 rounded-none focus:outline-none focus:border-[#0B7A63]"
+                    />
                   </div>
-                )}
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Room Number <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    data-testid="room-number-input"
-                    value={singleRoomNo}
-                    onChange={(e) => setSingleRoomNo(e.target.value)}
-                    placeholder="e.g. Room 101 or 204-A"
-                    required
-                    className="w-full border border-slate-300 px-3 py-2 text-xs text-slate-900 rounded-none focus:outline-none focus:border-[#0B7A63]"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Branch <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    data-testid="room-branch-select"
-                    value={singleBranchId}
-                    onChange={(e) => setSingleBranchId(e.target.value)}
-                    className="w-full border border-slate-300 px-3 py-2 text-xs text-slate-800 rounded-none bg-white font-medium focus:outline-none focus:border-[#0B7A63]"
-                  >
-                    {branches.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowAddModal(false)}
-                    disabled={isSubmitting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="sm"
-                    disabled={isSubmitting || !singleRoomNo.trim()}
-                    data-testid="save-room-button"
-                  >
-                    {isSubmitting ? "Saving..." : "Create Room"}
-                  </Button>
-                </div>
-              </form>
-            ) : (
-              <form onSubmit={handleBulkSubmit} className="p-5 space-y-4">
-                {bulkError && (
-                  <div
-                    data-testid="bulk-room-error"
-                    className="p-3 text-xs bg-red-50 border border-red-200 text-red-800 rounded-none flex items-start gap-2"
-                  >
-                    <Icons.Alert className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
-                    <span>{bulkError}</span>
+                  <div className="space-y-1.5">
+                    <label className="block text-[14px] font-semibold uppercase tracking-wide text-slate-700">
+                      Branch <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      data-testid="room-branch-select"
+                      value={singleBranchId}
+                      onChange={(e) => setSingleBranchId(e.target.value)}
+                      className="w-full min-h-[48px] border border-slate-300 px-3.5 py-3 text-base text-slate-800 rounded-none bg-white font-medium focus:outline-none focus:border-[#0B7A63]"
+                    >
+                      {branches.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                )}
 
-                {bulkSummary && (
-                  <div
-                    data-testid="bulk-room-summary"
-                    className="p-3 text-xs bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-none space-y-1"
-                  >
-                    <p className="font-bold flex items-center gap-1.5">
-                      <Icons.Check className="h-4 w-4 text-emerald-600" />
-                      Bulk Creation Complete
-                    </p>
-                    <p>
-                      Created: <strong>{bulkSummary.createdCount}</strong> rooms.
-                    </p>
-                    {bulkSummary.skippedCount > 0 && (
-                      <p className="text-amber-800">
-                        Skipped (already existing):{" "}
-                        <strong>{bulkSummary.skippedCount}</strong> (
-                        {bulkSummary.skippedRooms.join(", ")})
+                  <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddModal(false)}
+                      disabled={isSubmitting}
+                      className="min-h-[48px] px-5 border border-slate-300 text-slate-700 text-[14px] font-semibold uppercase tracking-wider rounded-none hover:bg-slate-100 select-none touch-manipulation cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting || !singleRoomNo.trim()}
+                      data-testid="save-room-button"
+                      className="flex-1 min-h-[48px] bg-[#0B7A63] hover:bg-[#086350] active:bg-[#064e3e] text-white text-base font-semibold uppercase tracking-wider rounded-none select-none touch-manipulation cursor-pointer shadow-xs disabled:opacity-50"
+                    >
+                      {isSubmitting ? "Saving..." : "Create Room"}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <form onSubmit={handleBulkSubmit} className="space-y-4">
+                  {bulkError && (
+                    <div
+                      data-testid="bulk-room-error"
+                      className="p-3 text-[13px] bg-red-50 border border-red-200 text-red-800 rounded-none flex items-start gap-2"
+                    >
+                      <Icons.Alert className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                      <span>{bulkError}</span>
+                    </div>
+                  )}
+
+                  {bulkSummary && (
+                    <div
+                      data-testid="bulk-room-summary"
+                      className="p-3 text-[13px] bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-none space-y-1"
+                    >
+                      <p className="font-bold flex items-center gap-1.5">
+                        <Icons.Check className="h-4 w-4 text-emerald-600" />
+                        Bulk Creation Complete
                       </p>
-                    )}
-                  </div>
-                )}
+                      <p>
+                        Created: <strong>{bulkSummary.createdCount}</strong> rooms.
+                      </p>
+                      {bulkSummary.skippedCount > 0 && (
+                        <p className="text-amber-800">
+                          Skipped (already existing):{" "}
+                          <strong>{bulkSummary.skippedCount}</strong> (
+                          {bulkSummary.skippedRooms.join(", ")})
+                        </p>
+                      )}
+                    </div>
+                  )}
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Prefix (e.g. &apos;R-&apos; or &apos;Room &apos;)
-                  </label>
-                  <input
-                    type="text"
-                    data-testid="bulk-prefix-input"
-                    value={bulkPrefix}
-                    onChange={(e) => setBulkPrefix(e.target.value)}
-                    placeholder="R-"
-                    className="w-full border border-slate-300 px-3 py-2 text-xs text-slate-900 rounded-none focus:outline-none focus:border-[#0B7A63]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                      Start Number <span className="text-red-500">*</span>
+                  <div className="space-y-1.5">
+                    <label className="block text-[14px] font-semibold uppercase tracking-wide text-slate-700">
+                      Prefix (e.g. &apos;R-&apos; or &apos;Room &apos;)
                     </label>
                     <input
-                      type="number"
-                      data-testid="bulk-start-input"
-                      value={bulkStart}
-                      min={1}
-                      onChange={(e) => setBulkStart(e.target.value)}
-                      required
-                      className="w-full border border-slate-300 px-3 py-2 text-xs text-slate-900 rounded-none focus:outline-none focus:border-[#0B7A63]"
+                      type="text"
+                      data-testid="bulk-prefix-input"
+                      value={bulkPrefix}
+                      onChange={(e) => setBulkPrefix(e.target.value)}
+                      placeholder="R-"
+                      className="w-full min-h-[48px] border border-slate-300 px-3.5 py-3 text-base text-slate-900 rounded-none focus:outline-none focus:border-[#0B7A63]"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                      End Number <span className="text-red-500">*</span>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="block text-[14px] font-semibold uppercase tracking-wide text-slate-700">
+                        Start <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        data-testid="bulk-start-input"
+                        value={bulkStart}
+                        min={1}
+                        onChange={(e) => setBulkStart(e.target.value)}
+                        required
+                        className="w-full min-h-[48px] border border-slate-300 px-3.5 py-3 text-base text-slate-900 rounded-none focus:outline-none focus:border-[#0B7A63]"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="block text-[14px] font-semibold uppercase tracking-wide text-slate-700">
+                        End <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        data-testid="bulk-end-input"
+                        value={bulkEnd}
+                        min={1}
+                        onChange={(e) => setBulkEnd(e.target.value)}
+                        required
+                        className="w-full min-h-[48px] border border-slate-300 px-3.5 py-3 text-base text-slate-900 rounded-none focus:outline-none focus:border-[#0B7A63]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-[14px] font-semibold uppercase tracking-wide text-slate-700">
+                      Branch <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="number"
-                      data-testid="bulk-end-input"
-                      value={bulkEnd}
-                      min={1}
-                      onChange={(e) => setBulkEnd(e.target.value)}
-                      required
-                      className="w-full border border-slate-300 px-3 py-2 text-xs text-slate-900 rounded-none focus:outline-none focus:border-[#0B7A63]"
-                    />
+                    <select
+                      data-testid="bulk-branch-select"
+                      value={bulkBranchId}
+                      onChange={(e) => setBulkBranchId(e.target.value)}
+                      className="w-full min-h-[48px] border border-slate-300 px-3.5 py-3 text-base text-slate-800 rounded-none bg-white font-medium focus:outline-none focus:border-[#0B7A63]"
+                    >
+                      {branches.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Branch <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    data-testid="bulk-branch-select"
-                    value={bulkBranchId}
-                    onChange={(e) => setBulkBranchId(e.target.value)}
-                    className="w-full border border-slate-300 px-3 py-2 text-xs text-slate-800 rounded-none bg-white font-medium focus:outline-none focus:border-[#0B7A63]"
-                  >
-                    {branches.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowAddModal(false)}
-                    disabled={isSubmitting}
-                  >
-                    Close
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="sm"
-                    disabled={isSubmitting}
-                    data-testid="bulk-submit-button"
-                  >
-                    {isSubmitting ? "Generating..." : "Generate Rooms"}
-                  </Button>
-                </div>
-              </form>
-            )}
+                  <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddModal(false)}
+                      disabled={isSubmitting}
+                      className="min-h-[48px] px-5 border border-slate-300 text-slate-700 text-[14px] font-semibold uppercase tracking-wider rounded-none hover:bg-slate-100 select-none touch-manipulation cursor-pointer"
+                    >
+                      Close
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      data-testid="bulk-submit-button"
+                      className="flex-1 min-h-[48px] bg-[#0B7A63] hover:bg-[#086350] active:bg-[#064e3e] text-white text-base font-semibold uppercase tracking-wider rounded-none select-none touch-manipulation cursor-pointer shadow-xs disabled:opacity-50"
+                    >
+                      {isSubmitting ? "Generating..." : "Generate Rooms"}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -738,19 +768,19 @@ export function RoomsClient({ initialRooms, branches }: RoomsClientProps) {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-3.5"
         >
-          <div className="w-full max-w-md border border-slate-200 bg-white shadow-xl rounded-none">
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 bg-slate-50">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
+          <div className="w-full max-w-md border border-slate-200 bg-white shadow-2xl rounded-none">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5 bg-slate-50">
+              <h2 className="text-[17px] font-bold uppercase tracking-wide text-slate-900">
                 Rename Room
               </h2>
               <button
                 type="button"
                 onClick={() => setEditingRoom(null)}
-                className="text-slate-400 hover:text-slate-700"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-slate-700 cursor-pointer"
               >
-                <Icons.Close className="h-4 w-4" />
+                <Icons.Close className="h-5 w-5" />
               </button>
             </div>
 
@@ -758,27 +788,27 @@ export function RoomsClient({ initialRooms, branches }: RoomsClientProps) {
               {editError && (
                 <div
                   data-testid="edit-room-error"
-                  className="p-3 text-xs bg-red-50 border border-red-200 text-red-800 rounded-none flex items-start gap-2"
+                  className="p-3 text-[13px] bg-red-50 border border-red-200 text-red-800 rounded-none flex items-start gap-2"
                 >
                   <Icons.Alert className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
                   <span>{editError}</span>
                 </div>
               )}
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              <div className="space-y-1.5">
+                <label className="block text-[14px] font-semibold uppercase tracking-wide text-slate-500">
                   Branch
                 </label>
                 <input
                   type="text"
                   readOnly
                   value={editingRoom.branchName}
-                  className="w-full border border-slate-200 bg-slate-100 px-3 py-2 text-xs font-medium text-slate-700 rounded-none select-none cursor-not-allowed"
+                  className="w-full min-h-[48px] border border-slate-200 bg-slate-100 px-3.5 py-3 text-base font-medium text-slate-700 rounded-none select-none cursor-not-allowed"
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              <div className="space-y-1.5">
+                <label className="block text-[14px] font-semibold uppercase tracking-wide text-slate-700">
                   Room Number <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -787,54 +817,52 @@ export function RoomsClient({ initialRooms, branches }: RoomsClientProps) {
                   value={editRoomNo}
                   onChange={(e) => setEditRoomNo(e.target.value)}
                   required
-                  className="w-full border border-slate-300 px-3 py-2 text-xs text-slate-900 rounded-none focus:outline-none focus:border-[#0B7A63]"
+                  className="w-full min-h-[48px] border border-slate-300 px-3.5 py-3 text-base text-slate-900 rounded-none focus:outline-none focus:border-[#0B7A63]"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-                <Button
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+                <button
                   type="button"
-                  variant="outline"
-                  size="sm"
                   onClick={() => setEditingRoom(null)}
                   disabled={isSubmitting}
+                  className="min-h-[48px] px-5 border border-slate-300 text-slate-700 text-[14px] font-semibold uppercase tracking-wider rounded-none hover:bg-slate-100 select-none touch-manipulation cursor-pointer"
                 >
                   Cancel
-                </Button>
-                <Button
+                </button>
+                <button
                   type="submit"
-                  variant="primary"
-                  size="sm"
                   disabled={isSubmitting || !editRoomNo.trim()}
                   data-testid="save-edit-room-button"
+                  className="flex-1 min-h-[48px] bg-[#0B7A63] hover:bg-[#086350] active:bg-[#064e3e] text-white text-base font-semibold uppercase tracking-wider rounded-none select-none touch-manipulation cursor-pointer shadow-xs disabled:opacity-50"
                 >
                   {isSubmitting ? "Saving..." : "Save Changes"}
-                </Button>
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Delete Confirm Modal */}
+      {/* Delete Confirm Bottom Sheet */}
       {deletingRoom && (
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-xs p-0 sm:p-4"
         >
-          <div className="w-full max-w-md border border-slate-200 bg-white shadow-xl rounded-none">
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 bg-slate-50">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-red-900 flex items-center gap-2">
-                <Icons.Trash className="h-4 w-4 text-red-600" />
+          <div className="w-full max-w-md border border-slate-200 bg-white shadow-2xl rounded-none pb-[env(safe-area-inset-bottom)]">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5 bg-rose-50/60">
+              <h2 className="text-[17px] font-bold uppercase tracking-wide text-rose-900 flex items-center gap-2">
+                <Icons.Trash className="h-5 w-5 text-rose-600" />
                 Delete Room
               </h2>
               <button
                 type="button"
                 onClick={() => setDeletingRoom(null)}
-                className="text-slate-400 hover:text-slate-700"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-slate-700 cursor-pointer"
               >
-                <Icons.Close className="h-4 w-4" />
+                <Icons.Close className="h-5 w-5" />
               </button>
             </div>
 
@@ -842,7 +870,7 @@ export function RoomsClient({ initialRooms, branches }: RoomsClientProps) {
               {deleteError && (
                 <div
                   data-testid="delete-room-error"
-                  className="p-3 text-xs bg-red-50 border border-red-200 text-red-800 rounded-none flex items-start gap-2"
+                  className="p-3 text-[13px] bg-red-50 border border-red-200 text-red-800 rounded-none flex items-start gap-2"
                 >
                   <Icons.Alert className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
                   <span>{deleteError}</span>
@@ -850,7 +878,7 @@ export function RoomsClient({ initialRooms, branches }: RoomsClientProps) {
               )}
 
               {deletingRoom.hasEverBeenUsed ? (
-                <div className="p-3 text-xs bg-amber-50 border border-amber-300 text-amber-900 rounded-none">
+                <div className="p-3.5 text-[13px] bg-amber-50 border border-amber-300 text-amber-900 rounded-none">
                   <p className="font-bold">Cannot delete used room</p>
                   <p className="mt-1">
                     Room <strong>{deletingRoom.roomNo}</strong> in{" "}
@@ -860,46 +888,43 @@ export function RoomsClient({ initialRooms, branches }: RoomsClientProps) {
                   </p>
                 </div>
               ) : (
-                <p className="text-xs text-slate-600">
+                <p className="text-[15px] text-slate-700 leading-relaxed">
                   Are you sure you want to delete Room{" "}
-                  <strong className="text-slate-900">{deletingRoom.roomNo}</strong> in{" "}
-                  <strong>{deletingRoom.branchName}</strong>? This action cannot be undone.
+                  <strong className="text-slate-900 font-bold">{deletingRoom.roomNo}</strong> in{" "}
+                  <strong className="text-slate-900 font-bold">{deletingRoom.branchName}</strong>? This action cannot be undone.
                 </p>
               )}
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-                <Button
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+                <button
                   type="button"
-                  variant="outline"
-                  size="sm"
                   onClick={() => setDeletingRoom(null)}
                   disabled={isSubmitting}
+                  className="min-h-[48px] px-5 border border-slate-300 text-slate-700 text-[14px] font-semibold uppercase tracking-wider rounded-none hover:bg-slate-100 select-none touch-manipulation cursor-pointer"
                 >
                   Cancel
-                </Button>
+                </button>
                 {!deletingRoom.hasEverBeenUsed ? (
-                  <Button
+                  <button
                     type="button"
-                    variant="destructive"
-                    size="sm"
                     onClick={handleDeleteConfirm}
                     disabled={isSubmitting}
                     data-testid="confirm-delete-room-button"
+                    className="flex-1 min-h-[48px] bg-rose-700 hover:bg-rose-800 active:bg-rose-900 text-white text-base font-semibold uppercase tracking-wider rounded-none select-none touch-manipulation cursor-pointer shadow-xs disabled:opacity-50"
                   >
                     {isSubmitting ? "Deleting..." : "Confirm Delete"}
-                  </Button>
+                  </button>
                 ) : (
-                  <Button
+                  <button
                     type="button"
-                    variant="secondary"
-                    size="sm"
                     onClick={() => {
                       setDeletingRoom(null);
                       handleToggleActive(deletingRoom);
                     }}
+                    className="flex-1 min-h-[48px] bg-slate-800 hover:bg-slate-900 text-white text-base font-semibold uppercase tracking-wider rounded-none select-none touch-manipulation cursor-pointer"
                   >
                     Deactivate Instead
-                  </Button>
+                  </button>
                 )}
               </div>
             </div>

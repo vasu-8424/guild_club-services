@@ -34,11 +34,23 @@ setup("reset database and initialize role sessions", async ({ page }) => {
 
   // 4. Therapist Session Setup
   await page.context().clearCookies();
+  await page.context().grantPermissions(["geolocation"]);
+  await page.context().setGeolocation({ latitude: 17.4325, longitude: 78.4071 });
   await page.goto("/login");
   await page.fill('[data-testid="login-email-input"]', seeded.therapist1.email);
   await page.fill('[data-testid="login-password-input"]', seeded.therapist1.password);
   await page.click('[data-testid="login-submit-button"]');
   await expect(page).toHaveURL(/\/therapist\/dashboard/, { timeout: 30000 });
+
+  // If LocationGate appears, wait for geolocation capture to refresh page
+  try {
+    await page.waitForSelector('[data-testid="daily-board"]', { timeout: 10000 });
+  } catch {
+    // If still pending, reload once
+    await page.reload();
+    await page.waitForSelector('[data-testid="daily-board"]', { timeout: 10000 }).catch(() => {});
+  }
+
   await page.context().storageState({ path: path.join(authDir, "therapist.json") });
 
   console.log("✅ Playwright role storage states saved for Super Admin, Admin, and Therapist.");

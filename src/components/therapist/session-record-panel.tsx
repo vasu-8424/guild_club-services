@@ -9,6 +9,7 @@ import {
   updateTodaySessionAction,
 } from "@/lib/actions/therapist-session-new-actions";
 import { formatDisplayDate } from "@/lib/date-utils";
+import { useKeyboardOffset, scrollInputIntoViewOnFocus } from "@/lib/mobile-keyboard";
 
 export interface SessionRecordCaseData {
   id: string;
@@ -43,6 +44,7 @@ export function SessionRecordPanel({
 }: SessionRecordPanelProps) {
   const isDoneToday = Boolean(caseData?.todaySession);
   const [isEditing, setIsEditing] = useState(false);
+  const keyboardOffset = useKeyboardOffset();
 
   const [presentCondition, setPresentCondition] = useState(
     caseData?.todaySession?.presentConditionSnapshot ||
@@ -345,25 +347,28 @@ export function SessionRecordPanel({
             )}
           </div>
 
-          {/* Drawer Actions */}
-          <div className="pt-4 border-t border-stone-200 flex items-center justify-between gap-3">
+          {/* Sticky Action Bar above keyboard and tab bar */}
+          <div
+            className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-md pt-3 pb-3 border-t border-stone-200 flex items-center justify-between gap-3 shadow-[0_-2px_8px_rgba(15,23,42,0.06)]"
+            style={{ bottom: keyboardOffset > 0 ? `${keyboardOffset}px` : 0 }}
+          >
             {isReadOnly ? (
               <button
                 type="button"
                 data-testid="edit-session-btn"
                 onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-stone-900 text-white font-bold text-xs uppercase tracking-wider rounded-none hover:bg-stone-800 flex items-center gap-2 cursor-pointer transition-colors"
+                className="w-full min-h-[52px] h-[52px] bg-stone-900 text-white font-semibold text-base uppercase tracking-wider rounded-none hover:bg-stone-800 flex items-center justify-center gap-2 cursor-pointer transition-colors select-none touch-manipulation"
               >
-                <Edit3 className="w-3.5 h-3.5" />
+                <Edit3 className="w-4 h-4" />
                 <span>Edit Today&apos;s Record</span>
               </button>
             ) : (
-              <div className="flex items-center gap-2 w-full justify-end">
+              <div className="flex items-center gap-2 w-full">
                 {isDoneToday && (
                   <button
                     type="button"
                     onClick={() => setIsEditing(false)}
-                    className="px-4 py-2 border border-stone-300 text-stone-700 text-xs font-semibold uppercase tracking-wider hover:bg-stone-100 rounded-none cursor-pointer"
+                    className="min-h-[52px] h-[52px] px-5 border border-stone-300 text-stone-700 text-[14px] font-semibold uppercase tracking-wider hover:bg-stone-100 rounded-none cursor-pointer select-none touch-manipulation"
                   >
                     Cancel
                   </button>
@@ -372,9 +377,9 @@ export function SessionRecordPanel({
                   type="submit"
                   data-testid="save-session-btn"
                   disabled={saving}
-                  className="px-5 py-2.5 bg-[#0B7A63] hover:bg-[#086350] disabled:bg-stone-400 text-white font-bold text-xs uppercase tracking-wider rounded-none transition-colors flex items-center gap-2 cursor-pointer shadow-sm"
+                  className="flex-1 min-h-[52px] h-[52px] bg-[#0B7A63] hover:bg-[#086350] active:bg-[#064e3e] disabled:bg-stone-400 text-white font-semibold text-base uppercase tracking-wider rounded-none transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm select-none touch-manipulation"
                 >
-                  <Save className="w-4 h-4" />
+                  <Save className="w-5 h-5" />
                   <span>{saving ? "Saving..." : "Save session"}</span>
                 </button>
               </div>

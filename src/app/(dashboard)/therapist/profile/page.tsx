@@ -4,8 +4,9 @@ import { db } from "@/db";
 import { users, therapistProfiles } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getTherapistLoginHistoryAction } from "@/lib/actions/location-actions";
-import { User, MapPin, Calendar, Clock, ExternalLink, Shield } from "lucide-react";
+import { User, MapPin, Calendar, Clock, ExternalLink, Shield, Settings, HelpCircle, LogOut } from "lucide-react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { LogoutButton } from "@/components/layout/logout-button";
 
 export const metadata = {
   title: "My Profile | Guild Club Services",
@@ -33,152 +34,161 @@ export default async function TherapistProfilePage() {
 
   return (
     <DashboardShell user={currentUser} title="My Profile">
-      <div className="space-y-6 max-w-5xl mx-auto pb-12">
-      {/* Header */}
-      <div className="border-b border-stone-200 pb-4">
-        <h1 className="text-2xl font-bold tracking-tight text-stone-900 uppercase">
-          Therapist Profile
-        </h1>
-        <p className="text-xs text-stone-500 mt-1">
-          Personal details, credentials, and recent login activity
-        </p>
-      </div>
+      <div className="space-y-4 max-w-xl mx-auto pb-12 w-full">
+        {/* Header */}
+        <div className="border-b border-stone-200 pb-3">
+          <h1 className="text-[24px] font-semibold tracking-tight text-stone-900 leading-tight">
+            Therapist Profile
+          </h1>
+          <p className="text-[13px] text-stone-500 mt-0.5">
+            Personal details, credentials, and app settings
+          </p>
+        </div>
 
-      {/* Practitioner Summary Card */}
-      <div className="bg-white border border-stone-200 p-6 rounded-none shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-[#0B7A63] text-white flex items-center justify-center font-bold text-xl rounded-none">
+        {/* Practitioner Summary Card */}
+        <div className="bg-white border border-stone-200 p-4 rounded-none shadow-xs space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 shrink-0 bg-[#0B7A63] text-white flex items-center justify-center font-bold text-lg rounded-none shadow-xs">
               {therapist?.name?.charAt(0)?.toUpperCase() || "T"}
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-stone-900 tracking-tight">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-[18px] font-semibold text-stone-900 tracking-tight truncate">
                 {therapist?.name}
               </h2>
-              <p className="text-xs text-stone-500">{therapist?.email}</p>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                  Therapist
-                </span>
-                {therapist?.specialization && (
-                  <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold bg-stone-100 text-stone-700 border border-stone-200">
-                    {therapist.specialization}
-                  </span>
-                )}
-              </div>
+              <p className="text-[13px] text-stone-500 truncate">{therapist?.email}</p>
             </div>
           </div>
 
-          <div className="text-xs text-stone-500 space-y-1 sm:text-right border-t sm:border-t-0 pt-3 sm:pt-0 border-stone-100">
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-stone-100 text-[13px]">
+            <span className="inline-flex items-center px-2 py-0.5 font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] rounded-none">
+              Therapist
+            </span>
+            {therapist?.specialization && (
+              <span className="inline-flex items-center px-2 py-0.5 font-medium bg-stone-100 text-stone-700 border border-stone-200 text-[12px] rounded-none">
+                {therapist.specialization}
+              </span>
+            )}
             {therapist?.experienceYears !== undefined && (
-              <p>Experience: <strong className="text-stone-800 font-semibold">{therapist.experienceYears} Years</strong></p>
+              <span className="text-stone-600 text-[13px]">
+                • {therapist.experienceYears} Years Exp
+              </span>
             )}
             {therapist?.phone && (
-              <p>Contact: <strong className="text-stone-800 font-semibold">{therapist.phone}</strong></p>
+              <span className="text-stone-600 text-[13px]">
+                • {therapist.phone}
+              </span>
             )}
           </div>
         </div>
-      </div>
 
-      {/* Login History Section */}
-      <div className="bg-white border border-stone-200 rounded-none shadow-xs overflow-hidden">
-        <div className="px-6 py-4 border-b border-stone-200 bg-stone-50 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-emerald-800" />
-            <h3 className="text-sm font-bold uppercase tracking-tight text-stone-900">
-              My Login History
+        {/* App Settings Card */}
+        <div className="bg-white border border-stone-200 rounded-none shadow-xs overflow-hidden">
+          <div className="px-4 py-3 border-b border-stone-200 bg-stone-50 flex items-center gap-2">
+            <Settings className="w-4 h-4 text-[#0B7A63]" />
+            <h3 className="text-[14px] font-bold uppercase tracking-wide text-stone-900">
+              App Settings & System
             </h3>
           </div>
-          <span className="text-xs text-stone-500">
-            Showing latest {loginRecords.length} sessions
-          </span>
+
+          <div className="p-4 space-y-3 divide-y divide-stone-100">
+            <div className="flex items-center justify-between text-[14px] text-stone-700">
+              <span className="font-medium text-stone-500">App Version</span>
+              <span className="font-mono font-semibold text-stone-900">v1.2.0 (Native Mobile)</span>
+            </div>
+
+            <div className="pt-3 flex items-center justify-between text-[14px] text-stone-700">
+              <div className="flex items-center gap-1.5">
+                <HelpCircle className="w-4 h-4 text-stone-400" />
+                <span className="font-medium text-stone-500">Support Contact</span>
+              </div>
+              <a
+                href="mailto:support@guildclub.com"
+                className="font-medium text-[#0B7A63] hover:underline"
+              >
+                support@guildclub.com
+              </a>
+            </div>
+
+            <div className="pt-4">
+              <LogoutButton
+                role={currentUser.role}
+                testId="profile-logout-button"
+                className="w-full min-h-[48px] h-[48px] border border-rose-300 text-rose-700 hover:bg-rose-50 text-base font-semibold uppercase tracking-wider rounded-none flex items-center justify-center gap-2 select-none touch-manipulation cursor-pointer"
+                label="Sign Out"
+              />
+            </div>
+          </div>
         </div>
 
-        {loginRecords.length === 0 ? (
-          <div className="p-8 text-center text-xs text-stone-500">
-            No login history recorded yet.
+        {/* Login History Section */}
+        <div className="bg-white border border-stone-200 rounded-none shadow-xs overflow-hidden">
+          <div className="px-4 py-3 border-b border-stone-200 bg-stone-50 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-emerald-800" />
+              <h3 className="text-[14px] font-bold uppercase tracking-wide text-stone-900">
+                Recent Login History
+              </h3>
+            </div>
+            <span className="text-[12px] text-stone-500">
+              {loginRecords.length} sessions
+            </span>
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-stone-100 border-b border-stone-200 text-stone-700 uppercase font-semibold">
-                  <th className="py-3 px-3">Login Time (IST)</th>
-                  <th className="py-3 px-3">Logout Time (IST)</th>
-                  <th className="py-3 px-3">Duration</th>
-                  <th className="py-3 px-3">Location Status</th>
-                  <th className="py-3 px-3">Accuracy</th>
-                  <th className="py-3 px-3">Map Location</th>
-                  <th className="py-3 px-3">IP Address</th>
+
+          {loginRecords.length === 0 ? (
+            <div className="p-6 text-center text-[13px] text-stone-500">
+              No login history recorded yet.
+            </div>
+          ) : (
+            <table className="w-full block" data-testid="login-history-table">
+              <thead className="sr-only">
+                <tr>
+                  <th>Login Time</th>
+                  <th>Status</th>
+                  <th>Duration</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-200 font-mono text-stone-800">
-                {loginRecords.map((record) => (
+              <tbody className="block divide-y divide-stone-100">
+                {loginRecords.slice(0, 5).map((record) => (
                   <tr
                     key={record.id}
                     data-testid="therapist-login-history-row"
-                    className="hover:bg-stone-50 transition-colors"
+                    className="block p-3.5 space-y-1.5 hover:bg-stone-50 transition-colors"
                   >
-                    <td className="py-3 px-3 font-sans font-medium text-stone-900">
-                      {record.formattedLoggedInAt}
-                    </td>
-                    <td className="py-3 px-3 font-sans text-stone-700">
-                      {record.formattedLoggedOutAt ? (
-                        record.formattedLoggedOutAt
-                      ) : (
-                        <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-sans font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                          Active session
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3 font-sans text-stone-700">
-                      {record.duration || "—"}
-                    </td>
-                    <td className="py-3 px-3 font-sans">
+                    <td className="flex items-center justify-between text-[14px]">
+                      <span className="font-semibold text-stone-900">
+                        {record.formattedLoggedInAt}
+                      </span>
                       {record.locationStatus === "captured" ? (
-                        <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                          Captured
-                        </span>
-                      ) : record.locationStatus === "denied" ? (
-                        <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold bg-red-100 text-red-800 border border-red-300">
-                          Denied
+                        <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-none">
+                          Verified
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold bg-stone-100 text-stone-700 border border-stone-300">
-                          Unavailable
+                        <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-stone-100 text-stone-600 border border-stone-300 rounded-none">
+                          {record.locationStatus || "Standard"}
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-3">
-                      {record.accuracyMeters !== null
-                        ? `±${record.accuracyMeters} m`
-                        : "—"}
-                    </td>
-                    <td className="py-3 px-3 font-sans">
-                      {record.mapUrl ? (
+
+                    <td className="flex items-center justify-between text-[13px] text-stone-500">
+                      <span>Duration: {record.duration || "Active"}</span>
+                      {record.mapUrl && (
                         <a
                           href={record.mapUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-[#0B7A63] hover:underline font-semibold"
                         >
-                          <span>Open in map</span>
+                          <span>Map</span>
                           <ExternalLink className="w-3 h-3" />
                         </a>
-                      ) : (
-                        <span className="text-stone-400">No coordinates</span>
                       )}
-                    </td>
-                    <td className="py-3 px-3 text-stone-600">
-                      {record.ipAddress || "—"}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
       </div>
     </DashboardShell>
   );
