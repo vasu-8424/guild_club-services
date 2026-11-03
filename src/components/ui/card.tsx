@@ -13,7 +13,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-none border border-slate-200 bg-white text-slate-900 shadow-[0_1px_0_rgba(15,23,42,0.04)] transition-all",
+        "w-full max-w-full min-w-0 rounded-none border border-slate-200 bg-white text-slate-900 shadow-[0_1px_0_rgba(15,23,42,0.04)] transition-all",
         topAccent && "border-t-2 border-t-[#0B7A63]",
         className
       )}

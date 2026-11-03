@@ -4,6 +4,7 @@ import { getEmailQuotaUsage } from "@/lib/notifications/quota";
 import { db } from "@/db";
 import { emailQueue, users } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { NotificationsClient } from "./notifications-client";
 
 export const metadata = {
@@ -12,7 +13,7 @@ export const metadata = {
 };
 
 export default async function SuperAdminNotificationsPage() {
-  await requireRole("super_admin");
+  const user = await requireRole("super_admin");
 
   const env = getEnv();
   const quota = await getEmailQuotaUsage();
@@ -55,23 +56,25 @@ export default async function SuperAdminNotificationsPage() {
     .where(eq(users.emailUndeliverable, true));
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Notification Delivery &amp; Quota
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Monitor outbox delivery statuses, Resend live provider limits, and queue health.
-        </p>
-      </div>
+    <DashboardShell user={user} title="Notification Delivery">
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Notification Delivery &amp; Quota
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Monitor outbox delivery statuses, Resend live provider limits, and queue health.
+          </p>
+        </div>
 
-      <NotificationsClient
-        quota={quota}
-        deliveries={deliveries}
-        undeliverableUsers={undeliverableUsers}
-        providerName={env.EMAIL_PROVIDER}
-        senderAddress={senderAddress}
-      />
-    </div>
+        <NotificationsClient
+          quota={quota}
+          deliveries={deliveries}
+          undeliverableUsers={undeliverableUsers}
+          providerName={env.EMAIL_PROVIDER}
+          senderAddress={senderAddress}
+        />
+      </div>
+    </DashboardShell>
   );
 }

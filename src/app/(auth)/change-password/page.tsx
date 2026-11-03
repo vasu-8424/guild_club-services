@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { changePasswordAction, logoutAction } from "@/lib/actions/auth-actions";
 import { Button } from "@/components/ui/button";

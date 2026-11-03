@@ -319,7 +319,7 @@ export function MonthCalendar({
       )}
 
       {/* 3 Counters Above Calendar */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
         <div
           data-testid="counter-sessions-done"
           className="bg-white border border-stone-200 p-3 rounded-none text-center shadow-2xs"
@@ -358,7 +358,7 @@ export function MonthCalendar({
       </div>
 
       {/* Calendar Card */}
-      <div className="bg-white border border-stone-200 rounded-none shadow-xs p-3.5 sm:p-6 overflow-x-auto">
+      <div className="bg-white border border-stone-200 rounded-none shadow-xs p-2.5 sm:p-6 overflow-hidden max-w-full">
         {/* Month Navigation Header */}
         <div className="flex items-center justify-between border-b border-stone-200 pb-4 mb-4">
           <div className="flex items-center gap-2">

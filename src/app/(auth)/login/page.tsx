@@ -39,9 +39,10 @@ function LoginForm() {
         body: JSON.stringify({ email, password }),
       });
 
-      if (apiRes.ok) {
-        const res = await apiRes.json();
-        if (res.success) {
+      const res = await apiRes.json().catch(() => null);
+
+      if (res) {
+        if (apiRes.ok && res.success) {
           const redirectParam = searchParams.get("redirect");
           const dest =
             redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
@@ -58,15 +59,15 @@ function LoginForm() {
         }
       }
 
-      // Fallback to server action if API returned non-OK
-      const res = await loginAction({ email, password });
+      // Fallback to server action ONLY if REST endpoint returned non-JSON / network failure
+      const actionRes = await loginAction({ email, password });
 
-      if (!res.success) {
-        if (res.fieldErrors) {
-          setFieldErrors(res.fieldErrors);
+      if (!actionRes.success) {
+        if (actionRes.fieldErrors) {
+          setFieldErrors(actionRes.fieldErrors);
         }
-        if (res.error) {
-          setGeneralError(res.error);
+        if (actionRes.error) {
+          setGeneralError(actionRes.error);
         }
         setIsLoading(false);
         return;
@@ -76,7 +77,7 @@ function LoginForm() {
       const dest =
         redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
           ? redirectParam
-          : res.redirectTo || "/admin/dashboard";
+          : actionRes.redirectTo || "/admin/dashboard";
       router.push(dest);
       router.refresh();
     } catch (err: any) {

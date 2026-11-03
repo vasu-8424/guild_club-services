@@ -151,7 +151,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         )}
 
         {children && (
-          <span className="btn-label truncate whitespace-nowrap leading-none select-none">
+          <span className="btn-label whitespace-normal break-words text-center leading-tight select-none">
             {children}
           </span>
         )}

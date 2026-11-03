@@ -332,51 +332,33 @@ export function NotificationsClient({
           </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
-                <th className="py-3 px-4">Date / Time (IST)</th>
-                <th className="py-3 px-4">Recipient</th>
-                <th className="py-3 px-4">Template</th>
-                <th className="py-3 px-4">Priority</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Provider Message ID / Note</th>
+        <div className="w-full">
+          <table className="w-full block" data-testid="deliveries-table">
+            <thead className="sr-only">
+              <tr>
+                <th>Date / Time (IST)</th>
+                <th>Recipient</th>
+                <th>Template</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Provider Message ID / Note</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="block space-y-3">
               {deliveries.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="py-8 text-center text-slate-500 text-sm"
-                  >
-                    No email deliveries recorded yet.
-                  </td>
+                <tr className="block p-8 text-center text-slate-500 text-sm bg-white border border-slate-200">
+                  <td className="block">No email deliveries recorded yet.</td>
                 </tr>
               ) : (
                 deliveries.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/75 transition-colors">
-                    <td className="py-3 px-4 font-mono text-slate-600 whitespace-nowrap">
-                      {item.sentAt || item.createdAt}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="font-medium text-slate-900">
-                        {item.toName || "—"}
-                      </div>
-                      <div className="font-mono text-slate-500 text-[11px]">
-                        {item.toEmail}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 font-mono font-medium text-slate-700">
-                      {item.template}
-                    </td>
-                    <td className="py-3 px-4 text-slate-600">
-                      <span className="inline-block px-1.5 py-0.5 bg-slate-100 border border-slate-200 text-[10px] font-bold">
-                        P{item.priority}
+                  <tr
+                    key={item.id}
+                    className="block rounded-none border border-slate-200 bg-white p-4 shadow-[0_1px_0_rgba(15,23,42,0.04)] space-y-2 hover:border-[#0B7A63] transition-colors"
+                  >
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <span className="font-mono text-xs text-slate-500">
+                        {item.sentAt || item.createdAt}
                       </span>
-                    </td>
-                    <td className="py-3 px-4">
                       <span
                         className={`inline-block px-2 py-0.5 border text-[10px] font-bold uppercase rounded-none ${getStatusBadge(
                           item.status
@@ -384,18 +366,30 @@ export function NotificationsClient({
                       >
                         {item.status}
                       </span>
-                    </td>
-                    <td className="py-3 px-4 font-mono text-[11px] text-slate-600 max-w-xs truncate">
-                      {item.providerMessageId ? (
-                        <span className="text-slate-700">
-                          ID: {item.providerMessageId}
-                        </span>
-                      ) : item.lastError ? (
-                        <span className="text-red-600">{item.lastError}</span>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-slate-900 text-sm">
+                          {item.toName || "—"}
+                        </div>
+                        <div className="font-mono text-slate-500 text-[11px] break-all">
+                          {item.toEmail}
+                        </div>
+                      </div>
+                      <span className="inline-block px-1.5 py-0.5 bg-slate-100 border border-slate-200 text-[10px] font-bold">
+                        P{item.priority}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs text-slate-600 pt-1 border-t border-slate-50">
+                      <span className="font-mono font-medium text-slate-700">
+                        {item.template}
+                      </span>
+                      <span className="font-mono text-[11px] text-slate-500 truncate max-w-[180px]">
+                        {item.providerMessageId ? `ID: ${item.providerMessageId}` : item.lastError ? item.lastError : "—"}
+                      </span>
+                    </div>
                   </tr>
                 ))
               )}

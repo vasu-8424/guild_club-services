@@ -99,7 +99,7 @@ export function TherapistPatientsTable({
         <Link
           href="/therapist/cases/new"
           data-testid="create-case-btn"
-          className="inline-flex items-center justify-center gap-2 bg-[#0B7A63] hover:bg-[#096350] text-white px-5 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-none shadow-xs transition-colors shrink-0"
+          className="w-full sm:w-auto min-h-[48px] inline-flex items-center justify-center gap-2 bg-[#0B7A63] hover:bg-[#096350] active:bg-[#064e3e] text-white px-5 py-3 text-base font-semibold uppercase tracking-wider rounded-none shadow-xs transition-colors shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>+ Create Case</span>
@@ -107,7 +107,7 @@ export function TherapistPatientsTable({
       </div>
 
       {/* 2. 3 Tiny Counters Above the Table */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
         <div
           data-testid="stat-active-patients"
           className="bg-white border border-stone-200 p-3 rounded-none shadow-2xs"

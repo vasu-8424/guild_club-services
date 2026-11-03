@@ -72,7 +72,7 @@ export function ExportSplitButton({
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
           "inline-flex items-center justify-center border border-slate-300 bg-white text-slate-700 hover:border-[#0B7A63] hover:text-[#0B7A63] active:bg-slate-50 transition-colors rounded-none px-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0B7A63]",
-          size === "sm" ? "h-9 w-8" : "h-11 w-9"
+          "min-h-[48px] min-w-[48px] h-[48px] w-[48px]"
         )}
       >
         <Icons.CaretDown className={cn("h-3.5 w-3.5 transition-transform duration-150", isOpen && "rotate-180")} />

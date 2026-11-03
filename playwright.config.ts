@@ -122,7 +122,7 @@ export default defineConfig({
     {
       name: "mobile-ux",
       testDir: "./tests/e2e/suites",
-      testMatch: /mobile-ux-redesign\.spec\.ts/,
+      testMatch: /mobile-.*\.spec\.ts/,
       use: {
         isMobile: true,
         hasTouch: true,

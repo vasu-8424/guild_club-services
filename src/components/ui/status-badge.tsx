@@ -19,7 +19,7 @@ export function StatusBadge({ status, className, showDot = true }: StatusBadgePr
   const norm = (status || "").toLowerCase();
 
   const baseStyle =
-    "h-[24px] px-2 text-[12px] uppercase whitespace-nowrap leading-none shrink-0 inline-flex items-center rounded-none font-semibold tracking-wider";
+    "min-h-[24px] h-auto py-0.5 px-2 text-[12px] uppercase whitespace-normal break-words max-w-full leading-tight inline-flex items-center rounded-none font-semibold tracking-wider";
 
   switch (norm) {
     case "new":

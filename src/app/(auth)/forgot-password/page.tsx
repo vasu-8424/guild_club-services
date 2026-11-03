@@ -5,7 +5,8 @@ import Link from "next/link";
 import { requestPasswordResetAction } from "@/lib/actions/password-reset-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Stethoscope, Mail, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
+import Image from "next/image";
+import { Mail, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = React.useState("");
@@ -41,8 +42,8 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-md shadow-emerald-600/20">
-            <Stethoscope className="h-7 w-7" />
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full overflow-hidden shadow-lg border-2 border-amber-500/30 bg-slate-900 mb-3">
+            <Image src="/logo.png" alt="Guild Club Services" width={64} height={64} priority className="h-full w-full object-cover" />
           </div>
           <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-900">
             Reset Password
@@ -53,7 +54,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-7 shadow-xl shadow-slate-200/50">
+        <div className="rounded-none border border-slate-200 border-t-2 border-t-[#0B7A63] bg-white p-7 shadow-[0_1px_0_rgba(15,23,42,0.04)]">
           <div className="mb-5 border-b border-slate-100 pb-4">
             <h2 className="text-base font-semibold text-slate-800">
               Forgot Your Password?
