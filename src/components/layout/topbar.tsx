@@ -95,15 +95,10 @@ export function Topbar({
   return (
     <header
       data-testid="topbar"
-      className="sticky top-0 z-30 flex h-14 w-full items-center justify-between border-b border-slate-200 bg-white/95 backdrop-blur-md px-3 sm:px-4 overscroll-contain select-none shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+      className="sticky top-0 z-30 flex h-14 w-full items-center justify-between border-b border-slate-200 bg-white/95 backdrop-blur-md px-3 sm:px-4 pt-[env(safe-area-inset-top)] overscroll-contain select-none shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
     >
-      {/* Left: Optional Back Arrow + Title & Multi-Branch Chip */}
-      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-        {!isInnerPage && (
-          <div data-testid="topbar-logo" className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-amber-500/30 bg-slate-900 shadow-xs mr-0.5">
-            <Image src="/logo.png" alt="Guild Club Services" width={32} height={32} priority className="h-full w-full object-cover" />
-          </div>
-        )}
+      {/* Left: Back Arrow on inner pages + Page Title & Optional Branch Chip */}
+      <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
         {isInnerPage && (
           <button
             type="button"
@@ -119,7 +114,7 @@ export function Topbar({
         <div className="min-w-0 flex-1">
           <h1
             data-testid="topbar-title"
-            className="text-base sm:text-lg font-semibold text-slate-900 tracking-tight truncate block leading-tight"
+            className="text-[18px] font-semibold text-slate-900 tracking-tight truncate block leading-tight"
           >
             {title}
           </h1>
@@ -127,7 +122,7 @@ export function Topbar({
           {/* Branch chip only shown when user has multiple branches */}
           {hasMultipleBranches && activeBranch && (
             <div className="mt-0.5 flex items-center">
-              <span className="inline-flex items-center px-1.5 py-0.2 text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-none truncate max-w-[200px]">
+              <span className="inline-flex items-center px-1.5 py-0.2 text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-none truncate max-w-[180px]">
                 {activeBranch.name}
               </span>
             </div>
@@ -135,17 +130,8 @@ export function Topbar({
         </div>
       </div>
 
-      {/* Right: Branch switcher (if multiple) & Notifications */}
-      <div className="flex items-center gap-1.5 shrink-0 ml-2">
-        {hasMultipleBranches && (
-          <BranchSwitcher
-            allowedBranches={branches}
-            activeBranchId={activeBranchId}
-            role={user.role}
-          />
-        )}
-
-        {/* Dynamic Notification Bell */}
+      {/* Right: Exactly ONE notification bell button on phones */}
+      <div className="flex items-center shrink-0">
         <NotificationBell userRole={user.role} />
       </div>
     </header>

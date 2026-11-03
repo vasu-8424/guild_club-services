@@ -60,7 +60,7 @@ function CaseTileComponent({ caseItem, onTileClick }: CaseTileProps) {
       data-case-id={caseItem.id}
       data-status={isDone ? "done" : "pending"}
       onClick={() => onTileClick(caseItem)}
-      className={`group relative p-4 flex flex-col justify-between transition-all cursor-pointer rounded-none border-2 shadow-xs select-none ${
+      className={`group relative p-3 min-h-[120px] flex flex-col justify-between transition-all cursor-pointer rounded-none border-2 shadow-xs select-none ${
         isDone
           ? "border-emerald-600 bg-emerald-50/20 hover:border-emerald-700 hover:bg-emerald-50/40"
           : "border-red-500 bg-red-50/15 hover:border-red-600 hover:bg-red-50/30"
@@ -68,7 +68,7 @@ function CaseTileComponent({ caseItem, onTileClick }: CaseTileProps) {
     >
       {/* Top Header: Patient ID & Today's Status Badge */}
       <div>
-        <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex flex-wrap items-center justify-between gap-1 mb-1.5">
           <span
             data-testid="patient-id"
             className="font-mono text-xs font-bold px-2 py-0.5 bg-stone-900 text-white tracking-wide"
@@ -96,7 +96,7 @@ function CaseTileComponent({ caseItem, onTileClick }: CaseTileProps) {
         </div>
 
         {/* Patient Name - clicking navigates to case detail page */}
-        <h3 className="text-sm font-bold text-stone-900 tracking-tight group-hover:text-[#0B7A63] transition-colors mb-2">
+        <h3 className="text-xs font-bold text-stone-900 tracking-tight group-hover:text-[#0B7A63] transition-colors mb-1.5 break-words line-clamp-2">
           <Link
             href={`/therapist/cases/${caseItem.id}`}
             onClick={(e) => e.stopPropagation()}

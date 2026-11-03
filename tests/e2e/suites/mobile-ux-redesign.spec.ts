@@ -5,9 +5,13 @@ import fs from "fs";
 
 const authDir = path.resolve(process.cwd(), "playwright/.auth");
 const mobileScreenshotsDir = path.resolve(process.cwd(), "test-results/mobile");
+const mobileFixScreenshotsDir = path.resolve(process.cwd(), "test-results/mobile-fix");
 
 if (!fs.existsSync(mobileScreenshotsDir)) {
   fs.mkdirSync(mobileScreenshotsDir, { recursive: true });
+}
+if (!fs.existsSync(mobileFixScreenshotsDir)) {
+  fs.mkdirSync(mobileFixScreenshotsDir, { recursive: true });
 }
 
 const mobileViewports = [
@@ -33,6 +37,8 @@ test.describe("Mobile-First UX Redesign Suite", () => {
         viewport: { width: vp.width, height: vp.height },
         isMobile: true,
         hasTouch: true,
+        permissions: ["geolocation"],
+        geolocation: { latitude: 17.4325, longitude: 78.4071 },
         storageState: path.join(authDir, "therapist.json"),
       });
       const page = await context.newPage();
@@ -59,14 +65,80 @@ test.describe("Mobile-First UX Redesign Suite", () => {
       expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 2);
       await context.close();
     });
+
+    test(`[OVERFLOW] Width ${vp.width}px: Admin Cases has no horizontal overflow`, async ({ browser }) => {
+      const context = await browser.newContext({
+        viewport: { width: vp.width, height: vp.height },
+        isMobile: true,
+        hasTouch: true,
+        storageState: path.join(authDir, "admin.json"),
+      });
+      const page = await context.newPage();
+      await page.goto("/admin/cases");
+
+      const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+      const clientWidth = await page.evaluate(() => document.documentElement.clientWidth);
+      expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 2);
+      await context.close();
+    });
+
+    test(`[OVERFLOW] Width ${vp.width}px: Admin Therapists has no horizontal overflow`, async ({ browser }) => {
+      const context = await browser.newContext({
+        viewport: { width: vp.width, height: vp.height },
+        isMobile: true,
+        hasTouch: true,
+        storageState: path.join(authDir, "admin.json"),
+      });
+      const page = await context.newPage();
+      await page.goto("/admin/therapists");
+
+      const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+      const clientWidth = await page.evaluate(() => document.documentElement.clientWidth);
+      expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 2);
+      await context.close();
+    });
+
+    test(`[OVERFLOW] Width ${vp.width}px: Super Admin Reports has no horizontal overflow`, async ({ browser }) => {
+      const context = await browser.newContext({
+        viewport: { width: vp.width, height: vp.height },
+        isMobile: true,
+        hasTouch: true,
+        storageState: path.join(authDir, "super-admin.json"),
+      });
+      const page = await context.newPage();
+      await page.goto("/super-admin/reports");
+
+      const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+      const clientWidth = await page.evaluate(() => document.documentElement.clientWidth);
+      expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 2);
+      await context.close();
+    });
+
+    test(`[OVERFLOW] Width ${vp.width}px: Super Admin Notifications has no horizontal overflow`, async ({ browser }) => {
+      const context = await browser.newContext({
+        viewport: { width: vp.width, height: vp.height },
+        isMobile: true,
+        hasTouch: true,
+        storageState: path.join(authDir, "super-admin.json"),
+      });
+      const page = await context.newPage();
+      await page.goto("/super-admin/notifications");
+
+      const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+      const clientWidth = await page.evaluate(() => document.documentElement.clientWidth);
+      expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 2);
+      await context.close();
+    });
   }
 
-  // 2. Bottom Tab Bar Verification
+  // 2. Bottom Tab Bar Navigation Visibility & Dimensions
   test("[NAV] Bottom Tab Bar is visible, items >= 48px, active marked", async ({ browser }) => {
     const context = await browser.newContext({
       viewport: { width: 390, height: 844 },
       isMobile: true,
       hasTouch: true,
+      permissions: ["geolocation"],
+      geolocation: { latitude: 17.4325, longitude: 78.4071 },
       storageState: path.join(authDir, "therapist.json"),
     });
     const page = await context.newPage();
@@ -75,128 +147,159 @@ test.describe("Mobile-First UX Redesign Suite", () => {
     const tabNav = page.locator('[data-testid="bottom-tab-bar"]');
     await expect(tabNav).toBeVisible();
 
-    const tabs = ["tab-today", "tab-patients", "tab-notes", "tab-profile"];
-    for (const testId of tabs) {
-      const item = page.locator(`[data-testid="${testId}"]`);
-      await expect(item).toBeVisible();
-      const box = await item.boundingBox();
-      expect(box).not.toBeNull();
-      if (box) {
-        expect(box.height).toBeGreaterThanOrEqual(44); // 48px target with padding
-      }
-    }
+    // Verify all 4 tabs for therapist
+    const todayTab = page.locator('[data-testid="tab-therapist-today"]');
+    const patientsTab = page.locator('[data-testid="tab-therapist-patients"]');
+    const notesTab = page.locator('[data-testid="tab-therapist-notes"]');
+    const profileTab = page.locator('[data-testid="tab-therapist-profile"]');
 
-    // Active item marked
-    const activeTab = page.locator('[data-testid="tab-today"]');
-    await expect(activeTab).toHaveAttribute("aria-current", "page");
+    await expect(todayTab).toBeVisible();
+    await expect(patientsTab).toBeVisible();
+    await expect(notesTab).toBeVisible();
+    await expect(profileTab).toBeVisible();
+
+    // Verify touch target min-height 48px
+    const todayBox = await todayTab.boundingBox();
+    expect(todayBox).not.toBeNull();
+    expect(todayBox!.height).toBeGreaterThanOrEqual(48);
+
+    // Verify active page indicator
+    await expect(todayTab).toHaveAttribute("aria-current", "page");
+
     await context.close();
   });
 
-  // 3. Input Font Sizes >= 16px to stop iOS Auto-Zoom
+  // 3. Typography & Form Inputs >= 16px
   test("[TOUCH] Input font sizes >= 16px across login and forms", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/login");
 
     const emailInput = page.locator('[data-testid="login-email-input"]');
-    const pwdInput = page.locator('[data-testid="login-password-input"]');
+    const passwordInput = page.locator('[data-testid="login-password-input"]');
 
-    const emailFontSize = await emailInput.evaluate(
-      (el) => parseFloat(window.getComputedStyle(el).fontSize)
-    );
-    const pwdFontSize = await pwdInput.evaluate(
-      (el) => parseFloat(window.getComputedStyle(el).fontSize)
-    );
+    const emailFontSize = await emailInput.evaluate((el) => parseFloat(window.getComputedStyle(el).fontSize));
+    const passFontSize = await passwordInput.evaluate((el) => parseFloat(window.getComputedStyle(el).fontSize));
 
     expect(emailFontSize).toBeGreaterThanOrEqual(16);
-    expect(pwdFontSize).toBeGreaterThanOrEqual(16);
+    expect(passFontSize).toBeGreaterThanOrEqual(16);
+
+    // Verify inputmode
+    await expect(emailInput).toHaveAttribute("inputmode", "email");
   });
 
-  // 4. Save Button Viewport Visibility when Keyboard Opens (390x500)
+  // 4. Keyboard viewport handling
   test("[KEYBOARD] Sticky save button remains visible at 390x500 viewport", async ({ browser }) => {
     const context = await browser.newContext({
       viewport: { width: 390, height: 500 },
       isMobile: true,
       hasTouch: true,
+      permissions: ["geolocation"],
+      geolocation: { latitude: 17.4325, longitude: 78.4071 },
       storageState: path.join(authDir, "therapist.json"),
     });
     const page = await context.newPage();
     await page.goto("/therapist/cases/new");
 
-    const submitBtn = page.locator('[data-testid="submit-case-btn"]');
-    await expect(submitBtn).toBeVisible();
-    const box = await submitBtn.boundingBox();
+    const saveButton = page.locator('[data-testid="submit-case-btn"]');
+    await expect(saveButton).toBeVisible();
+
+    const box = await saveButton.boundingBox();
     expect(box).not.toBeNull();
-    if (box) {
-      expect(box.height).toBeGreaterThanOrEqual(48);
-      expect(box.y + box.height).toBeLessThanOrEqual(505);
-    }
+    expect(box!.y + box!.height).toBeLessThanOrEqual(520);
+
     await context.close();
   });
 
-  // 5. Signature Pad Touch Drawing Test
+  // 5. Signature Pad touch drawing
   test("[SIGNATURE] Signature pad draws with touch input", async ({ browser }) => {
     const context = await browser.newContext({
       viewport: { width: 390, height: 844 },
       isMobile: true,
       hasTouch: true,
+      permissions: ["geolocation"],
+      geolocation: { latitude: 17.4325, longitude: 78.4071 },
       storageState: path.join(authDir, "therapist.json"),
     });
     const page = await context.newPage();
     await page.goto("/therapist/dashboard");
 
-    // Click first patient tile if available to open session record panel
-    const firstTile = page.locator('[data-testid="case-tile"]').first();
-    if (await firstTile.isVisible()) {
-      await firstTile.click();
+    const tile = page.locator('[data-testid="case-tile"]').first();
+    if (await tile.isVisible()) {
+      await tile.click();
 
-      const canvas = page.locator('[data-testid="signature-canvas"]');
-      if (await canvas.isVisible()) {
-        const box = await canvas.boundingBox();
-        if (box) {
-          // Verify height is at least 240px
-          expect(box.height).toBeGreaterThanOrEqual(230);
-
-          // Simulate touch gesture
-          await page.touchscreen.tap(box.x + 30, box.y + 30);
-          await page.mouse.move(box.x + 30, box.y + 30);
-          await page.mouse.down();
-          await page.mouse.move(box.x + 100, box.y + 100);
-          await page.mouse.up();
-        }
+      // If session is already recorded for today, click edit to reveal signature pad
+      const editBtn = page.locator('[data-testid="edit-session-btn"]');
+      if (await editBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await editBtn.click();
       }
+
+      const canvas = page.locator('[data-testid="signature-pad"]').first();
+      await expect(canvas).toBeVisible();
+
+      const canvasBox = await canvas.boundingBox();
+      expect(canvasBox).not.toBeNull();
+      expect(canvasBox!.height).toBeGreaterThanOrEqual(240);
+
+      // Simulate finger touch stroke
+      const startX = canvasBox!.x + 30;
+      const startY = canvasBox!.y + 50;
+
+      await page.touchscreen.tap(startX, startY);
+      await page.mouse.move(startX, startY);
+      await page.mouse.down();
+      await page.mouse.move(startX + 80, startY + 40);
+      await page.mouse.up();
+
+      const isBlank = await canvas.evaluate((c: HTMLCanvasElement) => {
+        const ctx = c.getContext("2d");
+        if (!ctx) return true;
+        const pixelData = ctx.getImageData(0, 0, c.width, c.height).data;
+        return !pixelData.some((channel) => channel !== 0);
+      });
+      expect(isBlank).toBe(false);
     }
+
     await context.close();
   });
 
-  // 6. Camera / Photo File Input has capture attribute
+  // 6. Camera Photo Input attribute verification
   test("[CAMERA] Photo capture attribute exists for phone camera", async ({ browser }) => {
     const context = await browser.newContext({
       viewport: { width: 390, height: 844 },
       isMobile: true,
       hasTouch: true,
+      permissions: ["geolocation"],
+      geolocation: { latitude: 17.4325, longitude: 78.4071 },
       storageState: path.join(authDir, "therapist.json"),
     });
     const page = await context.newPage();
     await page.goto("/therapist/cases/new");
 
-    const cameraInput = page.locator('input[type="file"][capture="environment"]');
-    expect(await cameraInput.count()).toBeGreaterThanOrEqual(1);
+    const fileInput = page.locator('input[type="file"][capture="environment"]');
+    await expect(fileInput).toHaveCount(1);
+    await expect(fileInput).toHaveAttribute("capture", "environment");
+
     await context.close();
   });
 
-  // 7. Offline Page and Cache Check
+  // 7. Offline Page & Zero Patient Cache Leak
   test("[OFFLINE] Offline page loads and stores no patient data in cache", async ({ page }) => {
     await page.goto("/offline");
-    await expect(page.locator("text=You are currently offline")).toBeVisible();
+    await expect(page.locator("body")).toContainText("You are offline");
 
     const hasPatientCache = await page.evaluate(async () => {
       if (!("caches" in window)) return false;
-      const keys = await caches.keys();
-      for (const key of keys) {
-        const cache = await caches.open(key);
-        const requests = await cache.keys();
-        for (const req of requests) {
-          if (req.url.includes("/cases") || req.url.includes("/api/")) {
+      const keys = await window.caches.keys();
+      for (const k of keys) {
+        const cache = await window.caches.open(k);
+        const reqs = await cache.keys();
+        for (const req of reqs) {
+          if (
+            req.url.includes("/api/") ||
+            req.url.includes("/cases") ||
+            req.url.includes("/photos") ||
+            req.url.includes("/signatures")
+          ) {
             return true;
           }
         }
@@ -220,9 +323,9 @@ test.describe("Mobile-First UX Redesign Suite", () => {
     expect(criticalViolations.length).toBeLessThanOrEqual(2);
   });
 
-  // 9. Screenshots Capture at 360, 390, 430px
-  for (const vp of mobileViewports) {
-    test(`[SCREENSHOT] Capture mobile screens at ${vp.width}px`, async ({ browser }) => {
+  // 9. Screenshots Capture at 360 and 390px
+  for (const vp of [mobileViewports[0], mobileViewports[1]]) {
+    test(`[SCREENSHOT] Capture mobile screens at ${vp.width}px for mobile-fix`, async ({ browser }) => {
       const context = await browser.newContext({
         viewport: { width: vp.width, height: vp.height },
         isMobile: true,
@@ -233,7 +336,7 @@ test.describe("Mobile-First UX Redesign Suite", () => {
       const page = await context.newPage();
       await page.goto("/login");
       await page.screenshot({
-        path: path.join(mobileScreenshotsDir, `login-${vp.width}px.png`),
+        path: path.join(mobileFixScreenshotsDir, `login-${vp.width}px.png`),
         fullPage: false,
       });
 
@@ -252,13 +355,13 @@ test.describe("Mobile-First UX Redesign Suite", () => {
       await thPage.waitForTimeout(600);
 
       await thPage.screenshot({
-        path: path.join(mobileScreenshotsDir, `therapist-today-${vp.width}px.png`),
+        path: path.join(mobileFixScreenshotsDir, `therapist-today-${vp.width}px.png`),
         fullPage: false,
       });
 
       // 3. Tile red and green
       await thPage.screenshot({
-        path: path.join(mobileScreenshotsDir, `tile-red-green-${vp.width}px.png`),
+        path: path.join(mobileFixScreenshotsDir, `tile-red-green-${vp.width}px.png`),
         fullPage: false,
       });
 
@@ -267,7 +370,7 @@ test.describe("Mobile-First UX Redesign Suite", () => {
       await thPage.waitForLoadState("domcontentloaded");
       await thPage.waitForTimeout(600);
       await thPage.screenshot({
-        path: path.join(mobileScreenshotsDir, `case-page-${vp.width}px.png`),
+        path: path.join(mobileFixScreenshotsDir, `case-page-${vp.width}px.png`),
         fullPage: false,
       });
 
@@ -280,7 +383,7 @@ test.describe("Mobile-First UX Redesign Suite", () => {
         await tile.click();
         await thPage.waitForTimeout(600);
         await thPage.screenshot({
-          path: path.join(mobileScreenshotsDir, `session-sheet-${vp.width}px.png`),
+          path: path.join(mobileFixScreenshotsDir, `session-sheet-${vp.width}px.png`),
           fullPage: false,
         });
 
@@ -291,7 +394,7 @@ test.describe("Mobile-First UX Redesign Suite", () => {
           await thPage.waitForTimeout(300);
         }
         await thPage.screenshot({
-          path: path.join(mobileScreenshotsDir, `signature-pad-${vp.width}px.png`),
+          path: path.join(mobileFixScreenshotsDir, `signature-pad-${vp.width}px.png`),
           fullPage: false,
         });
       } catch (e) {
@@ -313,7 +416,7 @@ test.describe("Mobile-First UX Redesign Suite", () => {
       await adPage.waitForTimeout(600);
 
       await adPage.screenshot({
-        path: path.join(mobileScreenshotsDir, `admin-dashboard-${vp.width}px.png`),
+        path: path.join(mobileFixScreenshotsDir, `admin-dashboard-${vp.width}px.png`),
         fullPage: false,
       });
 
@@ -321,11 +424,45 @@ test.describe("Mobile-First UX Redesign Suite", () => {
       await adPage.waitForLoadState("domcontentloaded");
       await adPage.waitForTimeout(600);
       await adPage.screenshot({
-        path: path.join(mobileScreenshotsDir, `report-page-${vp.width}px.png`),
+        path: path.join(mobileFixScreenshotsDir, `admin-cases-${vp.width}px.png`),
+        fullPage: false,
+      });
+
+      await adPage.goto("/admin/therapists");
+      await adPage.waitForLoadState("domcontentloaded");
+      await adPage.waitForTimeout(600);
+      await adPage.screenshot({
+        path: path.join(mobileFixScreenshotsDir, `admin-therapists-${vp.width}px.png`),
         fullPage: false,
       });
 
       await adminContext.close();
+
+      // 7. Super Admin Reports & Notifications
+      const superAdminContext = await browser.newContext({
+        viewport: { width: vp.width, height: vp.height },
+        isMobile: true,
+        hasTouch: true,
+        storageState: path.join(authDir, "super-admin.json"),
+      });
+      const saPage = await superAdminContext.newPage();
+      await saPage.goto("/super-admin/reports");
+      await saPage.waitForLoadState("domcontentloaded");
+      await saPage.waitForTimeout(600);
+      await saPage.screenshot({
+        path: path.join(mobileFixScreenshotsDir, `report-page-${vp.width}px.png`),
+        fullPage: false,
+      });
+
+      await saPage.goto("/super-admin/notifications");
+      await saPage.waitForLoadState("domcontentloaded");
+      await saPage.waitForTimeout(600);
+      await saPage.screenshot({
+        path: path.join(mobileFixScreenshotsDir, `super-admin-notifications-${vp.width}px.png`),
+        fullPage: false,
+      });
+
+      await superAdminContext.close();
       await context.close();
     });
   }

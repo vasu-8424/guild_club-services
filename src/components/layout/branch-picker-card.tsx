@@ -70,7 +70,7 @@ export function BranchPickerCard({
           No active branches available. Please configure branches in the management portal.
         </div>
       ) : (
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="mt-8 flex flex-col gap-4">
           {branches.map((branch) => {
             const isLoading = loadingId === branch.id;
             return (
@@ -90,13 +90,13 @@ export function BranchPickerCard({
                   </h3>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-slate-200 flex justify-end">
+                <div className="mt-4 pt-3 border-t border-slate-200 w-full">
                   <button
                     type="button"
                     data-testid={`select-branch-btn-${branch.id}`}
                     disabled={isLoading}
                     onClick={() => handleSelect(branch.id)}
-                    className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-white bg-[#0B7A63] hover:bg-[#096350] disabled:opacity-50 transition-colors rounded-none cursor-pointer"
+                    className="w-full min-h-[48px] inline-flex items-center justify-center px-4 py-3 text-base font-semibold text-white bg-[#0B7A63] hover:bg-[#096350] disabled:opacity-50 transition-colors rounded-none cursor-pointer touch-manipulation select-none"
                   >
                     {isLoading ? "Selecting..." : "Open Branch"}
                   </button>

@@ -32,6 +32,33 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
+      // First try standard REST endpoint to avoid Next.js Server Action hash mismatches
+      const apiRes = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (apiRes.ok) {
+        const res = await apiRes.json();
+        if (res.success) {
+          const redirectParam = searchParams.get("redirect");
+          const dest =
+            redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
+              ? redirectParam
+              : res.redirectTo || "/admin/dashboard";
+          router.push(dest);
+          router.refresh();
+          return;
+        } else {
+          if (res.fieldErrors) setFieldErrors(res.fieldErrors);
+          setGeneralError(res.error || "Invalid email or password.");
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Fallback to server action if API returned non-OK
       const res = await loginAction({ email, password });
 
       if (!res.success) {
@@ -169,6 +196,8 @@ function LoginForm() {
                     id="email-input"
                     data-testid="login-email-input"
                     type="email"
+                    inputMode="email"
+                    enterKeyHint="next"
                     lang="en-IN"
                     spellCheck={false}
                     autoCapitalize="none"
@@ -178,7 +207,7 @@ function LoginForm() {
                     required
                     autoComplete="email"
                     autoFocus
-                    className="w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-base sm:text-sm text-slate-900 placeholder:text-slate-400 shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:border-slate-400 focus:border-[#0B7A63] focus:outline-none focus:ring-1 focus:ring-[#0B7A63]"
+                    className="w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-900 placeholder:text-slate-400 shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:border-slate-400 focus:border-[#0B7A63] focus:outline-none focus:ring-1 focus:ring-[#0B7A63]"
                   />
                 </div>
                 {fieldErrors.email && (
@@ -209,7 +238,7 @@ function LoginForm() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     autoComplete="current-password"
-                    className="w-full rounded-none border border-slate-300 bg-white px-3.5 pr-10 py-2.5 text-base sm:text-sm text-slate-900 placeholder:text-slate-400 shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:border-slate-400 focus:border-[#0B7A63] focus:outline-none focus:ring-1 focus:ring-[#0B7A63]"
+                    className="w-full rounded-none border border-slate-300 bg-white px-3.5 pr-10 py-2.5 text-base text-slate-900 placeholder:text-slate-400 shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:border-slate-400 focus:border-[#0B7A63] focus:outline-none focus:ring-1 focus:ring-[#0B7A63]"
                   />
                   <button
                     type="button"

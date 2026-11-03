@@ -209,7 +209,8 @@ export function SignaturePad({
       <div className="border border-stone-300 rounded-none bg-white relative overflow-hidden shadow-xs">
         <canvas
           ref={canvasRef}
-          data-testid="signature-canvas"
+          data-testid="signature-pad"
+          data-signature-canvas="true"
           className="w-full h-[240px] min-h-[240px] cursor-crosshair bg-white touch-none"
           style={{ touchAction: "none" }}
           onMouseDown={startDrawing}

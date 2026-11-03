@@ -185,20 +185,13 @@ export function AdminDashboardClient({ data }: AdminDashboardClientProps) {
   return (
     <div className="space-y-6">
       {/* Top Bar: Title & Date Selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-        <div>
-          <h1 className="text-xl font-bold uppercase tracking-wider text-slate-900">
-            Dashboard
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Operational clinical overview for{" "}
-            <strong className="text-slate-800 font-semibold">{filter.filterLabel}</strong>{" "}
-            (Asia/Kolkata).
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2.5">
+      <div className="flex flex-col gap-3 border-b border-slate-200 pb-4">
+        <p className="text-xs text-slate-500">
+          Clinical overview for <strong className="text-slate-800 font-semibold">{filter.filterLabel}</strong> (Asia/Kolkata).
+        </p>
+        <div className="flex flex-col gap-2 w-full">
           <BranchReportButton />
-          <div data-testid="dashboard-date-selector">
+          <div data-testid="dashboard-date-selector" className="w-full">
             <DateSelector />
           </div>
         </div>
@@ -234,16 +227,16 @@ export function AdminDashboardClient({ data }: AdminDashboardClientProps) {
       )}
 
       {/* Four Plain Number Boxes (NO charts, NO sparklines) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         {/* 1. Therapists (active) */}
         <div
           data-testid="stat-therapists"
           className="border border-slate-200 bg-white p-5 shadow-xs rounded-none"
         >
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <p className="text-[13px] font-semibold uppercase tracking-wider text-slate-600">
             Therapists (active)
           </p>
-          <p className="text-3xl font-bold font-mono text-slate-900 mt-2">
+          <p className="text-[28px] font-bold font-mono text-slate-900 mt-2">
             {stats.activeTherapists}
           </p>
           <p className="text-[11px] text-slate-400 mt-1">Practitioners on duty</p>
@@ -254,10 +247,10 @@ export function AdminDashboardClient({ data }: AdminDashboardClientProps) {
           data-testid="stat-active-cases"
           className="border border-slate-200 bg-white p-5 shadow-xs rounded-none"
         >
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <p className="text-[13px] font-semibold uppercase tracking-wider text-slate-600">
             Active cases
           </p>
-          <p className="text-3xl font-bold font-mono text-slate-900 mt-2">
+          <p className="text-[28px] font-bold font-mono text-slate-900 mt-2">
             {stats.activeCases}
           </p>
           <p className="text-[11px] text-slate-400 mt-1">
@@ -270,10 +263,10 @@ export function AdminDashboardClient({ data }: AdminDashboardClientProps) {
           data-testid="stat-sessions"
           className="border border-slate-200 bg-white p-5 shadow-xs rounded-none"
         >
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <p className="text-[13px] font-semibold uppercase tracking-wider text-slate-600">
             Sessions on date
           </p>
-          <p className="text-3xl font-bold font-mono text-[#0B7A63] mt-2">
+          <p className="text-[28px] font-bold font-mono text-[#0B7A63] mt-2">
             {stats.sessionsOnDate}
           </p>
           <p className="text-[11px] text-slate-400 mt-1">Recorded for {filter.filterLabel}</p>
@@ -284,10 +277,10 @@ export function AdminDashboardClient({ data }: AdminDashboardClientProps) {
           data-testid="stat-rooms"
           className="border border-slate-200 bg-white p-5 shadow-xs rounded-none"
         >
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <p className="text-[13px] font-semibold uppercase tracking-wider text-slate-600">
             Rooms (free / total)
           </p>
-          <p className="text-3xl font-bold font-mono text-slate-900 mt-2">
+          <p className="text-[28px] font-bold font-mono text-slate-900 mt-2">
             {stats.roomsFree} / {stats.roomsTotal}
           </p>
           <p className="text-[11px] text-slate-400 mt-1">Available across branches</p>
@@ -346,7 +339,7 @@ export function AdminDashboardClient({ data }: AdminDashboardClientProps) {
           ) : (
             <table
               data-testid="therapists-table"
-              className="w-full text-left text-xs border-collapse"
+              className="w-full block text-left text-xs border-collapse divide-y divide-slate-100"
             >
               <thead>
                 <tr className="bg-slate-100 border-b border-slate-200 text-slate-700 uppercase font-semibold select-none">
@@ -419,7 +412,7 @@ export function AdminDashboardClient({ data }: AdminDashboardClientProps) {
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 font-sans text-slate-800">
+              <tbody className="block divide-y divide-slate-200 font-sans text-slate-800">
                 {processedTherapists.map((therapist) => {
                   const menuItems: RowActionMenuItem[] = [
                     {
@@ -485,13 +478,13 @@ export function AdminDashboardClient({ data }: AdminDashboardClientProps) {
                     <tr
                       key={therapist.id}
                       data-testid={`therapist-row-${therapist.id}`}
-                      className="hover:bg-slate-50/70 transition-colors"
+                      className="block p-4 space-y-2 hover:bg-slate-50/70 transition-colors"
                     >
                       {/* Therapist Column */}
-                      <td className="py-3 px-4">
+                      <td className="block">
                         <Link
                           href={`/admin/therapists/${therapist.id}`}
-                          className="font-bold text-slate-900 hover:text-[#0B7A63] transition-colors block"
+                          className="font-bold text-base text-slate-900 hover:text-[#0B7A63] transition-colors block"
                         >
                           {therapist.name}
                         </Link>
@@ -501,32 +494,37 @@ export function AdminDashboardClient({ data }: AdminDashboardClientProps) {
                       </td>
 
                       {/* Sessions on date */}
-                      <td className="py-3 px-4 font-mono font-bold text-slate-900">
-                        {therapist.sessionsOnDate}
+                      <td className="flex items-center justify-between font-mono font-bold text-slate-900 text-xs">
+                        <span className="text-slate-500 font-sans font-medium">Sessions on date:</span>
+                        <span>{therapist.sessionsOnDate}</span>
                       </td>
 
                       {/* Active cases */}
-                      <td className="py-3 px-4 font-mono text-slate-800">
-                        {therapist.activeCases}
+                      <td className="flex items-center justify-between font-mono text-slate-800 text-xs">
+                        <span className="text-slate-500 font-sans font-medium">Active cases:</span>
+                        <span>{therapist.activeCases}</span>
                       </td>
 
                       {/* Closed on date */}
-                      <td className="py-3 px-4 font-mono text-slate-800">
-                        {therapist.closedOnDate}
+                      <td className="flex items-center justify-between font-mono text-slate-800 text-xs">
+                        <span className="text-slate-500 font-sans font-medium">Closed on date:</span>
+                        <span>{therapist.closedOnDate}</span>
                       </td>
 
                       {/* Rooms in use */}
-                      <td className="py-3 px-4 font-mono text-slate-800">
-                        {therapist.roomsInUse}
+                      <td className="flex items-center justify-between font-mono text-slate-800 text-xs">
+                        <span className="text-slate-500 font-sans font-medium">Rooms in use:</span>
+                        <span>{therapist.roomsInUse}</span>
                       </td>
 
                       {/* Last login */}
-                      <td className="py-3 px-4 text-[11px] font-mono text-slate-600">
-                        {therapist.lastLogin}
+                      <td className="flex items-center justify-between text-[11px] font-mono text-slate-600">
+                        <span className="text-slate-500 font-sans font-medium">Last login:</span>
+                        <span>{therapist.lastLogin}</span>
                       </td>
 
                       {/* Actions */}
-                      <td className="py-3 px-4 text-right">
+                      <td className="pt-2 border-t border-slate-100 block">
                         <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="primary"

@@ -114,7 +114,7 @@ export function ReportsClient({
             </span>
             <span className="text-xs text-slate-400">&bull; {dateRangeLabel}</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900">
+          <h2 className="text-[24px] font-semibold tracking-tight text-slate-900 leading-tight">
             Clinical Operations & Success Analytics
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
@@ -122,12 +122,12 @@ export function ReportsClient({
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex flex-col gap-2.5 w-full shrink-0 pt-2">
           <Button
             type="button"
             variant="secondary"
             size="sm"
-            data-testid="export-excel-button"
+            data-testid="export-excel-button" className="w-full min-h-[48px]"
             onClick={handleExportExcel}
             isLoading={isExportingExcel}
             leadingIcon={<Icons.FileExcel className="h-4 w-4 text-emerald-600" />}
@@ -138,7 +138,7 @@ export function ReportsClient({
           <Button
             type="button"
             size="sm"
-            data-testid="export-pdf-button"
+            data-testid="export-pdf-button" className="w-full min-h-[48px]"
             onClick={handleExportPdf}
             isLoading={isExportingPdf}
             leadingIcon={<Icons.FilePdf className="h-4 w-4" />}
@@ -149,63 +149,68 @@ export function ReportsClient({
       </div>
 
       {/* Date Range Filter Bar */}
-      <div className="rounded-none border border-slate-200 bg-slate-50/70 p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-slate-500 font-semibold mr-1 flex items-center gap-1">
+      <div className="rounded-none border border-slate-200 bg-slate-50/70 p-4 flex flex-col gap-4 text-xs">
+        <div className="space-y-2">
+          <span className="text-slate-600 font-semibold text-[13px] flex items-center gap-1">
             <Icons.Filter className="h-3.5 w-3.5 text-slate-400" />
-            Timeframe:
+            Timeframe Preset:
           </span>
-          <button
-            type="button"
-            onClick={() => handleApplyFilter("all")}
-            className={`rounded-none px-3 py-1.5 font-semibold uppercase tracking-wider transition-colors border ${
-              !startDate && !endDate
-                ? "bg-[#0B7A63] text-white border-[#085d4b]"
-                : "bg-white text-slate-700 hover:bg-slate-100 border-slate-200"
-            }`}
-          >
-            All Time
-          </button>
-          <button
-            type="button"
-            onClick={() => handleApplyFilter("30")}
-            className="rounded-none px-3 py-1.5 bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 font-semibold uppercase tracking-wider"
-          >
-            Last 30 Days
-          </button>
-          <button
-            type="button"
-            onClick={() => handleApplyFilter("90")}
-            className="rounded-none px-3 py-1.5 bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 font-semibold uppercase tracking-wider"
-          >
-            Last 90 Days
-          </button>
-          <button
-            type="button"
-            onClick={() => handleApplyFilter("ytd")}
-            className="rounded-none px-3 py-1.5 bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 font-semibold uppercase tracking-wider"
-          >
-            Year to Date (YTD)
-          </button>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => handleApplyFilter("all")}
+              className={`min-h-[44px] rounded-none px-3 py-2 text-center text-xs font-semibold uppercase tracking-wider transition-colors border ${
+                !startDate && !endDate
+                  ? "bg-[#0B7A63] text-white border-[#085d4b]"
+                  : "bg-white text-slate-700 hover:bg-slate-100 border-slate-200"
+              }`}
+            >
+              All Time
+            </button>
+            <button
+              type="button"
+              onClick={() => handleApplyFilter("30")}
+              className="min-h-[44px] rounded-none px-3 py-2 text-center text-xs bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 font-semibold uppercase tracking-wider"
+            >
+              Last 30 Days
+            </button>
+            <button
+              type="button"
+              onClick={() => handleApplyFilter("90")}
+              className="min-h-[44px] rounded-none px-3 py-2 text-center text-xs bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 font-semibold uppercase tracking-wider"
+            >
+              Last 90 Days
+            </button>
+            <button
+              type="button"
+              onClick={() => handleApplyFilter("ytd")}
+              className="min-h-[44px] rounded-none px-3 py-2 text-center text-xs bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 font-semibold uppercase tracking-wider"
+            >
+              Year to Date
+            </button>
+          </div>
         </div>
 
-        <form onSubmit={handleCustomSubmit} className="flex items-center gap-2">
+        <form onSubmit={handleCustomSubmit} className="flex flex-col gap-2 pt-2 border-t border-slate-200">
+          <span className="text-[13px] font-semibold text-slate-600">Custom Date Range:</span>
           <input
             type="date"
             value={fromInput}
             onChange={(e) => setFromInput(e.target.value)}
-            className="rounded-none border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800"
+            className="w-full min-h-[48px] rounded-none border border-slate-300 bg-white px-3 py-2 text-base text-slate-800"
           />
-          <span className="text-slate-400">to</span>
           <input
             type="date"
             value={toInput}
             onChange={(e) => setToInput(e.target.value)}
-            className="rounded-none border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800"
+            className="w-full min-h-[48px] rounded-none border border-slate-300 bg-white px-3 py-2 text-base text-slate-800"
           />
-          <Button type="submit" size="sm" variant="secondary" className="h-7 text-xs px-2.5">
-            Apply
-          </Button>
+          <button
+            type="submit"
+            className="w-full min-h-[48px] rounded-none bg-slate-900 text-white px-4 py-2 text-base font-semibold uppercase tracking-wider hover:bg-slate-800 transition-colors"
+          >
+            Apply Range
+          </button>
         </form>
       </div>
 

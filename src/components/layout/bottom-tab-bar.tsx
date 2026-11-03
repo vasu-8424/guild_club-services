@@ -86,26 +86,26 @@ export function BottomTabBar({ role }: BottomTabBarProps) {
             label: "Today",
             href: "/therapist/dashboard",
             icon: Icons.Dashboard,
-            testId: "tab-today",
+            testId: "tab-therapist-today",
           },
           {
             label: "Patients",
             href: "/therapist/cases",
             icon: Icons.Cases,
-            testId: "tab-patients",
+            testId: "tab-therapist-patients",
           },
           {
             label: "Notes",
             href: "/therapist/notes",
             icon: Icons.Envelope,
             badge: unreadNotes,
-            testId: "tab-notes",
+            testId: "tab-therapist-notes",
           },
           {
             label: "Profile",
             href: "/therapist/profile",
             icon: Icons.User,
-            testId: "tab-profile",
+            testId: "tab-therapist-profile",
           },
         ];
       case "admin":

@@ -13,7 +13,7 @@ export default function OfflinePage() {
 
         <div className="space-y-1.5">
           <h1 className="text-[20px] font-semibold tracking-tight text-slate-900">
-            You are currently offline
+            You are offline
           </h1>
           <p className="text-[14px] text-slate-600 leading-relaxed">
             Please check your internet connection to access clinic records.

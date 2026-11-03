@@ -67,9 +67,9 @@ export async function DashboardShell({
 
         {/* 
           Main Scrollable Content Area 
-          Padding bottom accommodates fixed 64px bottom tab bar + safe area inset
+          Padding bottom accommodates fixed 64px bottom tab bar + safe area inset + 16px buffer
         */}
-        <main className="flex-1 overflow-y-auto px-3.5 py-4 pb-[calc(4.5rem+env(safe-area-inset-bottom))]">
+        <main className="flex-1 w-full max-w-full min-w-0 overflow-y-auto overflow-x-hidden px-3.5 sm:px-4 py-4 pb-[calc(4rem+env(safe-area-inset-bottom)+1.5rem)]">
           <InstallPromptCard />
           {children}
         </main>

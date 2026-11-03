@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { CLINICAL_SERVICES, getServiceLabel } from "@/lib/services";
 import { getTodayIST } from "@/lib/date-utils";
-import { Search, Filter, Check, X as CrossIcon, FileText } from "lucide-react";
+import { Search, Filter, Check, X as CrossIcon, FileText, ChevronRight } from "lucide-react";
 import { CaseRowActions } from "./case-row-actions";
 import { BranchReportButton } from "@/components/admin/branch-report-button";
 import Link from "next/link";
@@ -268,24 +268,24 @@ export default async function AdminCasesPage({ searchParams }: CasesPageProps) {
               No clinical cases match your filter criteria.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs" data-testid="admin-cases-table">
-                <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[10px] select-none z-10">
+            <div className="w-full">
+              <table className="w-full block text-left text-xs divide-y divide-slate-100" data-testid="admin-cases-table">
+                <thead className="sr-only">
                   <tr>
-                    <th className="px-4 py-3">Patient ID</th>
-                    <th className="px-4 py-3">Patient Name</th>
-                    <th className="px-4 py-3">Problem</th>
-                    <th className="px-4 py-3">Present Condition</th>
-                    <th className="px-4 py-3">Service</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3 text-center">Today</th>
-                    <th className="px-4 py-3">Therapist</th>
-                    <th className="px-4 py-3">Branch</th>
-                    <th className="px-4 py-3 text-center">Reports</th>
-                    <th className="px-4 py-3 text-right">Actions</th>
+                    <th>Patient ID</th>
+                    <th>Patient Name</th>
+                    <th>Problem</th>
+                    <th>Present Condition</th>
+                    <th>Service</th>
+                    <th>Status</th>
+                    <th>Today</th>
+                    <th>Therapist</th>
+                    <th>Branch</th>
+                    <th>Reports</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 font-medium">
+                <tbody className="block divide-y divide-slate-200 font-medium">
                   {casesList.map((cs) => {
                     const isClosed = cs.status === "completed";
                     const hasToday = todayDoneCaseIds.has(cs.id);
@@ -296,37 +296,19 @@ export default async function AdminCasesPage({ searchParams }: CasesPageProps) {
                       <tr
                         key={cs.id}
                         data-testid={`admin-case-row-${cs.id}`}
-                        className="hover:bg-slate-50/60 transition-colors"
+                        className="block p-4 space-y-2 hover:bg-slate-50/70 transition-colors"
                       >
-                        {/* 1. Patient ID */}
-                        <td className="px-4 py-3 font-mono font-bold text-[#0B7A63] whitespace-nowrap">
-                          {cs.patientId || cs.caseNumber}
+                        {/* 1. Header: Patient ID & Name */}
+                        <td className="flex items-center justify-between font-mono font-bold text-[#0B7A63]">
+                          <span>{cs.patientId || cs.caseNumber}</span>
+                          <span className="font-sans font-semibold text-slate-900 text-sm">{cs.clientName}</span>
                         </td>
 
-                        {/* 2. Patient Name */}
-                        <td className="px-4 py-3 font-semibold text-slate-900 whitespace-nowrap">
-                          {cs.clientName}
-                        </td>
-
-                        {/* 3. Problem */}
-                        <td className="px-4 py-3 text-slate-700 max-w-[180px] truncate" title={cs.problem || cs.description}>
-                          {cs.problem || cs.description}
-                        </td>
-
-                        {/* 4. Present Condition */}
-                        <td className="px-4 py-3 text-slate-600 max-w-[180px] truncate" title={cs.presentCondition || "Intake assessment recorded"}>
-                          {cs.presentCondition || "Intake assessment recorded"}
-                        </td>
-
-                        {/* 5. Service Tag */}
-                        <td className="px-4 py-3 whitespace-nowrap">
+                        {/* 2. Service & Status */}
+                        <td className="flex items-center justify-between gap-2">
                           <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
                             {serviceLabel}
                           </span>
-                        </td>
-
-                        {/* 6. Status Tag */}
-                        <td className="px-4 py-3 whitespace-nowrap">
                           {isClosed ? (
                             <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold bg-stone-100 text-stone-600 border border-stone-200">
                               Closed
@@ -338,51 +320,41 @@ export default async function AdminCasesPage({ searchParams }: CasesPageProps) {
                           )}
                         </td>
 
-                        {/* 7. Today's Session */}
-                        <td className="px-4 py-3 text-center whitespace-nowrap">
-                          {hasToday ? (
-                            <span
-                              title="Session done today"
-                              className="inline-flex items-center justify-center w-5 h-5 bg-emerald-100 text-emerald-800 border border-emerald-400 mx-auto"
-                            >
-                              <Check className="w-3.5 h-3.5" />
-                            </span>
-                          ) : (
-                            <span
-                              title="No session today"
-                              className="inline-flex items-center justify-center w-5 h-5 bg-red-100 text-red-800 border border-red-300 mx-auto"
-                            >
-                              <CrossIcon className="w-3.5 h-3.5" />
-                            </span>
-                          )}
+                        {/* 3. Problem */}
+                        <td className="text-slate-700 text-xs line-clamp-2">
+                          <span className="font-semibold text-slate-500 uppercase text-[10px] block">Problem</span>
+                          {cs.problem || cs.description}
                         </td>
 
-                        {/* 8. Therapist */}
-                        <td className="px-4 py-3 text-slate-800 whitespace-nowrap">
-                          {cs.therapistName || <span className="italic text-slate-400">Unassigned</span>}
+                        {/* 4. Therapist & Branch */}
+                        <td className="flex items-center justify-between text-xs text-slate-600">
+                          <span>Therapist: <strong>{cs.therapistName || "Unassigned"}</strong></span>
+                          <span>{cs.branchName || "Main Branch"}</span>
                         </td>
 
-                        {/* 9. Branch */}
-                        <td className="px-4 py-3 text-slate-700 whitespace-nowrap">
-                          {cs.branchName || "Main Branch"}
+                        {/* 5. Today session & Reports */}
+                        <td className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+                          <span className="flex items-center gap-1.5">
+                            Today:
+                            {hasToday ? (
+                              <span className="inline-flex items-center px-1.5 py-0.5 bg-emerald-100 text-emerald-800 font-semibold text-[10px]">Done</span>
+                            ) : (
+                              <span className="inline-flex items-center px-1.5 py-0.5 bg-red-100 text-red-800 font-semibold text-[10px]">Pending</span>
+                            )}
+                          </span>
+                          <span className="text-slate-500 font-mono">{reportCount} Report{reportCount === 1 ? "" : "s"}</span>
                         </td>
 
-                        {/* 10. Reports Count & Quick Link */}
-                        <td className="px-4 py-3 text-center whitespace-nowrap" data-testid={`reports-cell-${cs.id}`}>
+                        {/* 6. View Details Action */}
+                        <td className="pt-2">
                           <Link
-                            href={`/cases/${cs.id}/report`}
-                            data-testid={`quick-report-link-${cs.id}`}
-                            className="inline-flex items-center gap-1 font-mono font-semibold text-[#0B7A63] hover:underline"
-                            title="View progress report"
+                            href={`/admin/cases/${cs.id}`}
+                            data-testid={`view-case-link-${cs.id}`}
+                            className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs uppercase tracking-wider rounded-none transition-colors"
                           >
-                            <FileText className="w-3.5 h-3.5" />
-                            <span>{reportCount}</span>
+                            <span>Open Case Management</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
                           </Link>
-                        </td>
-
-                        {/* 11. Actions */}
-                        <td className="px-4 py-3 text-right whitespace-nowrap">
-                          <CaseRowActions caseId={cs.id} isAssigned={Boolean(cs.therapistName)} />
                         </td>
                       </tr>
                     );

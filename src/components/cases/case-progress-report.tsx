@@ -70,7 +70,7 @@ export function CaseProgressReport({ data }: { data: ProgressReportData }) {
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12" data-testid="progress-report-view">
       {/* Top action bar (hidden on print) */}
-      <div className="no-print flex items-center justify-between border-b border-stone-200 pb-4">
+      <div className="no-print flex flex-col gap-3 border-b border-stone-200 pb-4">
         <Link
           href={backHref}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-600 hover:text-stone-900 uppercase tracking-wider"
@@ -83,7 +83,7 @@ export function CaseProgressReport({ data }: { data: ProgressReportData }) {
           type="button"
           data-testid="download-pdf-btn"
           onClick={handlePrint}
-          className="inline-flex items-center gap-2 bg-[#0B7A63] hover:bg-[#096350] text-white px-5 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-none shadow-xs transition-colors"
+          className="w-full min-h-[48px] inline-flex items-center justify-center gap-2 bg-[#0B7A63] hover:bg-[#096350] text-white px-5 py-3 text-base font-semibold uppercase tracking-wider rounded-none shadow-xs transition-colors cursor-pointer select-none touch-manipulation"
         >
           <Printer className="w-4 h-4" />
           <span>Download PDF</span>
@@ -91,10 +91,10 @@ export function CaseProgressReport({ data }: { data: ProgressReportData }) {
       </div>
 
       {/* Printable Sheet */}
-      <div className="report-sheet bg-white border border-stone-300 p-8 shadow-sm rounded-none text-stone-900 print:border-0 print:p-0 print:shadow-none">
+      <div className="report-sheet bg-white border border-stone-300 p-4 sm:p-8 shadow-sm rounded-none text-stone-900 print:border-0 print:p-0 print:shadow-none">
         {/* a) Header: Patient ID, patient name, age, sex, service, problem, branch, room, start date, end date or "Ongoing", and status. */}
         <div className="page-break-avoid mb-6">
-          <div className="flex items-start justify-between border-b-2 border-stone-900 pb-4 mb-4">
+          <div className="flex flex-col gap-3 border-b-2 border-stone-900 pb-4 mb-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full overflow-hidden border border-amber-500/30 bg-slate-900 shrink-0">
                 <Image src="/logo.png" alt="Guild Club Seal" width={48} height={48} priority className="h-full w-full object-cover" />
@@ -114,13 +114,13 @@ export function CaseProgressReport({ data }: { data: ProgressReportData }) {
             </div>
           </div>
 
-            <div className="text-right">
+            <div className="text-left pt-2 border-t border-stone-200 flex items-center justify-between">
               <span className="text-[10px] text-stone-500 block uppercase font-bold tracking-wider">
                 Patient ID
               </span>
               <span
                 data-testid="report-patient-id"
-                className="text-2xl font-mono font-bold text-[#0B7A63]"
+                className="text-[24px] font-mono font-bold text-[#0B7A63]"
               >
                 {data.patientId}
               </span>

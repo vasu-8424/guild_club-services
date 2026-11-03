@@ -131,7 +131,7 @@ export function NotificationsClient({
           data-testid="quota-warning-banner"
           className="border-l-4 border-amber-500 bg-amber-50 p-4 text-amber-900 rounded-none border border-amber-200"
         >
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-2.5 w-full">
             <Icons.Alert className="h-5 w-5 text-amber-600 shrink-0" />
             <div>
               <p className="font-semibold text-sm">
@@ -189,7 +189,7 @@ export function NotificationsClient({
       )}
 
       {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         {/* Today's Quota */}
         <div className="bg-white border border-slate-200 p-5 shadow-sm rounded-none">
           <div className="flex items-center justify-between text-slate-600 text-xs font-semibold uppercase tracking-wider mb-2">
@@ -304,7 +304,7 @@ export function NotificationsClient({
             variant="outline"
             onClick={handleRetry}
             disabled={isRetrying}
-            className="rounded-none cursor-pointer"
+            className="w-full min-h-[48px] text-base rounded-none cursor-pointer"
           >
             {isRetrying ? "Processing..." : "Retry & Process Queue"}
           </Button>
@@ -314,7 +314,7 @@ export function NotificationsClient({
             variant="primary"
             onClick={handleSendTest}
             disabled={isSendingTest}
-            className="rounded-none cursor-pointer"
+            className="w-full min-h-[48px] text-base rounded-none cursor-pointer"
           >
             {isSendingTest ? "Sending Test..." : "Send test email to myself"}
           </Button>

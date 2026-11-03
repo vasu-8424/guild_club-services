@@ -195,58 +195,70 @@ export function TherapistDetailClient({
         <div className="overflow-x-auto">
           <table
             data-testid="sessions-per-day-table"
-            data-test-table="daily-sessions-table"
-            className="w-full text-left text-xs border-collapse"
+            className="w-full block text-left text-xs border-collapse divide-y divide-slate-100"
           >
-            <thead>
-              <tr className="bg-slate-100 border-b border-slate-200 text-slate-700 uppercase font-semibold">
-                <th className="py-2.5 px-4">Date</th>
-                <th className="py-2.5 px-4">Sessions done</th>
-                <th className="py-2.5 px-4">Cases closed</th>
-                <th className="py-2.5 px-4">New cases</th>
+            <thead className="sr-only">
+              <tr>
+                <th>Date</th>
+                <th>Sessions done</th>
+                <th>Cases closed</th>
+                <th>New cases</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 font-sans text-slate-800">
+            <tbody className="block divide-y divide-slate-200 font-sans text-slate-800">
               {dailyMetrics.map((day) => (
                 <tr
                   key={day.dateStr}
                   data-testid={`session-day-row-${day.dateStr}`}
-                  className="hover:bg-slate-50/70 transition-colors"
+                  className="block p-3.5 space-y-1.5 hover:bg-slate-50 transition-colors"
                 >
-                  <td className="py-2.5 px-4 font-mono font-medium text-slate-900">
-                    {day.formattedDate}
+                  <td className="flex items-center justify-between font-mono font-bold text-slate-900">
+                    <span className="text-[11px] uppercase tracking-wider text-slate-500 font-sans">Date</span>
+                    <span>{day.formattedDate}</span>
                   </td>
-                  <td className="py-2.5 px-4 font-mono font-bold">
+                  <td className="flex items-center justify-between font-mono">
+                    <span className="text-[11px] uppercase tracking-wider text-slate-500 font-sans">Sessions</span>
                     {day.sessionsDone === 0 ? (
                       <span className="text-red-600 font-bold" data-testid="zero-sessions">
                         0
                       </span>
                     ) : (
-                      <span className="text-slate-900">{day.sessionsDone}</span>
+                      <span className="text-slate-900 font-bold">{day.sessionsDone}</span>
                     )}
                   </td>
-                  <td className="py-2.5 px-4 font-mono text-slate-700">
-                    {day.casesClosed}
+                  <td className="flex items-center justify-between font-mono text-slate-700">
+                    <span className="text-[11px] uppercase tracking-wider text-slate-500 font-sans">Closed</span>
+                    <span>{day.casesClosed}</span>
                   </td>
-                  <td className="py-2.5 px-4 font-mono text-slate-700">
-                    {day.newCases}
+                  <td className="flex items-center justify-between font-mono text-slate-700">
+                    <span className="text-[11px] uppercase tracking-wider text-slate-500 font-sans">New Cases</span>
+                    <span>{day.newCases}</span>
                   </td>
                 </tr>
               ))}
             </tbody>
             {/* Total Row */}
-            <tfoot>
+            <tfoot className="block bg-slate-100/90 border-t-2 border-slate-300 font-bold text-slate-900 p-3.5">
               <tr
                 data-testid="month-totals-row"
                 data-test-totals="daily-sessions-totals-row"
-                className="bg-slate-100/90 border-t-2 border-slate-300 font-bold text-slate-900"
+                className="block space-y-1"
               >
-                <td className="py-3 px-4 uppercase text-xs tracking-wider">
+                <td className="block uppercase text-xs tracking-wider mb-1 text-slate-700">
                   Total for Month
                 </td>
-                <td className="py-3 px-4 font-mono">{monthTotals.sessions}</td>
-                <td className="py-3 px-4 font-mono">{monthTotals.closed}</td>
-                <td className="py-3 px-4 font-mono">{monthTotals.newCases}</td>
+                <td className="flex items-center justify-between font-mono text-xs">
+                  <span className="text-slate-600 font-medium">Total Sessions:</span>
+                  <span>{monthTotals.sessions}</span>
+                </td>
+                <td className="flex items-center justify-between font-mono text-xs">
+                  <span className="text-slate-600 font-medium">Total Closed:</span>
+                  <span>{monthTotals.closed}</span>
+                </td>
+                <td className="flex items-center justify-between font-mono text-xs">
+                  <span className="text-slate-600 font-medium">Total New Cases:</span>
+                  <span>{monthTotals.newCases}</span>
+                </td>
               </tr>
             </tfoot>
           </table>
@@ -272,59 +284,46 @@ export function TherapistDetailClient({
           <div className="overflow-x-auto">
             <table
               data-testid="therapist-active-cases-table"
-              className="w-full text-left text-xs border-collapse"
+              className="w-full block text-left text-xs border-collapse divide-y divide-slate-100"
             >
-              <thead>
-                <tr className="bg-slate-100 border-b border-slate-200 text-slate-700 uppercase font-semibold">
-                  <th className="py-2.5 px-4">Patient ID</th>
-                  <th className="py-2.5 px-4">Patient name</th>
-                  <th className="py-2.5 px-4">Service</th>
-                  <th className="py-2.5 px-4">Branch</th>
-                  <th className="py-2.5 px-4">Room</th>
-                  <th className="py-2.5 px-4">Start date</th>
-                  <th className="py-2.5 px-4">Sessions done</th>
-                  <th className="py-2.5 px-4">Last session date</th>
-                  <th className="py-2.5 px-4 text-right">Action</th>
+              <thead className="sr-only">
+                <tr>
+                  <th>Patient ID</th>
+                  <th>Patient name</th>
+                  <th>Service</th>
+                  <th>Branch</th>
+                  <th>Room</th>
+                  <th>Start date</th>
+                  <th>Sessions done</th>
+                  <th>Last session date</th>
+                  <th>Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 font-sans text-slate-800">
+              <tbody className="block divide-y divide-slate-200 font-sans text-slate-800">
                 {activeCases.map((c) => (
                   <tr
                     key={c.id}
                     data-testid={`active-case-row-${c.id}`}
-                    className="hover:bg-slate-50/70 transition-colors"
+                    className="block p-3.5 space-y-2 hover:bg-slate-50 transition-colors"
                   >
-                    <td className="py-2.5 px-4 font-mono font-bold text-slate-900">
-                      {c.patientId}
+                    <td className="flex items-center justify-between font-mono font-bold text-slate-900">
+                      <span className="text-[#0B7A63]">{c.patientId}</span>
+                      <span className="font-sans font-semibold text-slate-800">{c.patientName}</span>
                     </td>
-                    <td className="py-2.5 px-4 font-semibold text-slate-900">
-                      {c.patientName}
+                    <td className="flex items-center justify-between text-slate-600">
+                      <span className="capitalize">{c.service.replace("_", " ")}</span>
+                      <span>Room {c.roomNo}</span>
                     </td>
-                    <td className="py-2.5 px-4 capitalize text-slate-700">
-                      {c.service.replace("_", " ")}
+                    <td className="flex items-center justify-between text-slate-500 font-mono text-[11px]">
+                      <span>Branch: {c.branchName}</span>
+                      <span>Sessions: {c.sessionsDone}</span>
                     </td>
-                    <td className="py-2.5 px-4 text-slate-700">
-                      {c.branchName}
-                    </td>
-                    <td className="py-2.5 px-4 font-mono font-medium text-slate-900">
-                      {c.roomNo}
-                    </td>
-                    <td className="py-2.5 px-4 font-mono text-[11px] text-slate-600">
-                      {c.startDate}
-                    </td>
-                    <td className="py-2.5 px-4 font-mono font-bold text-slate-900">
-                      {c.sessionsDone}
-                    </td>
-                    <td className="py-2.5 px-4 font-mono text-[11px] text-slate-600">
-                      {c.lastSessionDate}
-                    </td>
-                    <td className="py-2.5 px-4 text-right">
+                    <td className="pt-2 border-t border-slate-100 flex justify-end">
                       <Link
                         href={`/admin/cases/${c.id}`}
-                        data-testid={`view-case-link-${c.id}`}
-                        className="text-[#0B7A63] hover:underline font-bold text-[11px] uppercase tracking-wider"
+                        className="inline-flex items-center justify-center min-h-[44px] px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[#0B7A63] border border-[#0B7A63] hover:bg-[#0B7A63] hover:text-white transition-colors"
                       >
-                        View case &rarr;
+                        View case details
                       </Link>
                     </td>
                   </tr>

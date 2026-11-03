@@ -90,21 +90,15 @@ export function DailyBoardView({
   return (
     <div data-testid="daily-board" className="space-y-6">
       {/* Header Strip */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-5">
-        <div>
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-black text-stone-900 uppercase tracking-tight">
-              Today&apos;s Sessions
-            </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-stone-100 border border-stone-300 text-stone-800 text-xs font-bold rounded-none">
-              <MapPin className="w-3.5 h-3.5 text-[#0B7A63]" />
-              <span>{branchName}</span>
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 mt-1.5 text-xs font-semibold text-stone-600">
+      <div className="flex flex-col gap-3 border-b border-stone-200 pb-4">
+        <div className="flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-stone-100 border border-stone-300 text-stone-800 text-xs font-bold rounded-none">
+            <MapPin className="w-3.5 h-3.5 text-[#0B7A63]" />
+            <span>{branchName}</span>
+          </span>
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-600">
             <CalendarIcon className="w-3.5 h-3.5 text-[#0B7A63]" />
-            <span data-testid="today-date-ist">{formattedDate} (IST)</span>
+            <span data-testid="today-date-ist">{formattedDate}</span>
           </div>
         </div>
 
@@ -112,7 +106,7 @@ export function DailyBoardView({
           <Link
             href="/therapist/cases/new"
             data-testid="create-case-btn"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0B7A63] hover:bg-[#086350] text-white text-xs font-bold uppercase tracking-wider rounded-none shadow-sm transition-colors cursor-pointer"
+            className="w-full min-h-[48px] inline-flex items-center justify-center gap-2 px-4 py-3 bg-[#0B7A63] hover:bg-[#086350] text-white text-base font-bold uppercase tracking-wider rounded-none shadow-sm transition-colors cursor-pointer select-none touch-manipulation"
           >
             <Plus className="w-4 h-4" />
             <span>+ Create Case</span>
@@ -121,7 +115,7 @@ export function DailyBoardView({
       </div>
 
       {/* Summary Strip (3 Plain Numbers) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {/* Active patients */}
         <div data-testid="summary-active" className="bg-white border-2 border-stone-800 p-4 rounded-none shadow-xs">
           <div className="flex items-center justify-between">
@@ -206,7 +200,7 @@ export function DailyBoardView({
 
           <div
             data-testid="daily-board-grid"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-h-[75vh] overflow-y-auto pr-1"
+            className="grid grid-cols-2 gap-3 max-h-[75vh] overflow-y-auto pr-1"
           >
             {sortedCases.map((caseItem) => (
               <CaseTile
