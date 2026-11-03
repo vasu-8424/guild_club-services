@@ -1,15 +1,34 @@
 package com.guildclub.services;
 
 import android.os.Bundle;
+import android.webkit.WebSettings;
+import android.webkit.WebStorage;
+import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // BridgeActivity automatically wires BridgeWebChromeClient which supports:
-        // 1. File chooser & Camera upload (input type="file" and capture)
-        // 2. HTML5 Geolocation prompt & permissions
-        // 3. Alerts, confirms, and console bridges
+        
+        // Ensure WebView loads fresh content and does not serve stale cached pages
+        if (this.bridge != null && this.bridge.getWebView() != null) {
+            WebView webView = this.bridge.getWebView();
+            webView.clearCache(true);
+            WebStorage.getInstance().deleteAllData();
+            
+            WebSettings settings = webView.getSettings();
+            settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+            settings.setDomStorageEnabled(true);
+            settings.setDatabaseEnabled(true);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (this.bridge != null && this.bridge.getWebView() != null) {
+            this.bridge.getWebView().clearCache(true);
+        }
     }
 }
