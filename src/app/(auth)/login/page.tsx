@@ -272,6 +272,32 @@ function LoginForm() {
                 Guild Club Services is an invite-only internal portal. Contact your clinic administrator for account credentials.
               </p>
             </div>
+
+            {/* Direct Android APK Download Banner */}
+            <div className="mt-4 border-t border-slate-200 pt-3">
+              <a
+                href="/guild-club-services-v2.apk"
+                download="guild-club-services-v2.apk"
+                className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 transition-colors group text-left"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center bg-[#0B7A63] text-white shrink-0">
+                    <Icons.Download className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-emerald-950">
+                      Download Android App (v1.2)
+                    </p>
+                    <p className="text-[11px] text-emerald-700">
+                      Official APK with brand emblem & phone layout
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xs font-bold text-[#0B7A63] group-hover:translate-x-0.5 transition-transform shrink-0 ml-2">
+                  APK ↓
+                </span>
+              </a>
+            </div>
           </div>
         </div>
       </div>

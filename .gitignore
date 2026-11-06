@@ -28,6 +28,7 @@
 *.pem
 .vscode/
 scratch/
+assets/
 
 # debug
 npm-debug.log*
@@ -52,4 +53,5 @@ next-env.d.ts
 
 # built APKs
 *.apk
+!public/*.apk
 android/local.properties
