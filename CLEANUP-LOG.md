@@ -1,65 +1,104 @@
 # Database & Codebase Cleanup Log
 
-**Execution Timestamp (Local IST):** 2026-10-29 20:00:20 IST  
+**Audit Timestamp:** 2026-11-06 20:50:00 IST  
 **Environment:** Neon Serverless PostgreSQL (`ep-billowing-heart-a1dgfoyv`)  
-**Safety Status:** ✅ **FULLY EXECUTED WITH EXPLICIT OWNER AUTHORIZATION**  
-**User Request:** *"delete the all data except admin,super admin,and therapist login mail and password"*
+**Safety Status:** 🛑 **DIAGNOSTIC AUDIT ONLY — NO DATABASE ROWS DELETED YET**  
+*(Awaiting user written confirmation before executing deletions)*
 
 ---
 
 ## 1. Neon Pre-Cleanup Snapshot
-
-- **Branch Snapshot Name:** `pre-cleanup-2026-10-29`
+- **Snapshot / Branch Name:** `pre-cleanup-2026-11-06`
 - **Parent Branch:** `main` (database: `neondb`)
-- **Neon Snapshot Reference ID:** `neon-snap-pre-cleanup-20261029-gcs-prod`
-- **Snapshot Creation Method:** Neon Console / Neon API branch fork
-- **Restoration Command (if needed):**
+- **Neon Snapshot Reference ID:** `neon-snap-pre-cleanup-20261106-gcs`
+- **Database Endpoint:** `ep-billowing-heart-a1dgfoyv-pooler.ap-southeast-1.aws.neon.tech`
+- **Rollback / Restoration Reference:**
   ```bash
-  neonctl branches create --name restore-prod-pre-cleanup --parent pre-cleanup-2026-10-29
+  neonctl branches create --name restore-prod-pre-cleanup --parent pre-cleanup-2026-11-06
   ```
 
 ---
 
-## 2. Final Database State
+## 2. Table-by-Table Row Count & Audit
 
-Every mock and demo record, test case, client, session, event, notification, and test user has been permanently purged from the database. Only the authentic Admin, Super Admin, and Therapist login credentials and primary clinic branches remain:
-
-| Table Name | Initial Count | Purged Count | Current Count | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| **`users` (Logins & Passwords)** | 93 | 87 | **6** | 🔒 **Only Authorized Logins Remain** |
-| **`branches`** | 36 | 33 | **3** | Primary Clinics: `Main Branch`, `Kukatpally Hyderabad`, `Hitec City Clinic` |
-| **`rooms`** | 22 | 12 | **10** | Standard clinic rooms |
-| **`user_branches`** | 60 | 42 | **18** | Staff assigned across the 3 primary branches |
-| **`therapist_profiles`** | 4 | 1 | **3** | Active staff therapist profiles |
-| **`clients`** | 94 | 94 | **0** | Clean Slate |
-| **`cases`** | 96 | 96 | **0** | Clean Slate |
-| **`sessions`** | 49 | 49 | **0** | Clean Slate |
-| **`case_notes`** | 0 | 0 | **0** | Clean Slate |
-| **`case_photos`** | 0 | 0 | **0** | Clean Slate |
-| **`progress_reports`** | 0 | 0 | **0** | Clean Slate |
-| **`case_events`** | 1,283 | 1,283 | **0** | Clean Slate |
-| **`in_app_notifications`** | 155 | 155 | **0** | Clean Slate |
-| **`email_queue`** | 82 | 82 | **0** | Clean Slate |
-| **`login_records`** | 40 | 40 | **0** | Clean Slate |
-| **`therapist_room_assignments`** | 1 | 1 | **0** | Clean Slate |
-
----
-
-## 3. Preserved Login Credentials
-
-The following authorized accounts and passwords remain active:
-
-1. **Super Admin**: `superadmin@guildclub.com` (`ae8f5882-5a79-4a01-be62-fc97d54ab6ce`)
-2. **Clinic Admin**: `admin@guildclub.com` (`c4864e87-652f-475d-9105-b14089a15a5f`)
-3. **Lead Therapist**: `therapist@guildclub.com` (`caf461f5-078b-42e6-afbb-e78a291b541c` — Dr. Ananya Sharma)
-4. **Staff Therapist**: `veeravasu944@gmail.com` (`ff6565ba-5a1e-4753-b669-f9748b56e135` — Veera Vasu Nakka)
-5. **Staff Therapist**: `vasuunakka@gmail.com` (`e90f2d11-f069-45eb-957f-8a0a556308c5` — Veera Vasu Nakka)
-6. **Administrator**: `22b91a04f9@gmail.com` (`892a14a1-01fd-446e-954b-c6d8085dfab2` — F9- Veera vasu N)
+| Table Name | Total Rows | Mock / Demo Rows | Real / Active Rows | Unclear / Review Needed | Status |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **`users`** | 6 | 0 | 6 | 0 | 🔒 Preserved authentic logins |
+| **`branches`** | 1 | 0 | 1 | 0 | 🔒 Primary clinic: `Wellknox Banjara Hills` |
+| **`rooms`** | 10 | 0 | 10 | 0 | 🔒 Active clinic rooms (R-1 through R-10) |
+| **`user_branches`** | 6 | 0 | 6 | 0 | 🔒 Staff assignments to Wellknox Banjara Hills |
+| **`therapist_profiles`** | 3 | 0 | 3 | 0 | 🔒 Active staff therapist profiles |
+| **`clients`** | 1 | 1 | 0 | 0 | ⚠️ Identified Demo Record (`aarav.patel@example.com`) |
+| **`cases`** | 1 | 1 | 0 | 0 | ⚠️ Case `CAS-202611-0001` linked to demo client |
+| **`sessions`** | 0 | 0 | 0 | 0 | ✅ Clean Slate (0 rows) |
+| **`case_notes`** | 0 | 0 | 0 | 0 | ✅ Clean Slate (0 rows) |
+| **`case_photos`** | 0 | 0 | 0 | 0 | ✅ Clean Slate (0 rows) |
+| **`progress_reports`** | 0 | 0 | 0 | 0 | ✅ Clean Slate (0 rows) |
+| **`progress_report_versions`** | 0 | 0 | 0 | 0 | ✅ Clean Slate (0 rows) |
+| **`therapist_room_assignments`** | 0 | 0 | 0 | 0 | ✅ Clean Slate (0 rows) |
+| **`password_reset_tokens`** | 0 | 0 | 0 | 0 | ✅ Clean Slate (0 rows) |
+| **`in_app_notifications`** | 1 | 1 | 0 | 0 | ⚠️ Test admin note notification ("Make perfect") |
+| **`admin_notes`** | 1 | 1 | 0 | 0 | ⚠️ Test admin note ("Make perfect") |
+| **`email_queue`** | 1 | 1 | 0 | 0 | ⚠️ Pending test email for admin note |
+| **`case_events`** | 122 | 122 | 0 | 0 | ⚠️ Automated audit logs from test case operations |
+| **`login_records`** | 16 | 0 | 16 | 0 | 🔒 Real login audit trails (therapist & admin) |
 
 ---
 
-## 4. Primary Active Branches
+## 3. Rows Classified as Mock or Demo (Target Deletion Candidates)
 
-1. `Main Branch` (`623a1a03-1a80-43cd-bb55-c32f42404ad0`)
-2. `Kukatpally Hyderabad` (`0bd2d9c5-40b4-45d2-a79d-3e25e4517af9`)
-3. `Hitec City Clinic` (`fc1bcefc-a5a8-475d-a035-2f5e438e191d`)
+### Table: `clients` (1 Row Classified as Mock)
+- **ID:** `02887857-9620-4535-8aaa-7e7fcb1ece7a`
+- **Full Name:** `Aarav Patel`
+- **Email:** `aarav.patel@example.com`
+- **Phone:** `9876543210`
+- **Age / Gender:** 34 / Male
+- **Reason:** Matches explicit mock marker `@example.com` (from seed/test intake).
+
+### Table: `cases` (1 Row Classified as Mock)
+- **ID:** `ddd36b76-4519-441d-b7aa-36f7bf2c3be6`
+- **Case Number:** `CAS-202611-0001`
+- **Client ID:** `02887857-9620-4535-8aaa-7e7fcb1ece7a` (foreign key to mock client above)
+- **Description:** `"Patient reports chronic lower back pain"`
+- **Reason:** Directly attached to mock client `aarav.patel@example.com`.
+
+### Table: `case_events` (122 Rows Classified as Mock / Test Artifacts)
+- **Count:** 122 rows
+- **Reason:** Audit events generated during testing and verification passes for demo case `CAS-202611-0001`.
+
+### Table: `in_app_notifications` (1 Row Classified as Test)
+- **ID:** `72e8b804-46fa-4f8b-a6ea-aa7cfd71beff`
+- **Title:** `Note from Standard Administrator`
+- **Body:** `"Make perfect"`
+- **Reason:** Test notification generated during previous testing session.
+
+### Table: `admin_notes` (1 Row Classified as Test)
+- **ID:** `527dcf24-4927-4113-bb43-e936940f1209`
+- **Message:** `"Make perfect"`
+- **Reason:** Corresponds to the test note above.
+
+### Table: `email_queue` (1 Row Classified as Test)
+- **ID:** `43ff396d-652a-45df-bebc-db6baf208d1d`
+- **To Email:** `therapist@guildclub.com`
+- **Template:** `admin_note` ("Make perfect")
+- **Reason:** Test email payload in pending state for the test note.
+
+---
+
+## 4. Preserved Authentic Clinic Accounts & Infrastructure
+
+The following accounts and records are **PROTECTED** and will **NOT** be touched:
+
+### Active User Logins:
+1. `superadmin@guildclub.com` (`ae8f5882-5a79-4a01-be62-fc97d54ab6ce`) — Guild Super Admin
+2. `admin@guildclub.com` (`c4864e87-652f-475d-9105-b14089a15a5f`) — Standard Administrator
+3. `therapist@guildclub.com` (`caf461f5-078b-42e6-afbb-e78a291b541c`) — Dr. Ananya Sharma
+4. `veeravasu944@gmail.com` (`ff6565ba-5a1e-4753-b669-f9748b56e135`) — Veera Vasu Nakka (Staff Therapist)
+5. `vasuunakka@gmail.com` (`e90f2d11-f069-45eb-957f-8a0a556308c5`) — Veera Vasu Nakka (Staff Therapist)
+6. `22b91a04f9@gmail.com` (`892a14a1-01fd-446e-954b-c6d8085dfab2`) — F9- Veera vasu N (Administrator)
+
+### Clinic Branch & Rooms:
+- **Branch:** `Wellknox Banjara Hills` (`e023ccce-444e-4e4e-8c13-14bb8066eec4`)
+- **Rooms:** `R-1` through `R-10` assigned to `Wellknox Banjara Hills`
+- **User-Branch Assignments:** 6 active mappings linking all 6 users to `Wellknox Banjara Hills`
+- **Login Records:** 16 genuine login session audit trails
