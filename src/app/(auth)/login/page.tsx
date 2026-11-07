@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { loginAction } from "@/lib/actions/auth-actions";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/ui/icons";
+import { StaleUiGuard } from "@/components/layout/stale-ui-guard";
 
 function LoginForm() {
   const router = useRouter();
@@ -87,7 +88,8 @@ function LoginForm() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 font-sans">
+    <div className="flex min-h-screen bg-slate-50 font-sans flex-col">
+      <StaleUiGuard />
       {/* Left Marketing / Hero Panel (Hidden on mobile) */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-slate-900 p-12 relative overflow-hidden border-r border-slate-800">
         <div className="absolute inset-0 bg-radial from-[#0B7A63]/25 via-transparent to-transparent pointer-events-none" />
@@ -273,31 +275,7 @@ function LoginForm() {
               </p>
             </div>
 
-            {/* Direct Android APK Download Banner */}
-            <div className="mt-4 border-t border-slate-200 pt-3">
-              <a
-                href="/guild-club-services-v2.apk"
-                download="guild-club-services-v2.apk"
-                className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 transition-colors group text-left"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center bg-[#0B7A63] text-white shrink-0">
-                    <Icons.Download className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-emerald-950">
-                      Download Android App (v1.2)
-                    </p>
-                    <p className="text-[11px] text-emerald-700">
-                      Official APK with brand emblem & phone layout
-                    </p>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-[#0B7A63] group-hover:translate-x-0.5 transition-transform shrink-0 ml-2">
-                  APK ↓
-                </span>
-              </a>
-            </div>
+            
           </div>
         </div>
       </div>

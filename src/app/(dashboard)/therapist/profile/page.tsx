@@ -99,7 +99,9 @@ export default async function TherapistProfilePage() {
           <div className="p-4 space-y-3 divide-y divide-stone-100">
             <div className="flex items-center justify-between text-[14px] text-stone-700">
               <span className="font-medium text-stone-500">App Version</span>
-              <span className="font-mono font-semibold text-stone-900">v1.2.0 (Native Mobile)</span>
+              <span className="font-mono font-semibold text-stone-900" data-testid="settings-app-version">
+                v1.2 ({process.env.NEXT_PUBLIC_BUILD_ID || "live"})
+              </span>
             </div>
 
             <div className="pt-3 flex items-center justify-between text-[14px] text-stone-700">

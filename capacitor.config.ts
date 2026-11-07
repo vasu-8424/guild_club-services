@@ -5,13 +5,17 @@ const config: CapacitorConfig = {
   appName: "Guild Club Services",
   webDir: "public",
   server: {
-    // DEBUG/PROTOTYPE ONLY: Points to the live hosted application for mobile evaluation.
-    // NOTE: In production releases, Capacitor recommends local assets or verified domains.
-    url: "https://guildclub-services.vercel.app/",
+    url: "https://guildclub-services.vercel.app",
     cleartext: false,
     androidScheme: "https",
+  },
+  plugins: {
+    StatusBar: {
+      overlaysWebView: false,
+      style: "DARK",
+      backgroundColor: "#FFFFFF",
+    },
   },
 };
 
 export default config;
-

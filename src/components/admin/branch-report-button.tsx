@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Download, FileText, ChevronDown, RefreshCw, AlertCircle } from "lucide-react";
+import { Download, FileText, ChevronDown, RefreshCw } from "lucide-react";
 
 interface BranchReportButtonProps {
   branchId?: string | null;
@@ -76,21 +76,21 @@ export function BranchReportButton({ branchId, className = "" }: BranchReportBut
   };
 
   return (
-    <div className={`relative inline-flex items-center ${className}`} ref={dropdownRef}>
-      {/* Primary Split Button */}
-      <div className="inline-flex rounded-none shadow-xs border border-slate-300 bg-white">
+    <div className={`relative w-full sm:w-auto flex items-center ${className}`} ref={dropdownRef}>
+      {/* Primary Split Button - 48px height and full width on phones */}
+      <div className="flex w-full sm:w-auto min-h-[48px] rounded-none shadow-xs">
         {/* Main Action: Download CSV */}
         <button
           type="button"
           data-testid="branch-report-download-btn"
           disabled={isDownloading}
           onClick={() => handleDownload("csv")}
-          className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-700 hover:bg-slate-50 hover:text-[#0B7A63] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 h-12 min-h-[48px] border border-slate-300 bg-white text-xs font-semibold uppercase tracking-wider text-slate-700 hover:bg-slate-50 hover:text-[#0B7A63] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer select-none"
         >
           {isDownloading ? (
-            <RefreshCw className="h-3.5 w-3.5 animate-spin text-[#0B7A63]" />
+            <RefreshCw className="h-4 w-4 animate-spin text-[#0B7A63]" />
           ) : (
-            <Download className="h-3.5 w-3.5 text-[#0B7A63]" />
+            <Download className="h-4 w-4 text-[#0B7A63]" />
           )}
           <span>{isDownloading ? "Generating..." : "Download Report"}</span>
         </button>
@@ -101,10 +101,10 @@ export function BranchReportButton({ branchId, className = "" }: BranchReportBut
           data-testid="branch-report-split-toggle"
           disabled={isDownloading}
           onClick={() => setIsOpen(!isOpen)}
-          className="px-1.5 border-l border-slate-300 text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors disabled:opacity-50 cursor-pointer"
+          className="w-12 h-12 min-h-[48px] flex items-center justify-center border-y border-r border-slate-300 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors disabled:opacity-50 cursor-pointer select-none shrink-0"
           aria-label="Select report format"
         >
-          <ChevronDown className="h-3.5 w-3.5" />
+          <ChevronDown className="h-4 w-4" />
         </button>
       </div>
 
@@ -112,24 +112,24 @@ export function BranchReportButton({ branchId, className = "" }: BranchReportBut
       {isOpen && (
         <div
           data-testid="branch-report-dropdown-menu"
-          className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-300 rounded-none shadow-md z-50 py-1"
+          className="absolute left-0 sm:left-auto sm:right-0 top-full mt-1 w-full sm:w-48 bg-white border border-slate-300 rounded-none shadow-md z-50 py-1"
         >
           <button
             type="button"
             data-testid="branch-report-csv-btn"
             onClick={() => handleDownload("csv")}
-            className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-[#0B7A63] flex items-center gap-2 cursor-pointer"
+            className="w-full text-left px-3 py-2.5 text-xs text-slate-700 hover:bg-slate-50 hover:text-[#0B7A63] flex items-center gap-2 cursor-pointer"
           >
-            <Download className="h-3.5 w-3.5 text-slate-400" />
+            <Download className="h-4 w-4 text-slate-400" />
             <span>Excel / CSV Roster</span>
           </button>
           <button
             type="button"
             data-testid="branch-report-pdf-btn"
             onClick={() => handleDownload("pdf")}
-            className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-[#0B7A63] flex items-center gap-2 cursor-pointer"
+            className="w-full text-left px-3 py-2.5 text-xs text-slate-700 hover:bg-slate-50 hover:text-[#0B7A63] flex items-center gap-2 cursor-pointer"
           >
-            <FileText className="h-3.5 w-3.5 text-slate-400" />
+            <FileText className="h-4 w-4 text-slate-400" />
             <span>Printable PDF (A4)</span>
           </button>
         </div>
@@ -151,4 +151,3 @@ export function BranchReportButton({ branchId, className = "" }: BranchReportBut
     </div>
   );
 }
-

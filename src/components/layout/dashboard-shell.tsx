@@ -3,7 +3,7 @@ import { Topbar } from "./topbar";
 import { BottomTabBar } from "./bottom-tab-bar";
 import { TemporaryPasswordBanner } from "./temporary-password-banner";
 import { TabCloseBeaconListener } from "./tab-close-beacon";
-import { InstallPromptCard } from "@/components/pwa/install-prompt-card";
+import { StaleUiGuard } from "./stale-ui-guard";
 import type { CurrentUser } from "@/lib/session";
 import { getScope } from "@/lib/scope";
 
@@ -69,8 +69,8 @@ export async function DashboardShell({
           Main Scrollable Content Area 
           Padding bottom accommodates fixed 64px bottom tab bar + safe area inset + 16px buffer
         */}
-        <main className="flex-1 w-full max-w-full min-w-0 overflow-y-auto overflow-x-hidden px-3.5 sm:px-4 py-4 pb-[calc(4rem+env(safe-area-inset-bottom)+1.5rem)]">
-          <InstallPromptCard />
+        <main className="flex-1 w-full max-w-full min-w-0 overflow-y-auto overflow-x-hidden px-4 py-4 pb-[calc(4rem+env(safe-area-inset-bottom)+1.5rem)]">
+          <StaleUiGuard />
           {children}
         </main>
 

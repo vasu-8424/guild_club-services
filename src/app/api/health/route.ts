@@ -5,15 +5,22 @@ import { sql } from "drizzle-orm";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const buildId =
+    process.env.NEXT_PUBLIC_BUILD_ID ||
+    process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ||
+    "gcs-live";
+
   const response: {
     status: "ok" | "degraded";
     app: string;
+    buildId: string;
     database: "connected" | "disconnected";
     timestamp: string;
     uptime: number;
   } = {
     status: "ok",
     app: "Guild Club Services",
+    buildId,
     database: "connected",
     timestamp: new Date().toISOString(),
     uptime: Math.floor(process.uptime()),

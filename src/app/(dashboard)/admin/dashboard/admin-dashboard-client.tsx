@@ -186,8 +186,9 @@ export function AdminDashboardClient({ data }: AdminDashboardClientProps) {
     <div className="space-y-6">
       {/* Top Bar: Title & Date Selector */}
       <div className="flex flex-col gap-3 border-b border-slate-200 pb-4">
-        <p className="text-xs text-slate-500">
-          Clinical overview for <strong className="text-slate-800 font-semibold">{filter.filterLabel}</strong> (Asia/Kolkata).
+        <p className="text-xs text-slate-500 flex items-center gap-1.5">
+          <Icons.Info className="h-4 w-4 text-[#0B7A63] shrink-0" />
+          <span>Clinical overview for <strong className="text-slate-800 font-semibold">{filter.filterLabel}</strong> (Asia/Kolkata).</span>
         </p>
         <div className="flex flex-col gap-2 w-full">
           <BranchReportButton />
@@ -204,11 +205,11 @@ export function AdminDashboardClient({ data }: AdminDashboardClientProps) {
       {nullRoomCasesCount > 0 && (
         <div
           data-testid="null-room-cases-banner"
-          className="flex items-center justify-between gap-4 p-4 bg-amber-50 border border-amber-300 rounded-none text-xs text-amber-900 shadow-xs"
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-amber-50 border border-amber-300 rounded-none text-xs text-amber-900 shadow-xs"
         >
-          <div className="flex items-center gap-2.5">
-            <Icons.Alert className="h-5 w-5 text-amber-700 shrink-0" />
-            <div>
+          <div className="flex items-start gap-2.5 min-w-0 flex-1">
+            <Icons.Alert className="h-5 w-5 text-amber-700 shrink-0 mt-0.5" />
+            <div className="min-w-0 flex-1">
               <p className="font-bold text-amber-950">
                 {nullRoomCasesCount} open {nullRoomCasesCount === 1 ? "case has" : "cases have"} no room. Please edit them.
               </p>
@@ -219,7 +220,7 @@ export function AdminDashboardClient({ data }: AdminDashboardClientProps) {
           </div>
           <Link
             href="/admin/cases"
-            className="px-3 py-1.5 bg-amber-800 text-white font-bold text-[11px] uppercase tracking-wider hover:bg-amber-900 transition-colors whitespace-nowrap rounded-none"
+            className="inline-flex items-center justify-center min-h-[44px] px-4 py-2.5 w-full sm:w-auto max-w-full bg-amber-800 text-white font-bold text-[12px] uppercase tracking-wider hover:bg-amber-900 transition-colors whitespace-normal rounded-none text-center shrink-0"
           >
             Review Cases &rarr;
           </Link>

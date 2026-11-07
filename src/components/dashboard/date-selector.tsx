@@ -95,7 +95,7 @@ export function DateSelector() {
   };
 
   return (
-    <div className="relative inline-block text-left" ref={dropdownRef}>
+    <div className="relative w-full sm:w-auto block text-left" ref={dropdownRef}>
       {/* Trigger Button */}
       <Button
         type="button"
@@ -105,7 +105,7 @@ export function DateSelector() {
         onClick={() => setIsOpen(!isOpen)}
         leadingIcon={<Icons.Calendar className="h-4 w-4 text-[#0B7A63]" />}
         trailingIcon={<Icons.CaretDown className="h-3 w-3 text-slate-400" />}
-        className="min-h-[44px] h-[44px] px-3 border border-slate-300 bg-white hover:border-[#0B7A63] text-left transition-colors select-none touch-manipulation cursor-pointer"
+        className="w-full sm:w-auto min-h-[48px] h-12 px-4 justify-between sm:justify-start border border-slate-300 bg-white hover:border-[#0B7A63] text-left transition-colors select-none touch-manipulation cursor-pointer"
         aria-expanded={isOpen}
       >
         <span className="font-semibold text-slate-900 text-[14px] max-w-[120px] sm:max-w-xs truncate">

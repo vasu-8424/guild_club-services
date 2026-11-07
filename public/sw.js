@@ -1,20 +1,24 @@
 // Guild Club Services Service Worker
-// STRICT COMPLIANCE: Cache ONLY static app shell & icons.
-// NEVER cache patient data, photos, signatures, reports, or authenticated API routes.
+// Version: guild-club-v4-live
+// STRICT COMPLIANCE:
+// - Network-first for all HTML and navigation requests
+// - NEVER cache authenticated pages, API responses, photos, signatures, reports, or patient data
+// - Cache-first ONLY for immutable content-hashed assets under /_next/static/
 
-const CACHE_NAME = "guild-club-shell-v3";
-const SHELL_ASSETS = [
-  "/offline",
-  "/logo.png",
+const CACHE_VERSION = "guild-club-v4-live";
+const STATIC_CACHE = `${CACHE_VERSION}-static`;
+
+const IMMUTABLE_ASSETS = [
   "/icon-192.png",
   "/icon-512.png",
   "/favicon.png",
+  "/logo.png",
 ];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(SHELL_ASSETS);
+    caches.open(STATIC_CACHE).then((cache) => {
+      return cache.addAll(IMMUTABLE_ASSETS);
     })
   );
   self.skipWaiting();
@@ -24,7 +28,9 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
+        keys
+          .filter((key) => key !== STATIC_CACHE)
+          .map((key) => caches.delete(key))
       );
     })
   );
@@ -32,11 +38,12 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  const url = new URL(event.request.url);
+  const { request } = event;
+  const url = new URL(request.url);
 
-  // NEVER cache API requests, sensitive endpoints, or non-GET requests
+  // 1. Direct pass-through for non-GET or sensitive endpoints
   if (
-    event.request.method !== "GET" ||
+    request.method !== "GET" ||
     url.pathname.startsWith("/api/") ||
     url.pathname.includes("/cases/") ||
     url.pathname.includes("/photos/") ||
@@ -46,23 +53,42 @@ self.addEventListener("fetch", (event) => {
     url.pathname.includes("/admin/") ||
     url.pathname.includes("/super-admin/")
   ) {
-    // Direct network pass-through with no cache storage
     return;
   }
 
-  // Handle static assets or offline fallback
-  event.respondWith(
-    fetch(event.request).catch(async () => {
-      // If it is a navigation request, return offline fallback page
-      if (event.request.mode === "navigate") {
-        const cache = await caches.open(CACHE_NAME);
-        const cachedOffline = await cache.match("/offline");
-        if (cachedOffline) return cachedOffline;
-      }
-      // Check cache for icons/shell
-      const cache = await caches.open(CACHE_NAME);
-      return cache.match(event.request);
-    })
-  );
-});
+  // 2. Cache-first ONLY for content-hashed Next.js static assets
+  if (url.pathname.startsWith("/_next/static/")) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
+          if (response.status === 200) {
+            const clone = response.clone();
+            caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
 
+  // 3. Network-first for navigations and HTML documents
+  if (request.mode === "navigate" || request.headers.get("accept")?.includes("text/html")) {
+    event.respondWith(
+      fetch(request).catch(async () => {
+        const cache = await caches.open(STATIC_CACHE);
+        const fallback = await cache.match("/offline");
+        if (fallback) return fallback;
+        return new Response("Offline - Please check your connection", {
+          status: 503,
+          headers: { "Content-Type": "text/plain" },
+        });
+      })
+    );
+    return;
+  }
+
+  // 4. Default network fetch for all other requests
+  event.respondWith(fetch(request));
+});

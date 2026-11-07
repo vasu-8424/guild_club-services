@@ -95,44 +95,46 @@ export function Topbar({
   return (
     <header
       data-testid="topbar"
-      className="sticky top-0 z-30 flex h-14 w-full items-center justify-between border-b border-slate-200 bg-white/95 backdrop-blur-md px-3 sm:px-4 pt-[env(safe-area-inset-top)] overscroll-contain select-none shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+      className="sticky top-0 z-30 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md pt-[env(safe-area-inset-top,0px)] overscroll-contain select-none shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
     >
-      {/* Left: Back Arrow on inner pages + Page Title & Optional Branch Chip */}
-      <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
-        {isInnerPage && (
-          <button
-            type="button"
-            onClick={handleBack}
-            data-testid="topbar-back-button"
-            aria-label="Go back"
-            className="flex h-10 w-10 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-none text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 transition-colors cursor-pointer touch-manipulation"
-          >
-            <Icons.ArrowLeft size={20} weight="bold" />
-          </button>
-        )}
-
-        <div className="min-w-0 flex-1">
-          <h1
-            data-testid="topbar-title"
-            className="text-[18px] font-semibold text-slate-900 tracking-tight truncate block leading-tight"
-          >
-            {title}
-          </h1>
-
-          {/* Branch chip only shown when user has multiple branches */}
-          {hasMultipleBranches && activeBranch && (
-            <div className="mt-0.5 flex items-center">
-              <span className="inline-flex items-center px-1.5 py-0.2 text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-none truncate max-w-[180px]">
-                {activeBranch.name}
-              </span>
-            </div>
+      <div className="flex h-14 w-full items-center justify-between px-4">
+        {/* Left: Back Arrow on inner pages + Page Title & Optional Branch Chip */}
+        <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
+          {isInnerPage && (
+            <button
+              type="button"
+              onClick={handleBack}
+              data-testid="topbar-back-button"
+              aria-label="Go back"
+              className="flex h-10 w-10 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-none text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 transition-colors cursor-pointer touch-manipulation"
+            >
+              <Icons.ArrowLeft size={20} weight="bold" />
+            </button>
           )}
-        </div>
-      </div>
 
-      {/* Right: Exactly ONE notification bell button on phones */}
-      <div className="flex items-center shrink-0">
-        <NotificationBell userRole={user.role} />
+          <div className="min-w-0 flex-1">
+            <h1
+              data-testid="topbar-title"
+              className="text-[18px] font-semibold text-slate-900 tracking-tight truncate block leading-tight"
+            >
+              {title}
+            </h1>
+
+            {/* Branch chip only shown when user has multiple branches */}
+            {hasMultipleBranches && activeBranch && (
+              <div className="mt-0.5 flex items-center">
+                <span className="inline-flex items-center px-1.5 py-0.2 text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-none truncate max-w-[180px]">
+                  {activeBranch.name}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Exactly ONE notification bell button on phones */}
+        <div className="flex items-center shrink-0">
+          <NotificationBell userRole={user.role} />
+        </div>
       </div>
     </header>
   );
