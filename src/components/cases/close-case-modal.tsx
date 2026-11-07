@@ -461,13 +461,13 @@ export function CloseCaseModal({
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="px-4 py-2.5 min-h-[44px] sm:min-h-[36px] border border-stone-300 text-stone-700 hover:bg-stone-100 text-xs font-semibold uppercase tracking-wider rounded-none text-center cursor-pointer"
+                  className="px-4 py-2.5 min-h-[48px] border border-stone-300 text-stone-700 hover:bg-stone-100 text-xs font-semibold uppercase tracking-wider rounded-none text-center cursor-pointer w-full sm:w-auto"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-red-700 hover:bg-red-800 text-white px-5 py-2.5 min-h-[44px] sm:min-h-[36px] text-xs font-semibold uppercase tracking-wider rounded-none transition-colors text-center cursor-pointer"
+                  className="bg-red-700 hover:bg-red-800 text-white px-5 py-2.5 min-h-[48px] text-xs font-semibold uppercase tracking-wider rounded-none transition-colors text-center cursor-pointer w-full sm:w-auto"
                 >
                   Review & Close Case
                 </button>

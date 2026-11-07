@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { sql } from "drizzle-orm";
+import { getBuildId } from "@/lib/app-version";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const buildId =
-    process.env.NEXT_PUBLIC_BUILD_ID ||
-    process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ||
-    "gcs-live";
+  const buildId = getBuildId();
 
   const response: {
     status: "ok" | "degraded";

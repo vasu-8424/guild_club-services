@@ -32,11 +32,9 @@ export interface ButtonProps
  *
  * RULES:
  * 1. Sharp corners: 0px radius (rounded-none) app-wide.
- * 2. Fixed heights: sm = 36px, md = 44px, lg = 48px, icon = 40px, icon-sm = 36px.
- * 3. Never wrap: whitespace-nowrap, leading-none, font-semibold.
- * 4. Icons: Rendered via `leadingIcon` (or `icon`) / `trailingIcon`. Always side-by-side with text, shrink-0, display block.
- *
- * WARNING: DO NOT override display, flex-direction, gap, or fixed height with className.
+ * 2. Mobile-first full width: w-full sm:w-auto, min-height 48px, height auto, padding 12px 16px (py-3 px-4).
+ * 3. Text wrapping: whitespace-normal, break-words, centered.
+ * 4. Icons: Rendered via `leadingIcon` (or `icon`) / `trailingIcon`. Always side-by-side with text, shrink-0.
  */
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
@@ -61,8 +59,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const isIconButton = variant === "icon" || size === "icon" || size === "icon-sm";
 
     // Strict single-source layout rules
-    const baseLayout =
-      "btn relative inline-flex flex-row items-center justify-center box-border shrink-0 min-w-0 select-none font-semibold rounded-none tracking-tight whitespace-normal break-words text-center leading-tight transition-all duration-150 cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0B7A63] focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed";
+    const baseLayout = cn(
+      "btn relative inline-flex flex-row items-center justify-center box-border shrink-0 min-w-0 select-none font-semibold rounded-none tracking-tight whitespace-normal break-words text-center leading-tight transition-all duration-150 cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0B7A63] focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed max-w-full",
+      !isIconButton && "w-full sm:w-auto"
+    );
 
     const variantStyles: Record<ButtonVariant, string> = {
       // Primary: solid deep teal with 2px darker bottom border
@@ -87,7 +87,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
       // Destructive Outline: white with red border and red text
       "destructive-outline":
-        "bg-white text-rose-700 border border-rose-300 hover:bg-rose-50 hover:border-rose-600 active:bg-rose-100 shadow-[0_1px_0_rgba(244,63,94,0.04)]",
+        "bg-white text-rose-700 border-2 border-rose-300 hover:bg-rose-50 hover:border-rose-600 active:bg-rose-100 shadow-[0_1px_0_rgba(244,63,94,0.04)]",
 
       // Warning Outline: white with amber border and amber text (e.g. Reset Password)
       "warning-outline":
@@ -102,12 +102,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         "bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 hover:border-[#0B7A63] hover:text-[#0B7A63] active:bg-slate-100 shadow-[0_1px_0_rgba(15,23,42,0.04)]",
     };
 
-    // Strict touch targets >= 48px with wrap-friendly height
+    // Strict touch targets >= 48px with wrap-friendly height & padding 12px 16px (py-3 px-4)
     const sizeStyles: Record<ButtonSize, string> = {
-      sm: "min-h-[48px] h-auto py-2.5 px-3.5 gap-[6px] text-[14px]",
-      md: "min-h-[48px] h-auto py-2.5 px-4 gap-[8px] text-[15px] sm:text-[16px]",
-      lg: "min-h-[52px] h-auto py-3 px-5 gap-[8px] text-[16px]",
-      xl: "min-h-[52px] h-auto py-3 w-full px-5 gap-[8px] text-[16px]",
+      sm: "min-h-[48px] h-auto py-3 px-4 gap-[6px] text-[14px]",
+      md: "min-h-[48px] h-auto py-3 px-4 gap-[8px] text-[15px] sm:text-[16px]",
+      lg: "min-h-[52px] h-auto py-3 px-4 gap-[8px] text-[16px]",
+      xl: "min-h-[52px] h-auto py-3 px-4 w-full gap-[8px] text-[16px]",
       icon: "min-h-[48px] min-w-[48px] h-[48px] w-[48px] p-0 gap-0 text-[14px]",
       "icon-sm": "min-h-[48px] min-w-[48px] h-[48px] w-[48px] p-0 gap-0 text-[13px]",
     };
@@ -151,7 +151,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         )}
 
         {children && (
-          <span className="btn-label whitespace-normal break-words text-center leading-tight select-none">
+          <span className="btn-label whitespace-normal break-words text-center leading-tight select-none min-w-0 max-w-full">
             {children}
           </span>
         )}

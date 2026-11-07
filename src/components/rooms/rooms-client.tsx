@@ -306,7 +306,7 @@ export function RoomsClient({ initialRooms, branches }: RoomsClientProps) {
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 min-h-[36px] min-w-[36px] flex items-center justify-center text-slate-400 hover:text-slate-600 cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-slate-600 cursor-pointer"
             >
               <Icons.Close className="h-4 w-4" />
             </button>

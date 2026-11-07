@@ -163,7 +163,9 @@ export async function middleware(request: NextRequest) {
       const isSharedAdminRoute =
         session.role === "super_admin" &&
         (pathname.startsWith("/admin/therapists") ||
-          pathname.startsWith("/admin/cases"));
+          pathname.startsWith("/admin/cases") ||
+          pathname.startsWith("/admin/branches") ||
+          pathname.startsWith("/admin/rooms"));
 
       if (!isSharedAdminRoute) {
         return NextResponse.redirect(

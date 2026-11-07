@@ -31,7 +31,7 @@ export function TemporaryPasswordBanner({ user }: TemporaryPasswordBannerProps) 
           <span>For security, please change your temporary password.</span>{" "}
           <Link
             href="/change-password"
-            className="font-bold underline hover:text-amber-950 inline-flex items-center gap-0.5 whitespace-nowrap"
+            className="font-bold underline hover:text-amber-950 inline-flex items-center gap-0.5 whitespace-normal break-words"
           >
             Change password &rarr;
           </Link>
@@ -41,7 +41,7 @@ export function TemporaryPasswordBanner({ user }: TemporaryPasswordBannerProps) 
       <button
         type="button"
         onClick={() => setDismissed(true)}
-        className="shrink-0 p-1 text-amber-700 hover:text-amber-950 hover:bg-amber-100 rounded-none cursor-pointer transition-colors"
+        className="shrink-0 p-1 min-h-[44px] min-w-[44px] flex items-center justify-center text-amber-700 hover:text-amber-950 hover:bg-amber-100 rounded-none cursor-pointer transition-colors"
         aria-label="Dismiss banner"
         title="Dismiss warning"
       >

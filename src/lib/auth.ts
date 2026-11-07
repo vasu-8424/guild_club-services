@@ -73,14 +73,19 @@ export async function setSessionCookie(token: string) {
  * Clears the session cookie.
  */
 export async function deleteSessionCookie() {
-  const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE_NAME, "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0,
-  });
+  try {
+    const cookieStore = await cookies();
+    cookieStore.set(SESSION_COOKIE_NAME, "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+    });
+  } catch {
+    // In Server Components rendering, cookies cannot be modified.
+    // Ignore gracefully so the redirect or null return continues.
+  }
 }
 
 /**

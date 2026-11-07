@@ -133,7 +133,7 @@ test.describe("Capacitor Mobile Shell & Safe Area Inset Verification", () => {
     const versionElem = page.locator('[data-testid="settings-app-version"]');
     await expect(versionElem).toBeVisible();
     const versionText = await versionElem.innerText();
-    expect(versionText).toContain("v1.2");
+    expect(versionText).toContain("v1.5");
 
     await context.close();
   });

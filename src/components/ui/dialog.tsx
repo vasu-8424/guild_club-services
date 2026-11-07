@@ -52,7 +52,7 @@ export function DialogContent({
           size="icon-sm"
           variant="ghost"
           onClick={onClose}
-          className="absolute right-3 top-3 text-slate-400 hover:text-slate-700 min-h-[36px] min-w-[36px]"
+          className="absolute right-3 top-3 text-slate-400 hover:text-slate-700 min-h-[44px] min-w-[44px]"
           aria-label="Close dialog"
         >
           <Icons.Close className="h-4 w-4" />

@@ -39,7 +39,7 @@ export function AdminStatusButton({
     <Button
       variant="ghost"
       size="sm"
-      className={`h-8 px-2.5 text-xs flex items-center gap-1 ${
+      className={`min-h-[44px] h-[44px] px-3.5 text-xs flex items-center justify-center gap-1.5 ${
         currentStatus
           ? "text-rose-600 hover:text-rose-700 hover:bg-rose-50"
           : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"

@@ -681,7 +681,7 @@ export function CreateCaseForm({ branches }: CreateCaseFormProps) {
                 type="button"
                 data-testid="remove-photo-btn"
                 onClick={() => removePhoto(index)}
-                className="absolute top-1 right-1 min-h-[36px] min-w-[36px] bg-red-600 text-white rounded-none flex items-center justify-center shadow-xs cursor-pointer select-none touch-manipulation"
+                className="absolute top-1 right-1 min-h-[44px] min-w-[44px] bg-red-600 text-white rounded-none flex items-center justify-center shadow-xs cursor-pointer select-none touch-manipulation"
                 title="Remove photo"
               >
                 <Trash2 className="w-4 h-4" />

@@ -360,7 +360,7 @@ export function TherapistPatientsTable({
                 data-testid="prev-page-btn"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => p - 1)}
-                className="p-1 min-h-[36px] min-w-[36px] flex items-center justify-center border border-stone-300 disabled:opacity-30 rounded-none hover:bg-stone-100 cursor-pointer"
+                className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center border border-stone-300 disabled:opacity-30 rounded-none hover:bg-stone-100 cursor-pointer"
                 aria-label="Previous page"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -373,7 +373,7 @@ export function TherapistPatientsTable({
                 data-testid="next-page-btn"
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => p + 1)}
-                className="p-1 min-h-[36px] min-w-[36px] flex items-center justify-center border border-stone-300 disabled:opacity-30 rounded-none hover:bg-stone-100 cursor-pointer"
+                className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center border border-stone-300 disabled:opacity-30 rounded-none hover:bg-stone-100 cursor-pointer"
                 aria-label="Next page"
               >
                 <ChevronRight className="w-4 h-4" />

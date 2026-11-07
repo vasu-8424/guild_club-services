@@ -171,7 +171,7 @@ export function WritingAssist({
             type="button"
             data-testid="writing-mode-grammar"
             onClick={() => setMode("fix_grammar")}
-            className={`px-2.5 py-1 min-h-[32px] sm:min-h-[28px] whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
+            className={`px-3 py-1.5 min-h-[44px] whitespace-normal text-center shrink-0 transition-colors cursor-pointer ${
               mode === "fix_grammar"
                 ? "bg-white text-[#0B7A63] shadow-xs font-bold"
                 : "text-slate-500 hover:text-slate-800"
@@ -183,7 +183,7 @@ export function WritingAssist({
             type="button"
             data-testid="writing-mode-suggestions"
             onClick={() => setMode("suggest_improvements")}
-            className={`px-2.5 py-1 min-h-[32px] sm:min-h-[28px] whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
+            className={`px-3 py-1.5 min-h-[44px] whitespace-normal text-center shrink-0 transition-colors cursor-pointer ${
               mode === "suggest_improvements"
                 ? "bg-white text-[#0B7A63] shadow-xs font-bold"
                 : "text-slate-500 hover:text-slate-800"
@@ -195,7 +195,7 @@ export function WritingAssist({
             type="button"
             data-testid="writing-mode-summarize"
             onClick={() => setMode("summarize")}
-            className={`px-2.5 py-1 min-h-[32px] sm:min-h-[28px] whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
+            className={`px-3 py-1.5 min-h-[44px] whitespace-normal text-center shrink-0 transition-colors cursor-pointer ${
               mode === "summarize"
                 ? "bg-white text-[#0B7A63] shadow-xs font-bold"
                 : "text-slate-500 hover:text-slate-800"
@@ -207,7 +207,7 @@ export function WritingAssist({
             type="button"
             data-testid="writing-mode-simplify"
             onClick={() => setMode("simplify")}
-            className={`px-2.5 py-1 min-h-[32px] sm:min-h-[28px] whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
+            className={`px-3 py-1.5 min-h-[44px] whitespace-normal text-center shrink-0 transition-colors cursor-pointer ${
               mode === "simplify"
                 ? "bg-white text-[#0B7A63] shadow-xs font-bold"
                 : "text-slate-500 hover:text-slate-800"
@@ -219,7 +219,7 @@ export function WritingAssist({
             type="button"
             data-testid="writing-mode-shorten"
             onClick={() => setMode("shorten")}
-            className={`px-2.5 py-1 min-h-[32px] sm:min-h-[28px] whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
+            className={`px-3 py-1.5 min-h-[44px] whitespace-normal text-center shrink-0 transition-colors cursor-pointer ${
               mode === "shorten"
                 ? "bg-white text-[#0B7A63] shadow-xs font-bold"
                 : "text-slate-500 hover:text-slate-800"

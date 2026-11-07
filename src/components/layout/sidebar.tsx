@@ -71,6 +71,11 @@ export function Sidebar({ role, userName }: SidebarProps) {
                 href: "/super-admin/dashboard",
                 icon: Icons.Dashboard,
               },
+              {
+                title: "Profile & Settings",
+                href: "/profile",
+                icon: Icons.User,
+              },
             ],
           },
           {
@@ -105,6 +110,11 @@ export function Sidebar({ role, userName }: SidebarProps) {
                 title: "Notifications",
                 href: "/notifications",
                 icon: Icons.Alert,
+              },
+              {
+                title: "Profile & Settings",
+                href: "/profile",
+                icon: Icons.User,
               },
             ],
           },
@@ -155,6 +165,11 @@ export function Sidebar({ role, userName }: SidebarProps) {
                 href: "/notifications",
                 icon: Icons.Alert,
               },
+              {
+                title: "Profile & Settings",
+                href: "/profile",
+                icon: Icons.User,
+              },
             ],
           },
         ];
@@ -182,7 +197,7 @@ export function Sidebar({ role, userName }: SidebarProps) {
               },
               {
                 title: "Profile",
-                href: "/therapist/profile",
+                href: "/profile",
                 icon: Icons.User,
               },
             ],

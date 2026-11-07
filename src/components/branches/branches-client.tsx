@@ -1,19 +1,22 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { type Branch } from "@/db/schema";
 import {
   createBranchAction,
   renameBranchAction,
   toggleBranchStatusAction,
+  switchBranchAction,
 } from "@/lib/actions/branch-actions";
-import { Plus, Edit2, Check, X, Building2 } from "lucide-react";
+import { Plus, Edit2, Check, X, Building2, ExternalLink } from "lucide-react";
 
 interface BranchesClientProps {
   initialBranches: Branch[];
 }
 
 export function BranchesClient({ initialBranches }: BranchesClientProps) {
+  const router = useRouter();
   const [branchesList, setBranchesList] = useState<Branch[]>(initialBranches);
   const [isAdding, setIsAdding] = useState(false);
   const [newBranchName, setNewBranchName] = useState("");
@@ -21,6 +24,17 @@ export function BranchesClient({ initialBranches }: BranchesClientProps) {
   const [editName, setEditName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const handleOpenBranch = async (branchId: string) => {
+    setLoading(true);
+    try {
+      await switchBranchAction(branchId);
+      router.push(`/super-admin/dashboard?branch=${branchId}`);
+      router.refresh();
+    } catch {
+      window.location.href = `/super-admin/dashboard?branch=${branchId}`;
+    }
+  };
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,7 +121,7 @@ export function BranchesClient({ initialBranches }: BranchesClientProps) {
             className="w-full sm:w-auto min-h-[48px] h-[48px] inline-flex items-center justify-center gap-2 bg-[#0B7A63] hover:bg-[#096350] active:bg-[#064e3e] text-white px-5 text-base font-semibold uppercase tracking-wider rounded-none transition-colors select-none touch-manipulation shadow-xs cursor-pointer"
           >
             <Plus className="w-5 h-5" />
-            <span>Add Branch</span>
+            <span>Create Branch</span>
           </button>
         )}
       </div>
@@ -183,9 +197,9 @@ export function BranchesClient({ initialBranches }: BranchesClientProps) {
                 <tr
                   key={branch.id}
                   data-testid="branch-row"
-                  className="block rounded-none border border-stone-200 bg-white p-4 shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:border-[#0B7A63] transition-colors"
+                  className="block rounded-none border border-stone-200 bg-white p-4 shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:border-[#0B7A63] transition-colors space-y-3"
                 >
-                  <td className="block mb-3">
+                  <td className="block">
                     {editingId === branch.id ? (
                       <div className="space-y-2">
                         <input
@@ -200,7 +214,7 @@ export function BranchesClient({ initialBranches }: BranchesClientProps) {
                             type="button"
                             onClick={() => handleSaveRename(branch.id)}
                             data-testid={`save-rename-branch-${branch.id}`}
-                            className="min-h-[44px] h-[44px] px-4 bg-emerald-700 text-white text-[13px] font-semibold uppercase tracking-wider rounded-none inline-flex items-center gap-1.5"
+                            className="min-h-[44px] h-[44px] px-4 bg-emerald-700 text-white text-[13px] font-semibold uppercase tracking-wider rounded-none inline-flex items-center gap-1.5 cursor-pointer"
                           >
                             <Check className="w-4 h-4" />
                             <span>Save</span>
@@ -208,7 +222,7 @@ export function BranchesClient({ initialBranches }: BranchesClientProps) {
                           <button
                             type="button"
                             onClick={() => setEditingId(null)}
-                            className="min-h-[44px] h-[44px] px-4 border border-stone-300 text-stone-700 text-[13px] font-semibold uppercase tracking-wider rounded-none inline-flex items-center gap-1.5"
+                            className="min-h-[44px] h-[44px] px-4 border border-stone-300 text-stone-700 text-[13px] font-semibold uppercase tracking-wider rounded-none inline-flex items-center gap-1.5 cursor-pointer"
                           >
                             <X className="w-4 h-4" />
                             <span>Cancel</span>
@@ -217,9 +231,11 @@ export function BranchesClient({ initialBranches }: BranchesClientProps) {
                       </div>
                     ) : (
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2.5 font-semibold text-[17px] text-stone-900">
+                        <div className="flex items-center gap-2.5 font-semibold text-[17px] text-stone-900 min-w-0 flex-1">
                           <Building2 className="w-5 h-5 text-[#0B7A63] shrink-0" />
-                          <span data-testid={`branch-name-${branch.id}`}>{branch.name}</span>
+                          <span data-testid={`branch-name-${branch.id}`} className="truncate">
+                            {branch.name}
+                          </span>
                         </div>
                         {branch.isActive ? (
                           <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 uppercase tracking-wider rounded-none shrink-0">
@@ -234,8 +250,21 @@ export function BranchesClient({ initialBranches }: BranchesClientProps) {
                     )}
                   </td>
 
-                  <td className="block pt-2 border-t border-stone-100">
-                    <div className="flex items-center justify-end gap-2.5">
+                  {/* Card Actions: Full-Width Open Branch Button + Secondary Controls */}
+                  <td className="block pt-2 border-t border-stone-100 space-y-2">
+                    {/* Full-width "Open branch" button */}
+                    <button
+                      type="button"
+                      data-testid={`open-branch-btn-${branch.id}`}
+                      onClick={() => handleOpenBranch(branch.id)}
+                      disabled={!branch.isActive}
+                      className="w-full min-h-[48px] h-[48px] inline-flex items-center justify-center gap-2 bg-[#0B7A63] hover:bg-[#096350] active:bg-[#064e3e] text-white px-4 text-base font-semibold uppercase tracking-wider rounded-none transition-colors select-none touch-manipulation shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      <span>{branch.isActive ? "Open Branch" : "Branch Inactive"}</span>
+                    </button>
+
+                    <div className="flex items-center justify-end gap-2.5 pt-1">
                       {editingId !== branch.id && (
                         <button
                           type="button"
