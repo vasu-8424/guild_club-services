@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CLINICAL_SERVICES, getServiceLabel } from "@/lib/services";
+import { CLINICAL_SERVICES, getServiceLabel, getFilterableServices } from "@/lib/services";
 import {
   Search,
   Plus,
@@ -49,6 +49,10 @@ export function TherapistPatientsTable({
   const [serviceFilter, setServiceFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
+
+  const availableServices = useMemo(() => {
+    return getFilterableServices(patients.map((p) => p.service));
+  }, [patients]);
 
   // Filtered & Searched patients
   const filteredPatients = useMemo(() => {
@@ -198,7 +202,7 @@ export function TherapistPatientsTable({
             className="border border-stone-300 px-2.5 py-1.5 text-xs focus:outline-none focus:border-[#0B7A63] rounded-none bg-white text-stone-700"
           >
             <option value="all">All Services</option>
-            {CLINICAL_SERVICES.map((s) => (
+            {availableServices.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.label}
               </option>

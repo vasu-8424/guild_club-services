@@ -75,7 +75,7 @@ test.describe.serial("Progress Report & Case Closing Redesign Suite", () => {
       )
       VALUES (
         'GC-9011', 'GCP-0099', ${client.id}, ${branch.id}, '101',
-        'physiotherapy', 'physiotherapy', 'medium', 'Post-operative right knee arthroscopy rehabilitation',
+        'speech_therapy', 'speech_therapy', 'medium', 'Post-operative right knee arthroscopy rehabilitation',
         'Patient presents with limited ROM and grade 2 effusion.', 'Limited ROM 45 deg, pain 6/10',
         'in_progress', ${todayIST}, ${users.therapist.id}, ${users.therapist.id}
       )

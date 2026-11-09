@@ -1,6 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 import type { CurrentUser } from "@/lib/session";
 import type { DateFilterRange } from "@/lib/date-utils";
+import { getServiceLabel } from "@/lib/services";
 
 function getSql() {
   const url = process.env.DATABASE_URL;
@@ -659,22 +660,34 @@ export interface SuperAdminReportsData {
 }
 
 export async function getSuperAdminReports(
-  dateFilter?: { startDate?: string; endDate?: string }
+  dateFilter?: { startDate?: string; endDate?: string; branchId?: string }
 ): Promise<SuperAdminReportsData> {
   const sql = getSql();
 
   const hasDateFilter = Boolean(dateFilter?.startDate && dateFilter?.endDate);
-  const dateParams: string[] = hasDateFilter
-    ? [dateFilter!.startDate!, dateFilter!.endDate!]
-    : [];
+  const branchId = dateFilter?.branchId;
 
-  const dateWhereCases = hasDateFilter
-    ? `WHERE created_at >= ($1::date)::timestamp AT TIME ZONE 'Asia/Kolkata' AND created_at < (($2::date + 1))::timestamp AT TIME ZONE 'Asia/Kolkata'`
-    : "";
+  // Build WHERE conditions for cases
+  const caseWhereClauses: string[] = [];
+  const dateParams: string[] = [];
 
-  const dateWhereEvents = hasDateFilter
-    ? `WHERE occurred_at >= ($1::date)::timestamp AT TIME ZONE 'Asia/Kolkata' AND occurred_at < (($2::date + 1))::timestamp AT TIME ZONE 'Asia/Kolkata'`
-    : "";
+  if (branchId) {
+    dateParams.push(branchId);
+    caseWhereClauses.push(`branch_id = $${dateParams.length}`);
+  }
+
+  if (hasDateFilter) {
+    dateParams.push(dateFilter!.startDate!);
+    const p1 = dateParams.length;
+    dateParams.push(dateFilter!.endDate!);
+    const p2 = dateParams.length;
+    caseWhereClauses.push(
+      `created_at >= ($${p1}::date)::timestamp AT TIME ZONE 'Asia/Kolkata' AND created_at < (($${p2}::date + 1))::timestamp AT TIME ZONE 'Asia/Kolkata'`
+    );
+  }
+
+  const dateWhereCases =
+    caseWhereClauses.length > 0 ? `WHERE ${caseWhereClauses.join(" AND ")}` : "";
 
   // 1. Total cases, closed, successful
   const totalsQuery = `
@@ -693,29 +706,43 @@ export async function getSuperAdminReports(
   const totals = (await sql.query(totalsQuery, dateParams))[0] as any;
 
   // 2. Acceptance time (assigned -> accepted) & Reassignment rate
+  const dateClauseForEvents = hasDateFilter
+    ? `AND ce.occurred_at >= ($${branchId ? 2 : 1}::date)::timestamp AT TIME ZONE 'Asia/Kolkata' AND ce.occurred_at < (($${branchId ? 3 : 2}::date + 1))::timestamp AT TIME ZONE 'Asia/Kolkata'`
+    : "";
+
+  const branchClauseForEvents = branchId ? `AND c.branch_id = $1` : "";
+
   const acceptanceQuery = `
     WITH assigned_events AS (
-      SELECT case_id, occurred_at as assigned_at
-      FROM case_events
-      WHERE event_type = 'case_assigned'
-      ${hasDateFilter ? `AND occurred_at >= ($1::date)::timestamp AT TIME ZONE 'Asia/Kolkata' AND occurred_at < (($2::date + 1))::timestamp AT TIME ZONE 'Asia/Kolkata'` : ""}
+      SELECT ce.case_id, ce.occurred_at as assigned_at
+      FROM case_events ce
+      INNER JOIN cases c ON ce.case_id = c.id
+      WHERE ce.event_type = 'case_assigned'
+      ${branchClauseForEvents}
+      ${dateClauseForEvents}
     ),
     accepted_events AS (
-      SELECT case_id, occurred_at as accepted_at
-      FROM case_events
-      WHERE event_type = 'case_accepted'
+      SELECT ce.case_id, ce.occurred_at as accepted_at
+      FROM case_events ce
+      INNER JOIN cases c ON ce.case_id = c.id
+      WHERE ce.event_type = 'case_accepted'
+      ${branchClauseForEvents}
     ),
     declined_count AS (
       SELECT COUNT(*)::int as count 
-      FROM case_events 
-      WHERE event_type = 'case_declined'
-      ${hasDateFilter ? `AND occurred_at >= ($1::date)::timestamp AT TIME ZONE 'Asia/Kolkata' AND occurred_at < (($2::date + 1))::timestamp AT TIME ZONE 'Asia/Kolkata'` : ""}
+      FROM case_events ce
+      INNER JOIN cases c ON ce.case_id = c.id
+      WHERE ce.event_type = 'case_declined'
+      ${branchClauseForEvents}
+      ${dateClauseForEvents}
     ),
     total_assigned_count AS (
       SELECT COUNT(*)::int as count 
-      FROM case_events 
-      WHERE event_type = 'case_assigned'
-      ${hasDateFilter ? `AND occurred_at >= ($1::date)::timestamp AT TIME ZONE 'Asia/Kolkata' AND occurred_at < (($2::date + 1))::timestamp AT TIME ZONE 'Asia/Kolkata'` : ""}
+      FROM case_events ce
+      INNER JOIN cases c ON ce.case_id = c.id
+      WHERE ce.event_type = 'case_assigned'
+      ${branchClauseForEvents}
+      ${dateClauseForEvents}
     )
     SELECT 
       ROUND(AVG(EXTRACT(EPOCH FROM (acc.accepted_at - asg.assigned_at)) / 3600)::numeric, 1) as avg_acceptance_hours,
@@ -727,21 +754,30 @@ export async function getSuperAdminReports(
   const acceptanceRes = (await sql.query(acceptanceQuery, dateParams))[0] as any;
 
   // 3. Total sessions held
-  const sessionsHeldRes = (await sql.query(`
-    SELECT COUNT(*)::int as count FROM case_events
-    WHERE event_type IN ('session_held', 'session_recorded')
-    ${hasDateFilter ? `AND occurred_at >= ($1::date)::timestamp AT TIME ZONE 'Asia/Kolkata' AND occurred_at < (($2::date + 1))::timestamp AT TIME ZONE 'Asia/Kolkata'` : ""}
-  `, dateParams))[0] as any;
+  const sessionsHeldRes = (
+    await sql.query(
+      `
+    SELECT COUNT(*)::int as count FROM case_events ce
+    INNER JOIN cases c ON ce.case_id = c.id
+    WHERE ce.event_type IN ('session_held', 'session_recorded')
+    ${branchClauseForEvents}
+    ${dateClauseForEvents}
+  `,
+      dateParams
+    )
+  )[0] as any;
 
   const totalCases = Number(totals?.total_cases) || 0;
   const totalClosed = Number(totals?.total_closed) || 0;
   const successfulClosures = Number(totals?.successful_closures) || 0;
-  const overallSuccessRate = totalClosed > 0 ? Math.round((successfulClosures / totalClosed) * 100) : 0;
+  const overallSuccessRate =
+    totalClosed > 0 ? Math.round((successfulClosures / totalClosed) * 100) : 0;
   const avgResolutionDays = Number(totals?.avg_resolution_days) || 0;
   const avgAcceptanceHours = Number(acceptanceRes?.avg_acceptance_hours) || 0;
   const totalAssigned = Number(acceptanceRes?.total_assigned) || 0;
   const totalDeclined = Number(acceptanceRes?.total_declined) || 0;
-  const reassignmentRate = totalAssigned > 0 ? Math.round((totalDeclined / totalAssigned) * 100) : 0;
+  const reassignmentRate =
+    totalAssigned > 0 ? Math.round((totalDeclined / totalAssigned) * 100) : 0;
   const totalSessionsHeld = Number(sessionsHeldRes?.count) || 0;
 
   // 4. Per Therapist Performance
@@ -762,10 +798,15 @@ export async function getSuperAdminReports(
         END
       )::numeric, 1) as avg_resolution_days
     FROM users u
+    ${
+      branchId
+        ? `INNER JOIN user_branches ub ON u.id = ub.user_id AND ub.branch_id = $1 AND ub.removed_at IS NULL`
+        : ""
+    }
     LEFT JOIN therapist_profiles tp ON u.id = tp.user_id
     LEFT JOIN case_events ce ON u.id = ce.actor_id 
-      ${hasDateFilter ? `AND ce.occurred_at >= ($1::date)::timestamp AT TIME ZONE 'Asia/Kolkata' AND ce.occurred_at < (($2::date + 1))::timestamp AT TIME ZONE 'Asia/Kolkata'` : ""}
-    LEFT JOIN cases c ON ce.case_id = c.id
+      ${dateClauseForEvents}
+    LEFT JOIN cases c ON ce.case_id = c.id ${branchId ? `AND c.branch_id = $1` : ""}
     WHERE u.role = 'therapist'
     GROUP BY u.id, u.name, tp.specialization
     ORDER BY sessions_held DESC, cases_closed DESC, u.name ASC
@@ -791,6 +832,8 @@ export async function getSuperAdminReports(
   });
 
   // 5. Monthly Trends (last 6 months)
+  const monthlyBranchFilter = branchId ? `WHERE c.branch_id = $1` : "";
+  const monthlyParams = branchId ? [branchId] : [];
   const monthlyQuery = `
     WITH months AS (
       SELECT generate_series(
@@ -806,13 +849,13 @@ export async function getSuperAdminReports(
       COUNT(DISTINCT CASE WHEN ce_close.event_type = 'case_closed' AND (ce_close.metadata->>'outcome' IN ('successful', 'improved', 'partially_improved')) THEN ce_close.case_id END)::int as successful_closed,
       COUNT(DISTINCT CASE WHEN ce_sess.event_type IN ('session_held', 'session_recorded') THEN ce_sess.id END)::int as sessions_held
     FROM months m
-    LEFT JOIN cases c ON date_trunc('month', c.created_at AT TIME ZONE 'Asia/Kolkata') = m.m_date
-    LEFT JOIN case_events ce_close ON date_trunc('month', ce_close.occurred_at AT TIME ZONE 'Asia/Kolkata') = m.m_date AND ce_close.event_type = 'case_closed'
-    LEFT JOIN case_events ce_sess ON date_trunc('month', ce_sess.occurred_at AT TIME ZONE 'Asia/Kolkata') = m.m_date AND ce_sess.event_type IN ('session_held', 'session_recorded')
+    LEFT JOIN cases c ON date_trunc('month', c.created_at AT TIME ZONE 'Asia/Kolkata') = m.m_date ${branchId ? `AND c.branch_id = $1` : ""}
+    LEFT JOIN case_events ce_close ON date_trunc('month', ce_close.occurred_at AT TIME ZONE 'Asia/Kolkata') = m.m_date AND ce_close.event_type = 'case_closed' ${branchId ? `AND ce_close.case_id IN (SELECT id FROM cases WHERE branch_id = $1)` : ""}
+    LEFT JOIN case_events ce_sess ON date_trunc('month', ce_sess.occurred_at AT TIME ZONE 'Asia/Kolkata') = m.m_date AND ce_sess.event_type IN ('session_held', 'session_recorded') ${branchId ? `AND ce_sess.case_id IN (SELECT id FROM cases WHERE branch_id = $1)` : ""}
     GROUP BY m.m_date
     ORDER BY m.m_date ASC
   `;
-  const monthlyRows = (await sql.query(monthlyQuery)) as any[];
+  const monthlyRows = (await sql.query(monthlyQuery, monthlyParams)) as any[];
 
   const monthlyTrends = monthlyRows.map((r) => {
     const closed = Number(r.cases_closed) || 0;
@@ -838,7 +881,7 @@ export async function getSuperAdminReports(
   const catRows = (await sql.query(catQuery, dateParams)) as any[];
   const totalCat = catRows.reduce((acc, cur) => acc + Number(cur.count), 0);
   const categoryBreakdown = catRows.map((r) => ({
-    category: r.category,
+    category: getServiceLabel(r.category),
     count: Number(r.count),
     percentage: totalCat > 0 ? Math.round((Number(r.count) / totalCat) * 100) : 0,
   }));

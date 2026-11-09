@@ -60,8 +60,8 @@ const createCaseSchema = z.object({
   }),
   problem: z.string().trim().min(2, "Problem description is required."),
   presentCondition: z.string().trim().min(2, "Present condition is required."),
-  service: z.enum(serviceTypeEnum.enumValues, {
-    message: "Select a valid clinical service.",
+  service: z.enum(["speech_therapy", "swallow_therapy", "vitalstim_therapy"] as const, {
+    message: "Select a valid active clinical service.",
   }),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)."),
   roomId: z.string().uuid("Please select a room."),

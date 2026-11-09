@@ -102,3 +102,24 @@ The following accounts and records are **PROTECTED** and will **NOT** be touched
 - **Rooms:** `R-1` through `R-10` assigned to `Wellknox Banjara Hills`
 - **User-Branch Assignments:** 6 active mappings linking all 6 users to `Wellknox Banjara Hills`
 - **Login Records:** 16 genuine login session audit trails
+
+
+---
+
+## 5. Admin Dashboard Therapist Table Removal & Zero-Row Audit
+
+**Audit Date:** 2026-11-08  
+**Scope:** Admin Dashboard (`/admin/dashboard`) clean-up.
+
+### Findings:
+1. **Source Query:** `getAdminSimplifiedDashboardData` in `src/lib/dashboard-admin.ts`.
+2. **Current Branch:** `Wellknox Banjara Hills` (`e023ccce-444e-4e4e-8c13-14bb8066eec4`).
+3. **Returned Therapist Records:**
+   - `caf461f5-078b-42e6-afbb-e78a291b541c` | `Dr. Ananya Sharma` (`therapist@guildclub.com`) — Test/seed account from `seed-test-data.ts`.
+   - `ff6565ba-5a1e-4753-b669-f9748b56e135` | `Veera Vasu Nakka` (`veeravasu944@gmail.com`) — Authentic staff account; currently has 0 active cases and 0 sessions on selected date.
+   - `e90f2d11-f069-45eb-957f-8a0a556308c5` | `Veera Vasu Nakka` (`vasuunakka@gmail.com`) — Authentic staff account; currently has 0 active cases and 0 sessions on selected date.
+4. **Dashboard Impact:**
+   - Displaying this table with 0 sessions, 0 active cases, 0 closed cases, and 0 rooms in use caused visual clutter on the phone dashboard.
+   - Per requirements, rather than masking or hiding zero rows, the entire redundant Therapist summary table (`therapists-table`) was removed from `/admin/dashboard`.
+   - Dedicated therapist administration remains fully functional at `/admin/therapists`.
+   - Database rows in `users`, `therapist_profiles`, and `user_branches` remain strictly untouched.

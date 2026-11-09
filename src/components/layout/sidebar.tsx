@@ -12,6 +12,7 @@ import type { IconProps } from "@phosphor-icons/react";
 import { getTherapistNotesAction } from "@/lib/actions/admin-notes-actions";
 import { logoutAction } from "@/lib/actions/auth-actions";
 import { LogoutButton } from "./logout-button";
+import { ROLE_SIDEBAR_CONFIG, getRoleDashboardPath } from "@/lib/navigation";
 
 interface SidebarProps {
   role: UserRole;
@@ -60,153 +61,16 @@ export function Sidebar({ role, userName }: SidebarProps) {
   }, [role, pathname]);
 
   const getNavSections = (userRole: UserRole): NavSection[] => {
-    switch (userRole) {
-      case "super_admin":
-        return [
-          {
-            section: "Overview",
-            items: [
-              {
-                title: "Dashboard",
-                href: "/super-admin/dashboard",
-                icon: Icons.Dashboard,
-              },
-              {
-                title: "Profile & Settings",
-                href: "/profile",
-                icon: Icons.User,
-              },
-            ],
-          },
-          {
-            section: "Management",
-            items: [
-              {
-                title: "Cases",
-                href: "/admin/cases",
-                icon: Icons.Cases,
-              },
-              {
-                title: "Therapists",
-                href: "/admin/therapists",
-                icon: Icons.Therapists,
-              },
-              {
-                title: "Rooms",
-                href: "/admin/rooms",
-                icon: Icons.Door,
-              },
-              {
-                title: "Admins",
-                href: "/super-admin/admins",
-                icon: Icons.Admins,
-              },
-              {
-                title: "Branches",
-                href: "/admin/branches",
-                icon: Icons.Door,
-              },
-              {
-                title: "Notifications",
-                href: "/notifications",
-                icon: Icons.Alert,
-              },
-              {
-                title: "Profile & Settings",
-                href: "/profile",
-                icon: Icons.User,
-              },
-            ],
-          },
-          {
-            section: "Insights",
-            items: [
-              {
-                title: "Reports",
-                href: "/super-admin/reports",
-                icon: Icons.Reports,
-              },
-              {
-                title: "Delivery & Quota",
-                href: "/super-admin/notifications",
-                icon: Icons.Analytics,
-              },
-            ],
-          },
-        ];
-
-      case "admin":
-        return [
-          {
-            section: "Navigation",
-            items: [
-              {
-                title: "Dashboard",
-                href: "/admin/dashboard",
-                icon: Icons.Dashboard,
-              },
-              {
-                title: "Therapists",
-                href: "/admin/therapists",
-                icon: Icons.Therapists,
-              },
-              {
-                title: "Rooms",
-                href: "/admin/rooms",
-                icon: Icons.Door,
-              },
-              {
-                title: "Cases",
-                href: "/admin/cases",
-                icon: Icons.Cases,
-              },
-              {
-                title: "Notifications",
-                href: "/notifications",
-                icon: Icons.Alert,
-              },
-              {
-                title: "Profile & Settings",
-                href: "/profile",
-                icon: Icons.User,
-              },
-            ],
-          },
-        ];
-
-      case "therapist":
-        return [
-          {
-            section: "Practice",
-            items: [
-              {
-                title: "Dashboard",
-                href: "/therapist/dashboard",
-                icon: Icons.Dashboard,
-              },
-              {
-                title: "My Patients",
-                href: "/therapist/cases",
-                icon: Icons.Cases,
-              },
-              {
-                title: "Notes from Admin",
-                href: "/therapist/notes",
-                icon: Icons.Envelope,
-                badge: unreadNotesCount,
-              },
-              {
-                title: "Profile",
-                href: "/profile",
-                icon: Icons.User,
-              },
-            ],
-          },
-        ];
-
-      default:
-        return [];
-    }
+    const rawSections = ROLE_SIDEBAR_CONFIG[userRole] || [];
+    return rawSections.map((sec) => ({
+      section: sec.section,
+      items: sec.items.map((item) => ({
+        title: item.title,
+        href: item.href,
+        icon: item.icon,
+        badge: item.badgeKey === "unreadNotes" ? unreadNotesCount : undefined,
+      })),
+    }));
   };
 
   const navSections = getNavSections(role);

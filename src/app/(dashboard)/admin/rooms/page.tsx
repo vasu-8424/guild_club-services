@@ -1,28 +1,17 @@
-import React from "react";
-import { requireRole } from "@/lib/session";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { getRoomsAction } from "@/lib/actions/room-management-actions";
-import { getBranchesAction } from "@/lib/actions/branch-actions";
-import { RoomsClient } from "@/components/rooms/rooms-client";
-
-export const metadata = {
-  title: "Rooms | Guild Club Services",
-};
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/session";
 
 export default async function AdminRoomsPage() {
-  const user = await requireRole("admin", "super_admin");
+  const user = await getCurrentUser();
 
-  const [roomsRes, branchesRes] = await Promise.all([
-    getRoomsAction(),
-    getBranchesAction(true),
-  ]);
+  if (!user) {
+    redirect("/login");
+  }
 
-  const initialRooms = roomsRes.success && roomsRes.data ? roomsRes.data : [];
-  const branches = branchesRes.success && branchesRes.branches ? branchesRes.branches : [];
+  if (user.role === "super_admin") {
+    redirect("/super-admin/rooms");
+  }
 
-  return (
-    <DashboardShell user={user} title="Rooms">
-      <RoomsClient initialRooms={initialRooms} branches={branches} />
-    </DashboardShell>
-  );
+  // Admin role does not manage rooms
+  redirect("/admin/dashboard");
 }

@@ -112,7 +112,7 @@ test.describe("Mobile Phone Fixes - Navigation, Profile, Branches & Sign Out", (
       const versionEl = page.locator('[data-testid="settings-app-version"]');
       await expect(versionEl).toBeVisible();
       const versionText = await versionEl.textContent();
-      expect(versionText).toContain("v1.5");
+      expect(versionText).toContain("v1.6");
 
       // Fetch /api/health to confirm matching buildId
       const healthRes = await page.request.get("/api/health");
@@ -228,6 +228,41 @@ test.describe("Mobile Phone Fixes - Navigation, Profile, Branches & Sign Out", (
         }
       }
     }
+
+    await context.close();
+  });
+
+  // 7. Clinical Service options: Speech Therapy replaces Physiotherapy
+  test("Therapist Create Case: Clinical Service shows Speech Therapy instead of Physiotherapy", async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      storageState: "playwright/.auth/therapist.json",
+      isMobile: true,
+      hasTouch: true,
+    });
+    const page = await context.newPage();
+
+    await page.goto("/therapist/cases/new", { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(500);
+
+    const serviceSelect = page.locator('[data-testid="service-select"]');
+    await expect(serviceSelect).toBeVisible();
+
+    // Verify option texts
+    const optionTexts = await serviceSelect.locator("option").allInnerTexts();
+    expect(optionTexts).toContain("Speech Therapy");
+    expect(optionTexts).toContain("Swallow Therapy");
+    expect(optionTexts).toContain("VitalStim Therapy");
+    expect(optionTexts).not.toContain("Physiotherapy");
+
+    // Default value should be speech_therapy
+    await expect(serviceSelect).toHaveValue("speech_therapy");
+
+    // Take screenshot for verification
+    const screenshotPath = "C:/Users/admin/.gemini/antigravity/brain/237e4596-e969-448f-b5d4-4fa509b8dbc3/therapist-create-case-speech-therapy-390px.png";
+    await page.screenshot({ path: screenshotPath, fullPage: false });
 
     await context.close();
   });

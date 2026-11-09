@@ -9,6 +9,7 @@ import {
 } from "@/lib/actions/case-close-actions";
 import { WritingAssist } from "@/components/writing-assist/writing-assist";
 import { Camera, Trash2, AlertTriangle, X } from "lucide-react";
+import { useNetworkStatus } from "@/components/network/network-provider";
 
 interface CloseCaseModalProps {
   caseId: string;
@@ -24,6 +25,7 @@ export function CloseCaseModal({
   onSuccess,
 }: CloseCaseModalProps) {
   const router = useRouter();
+  const { isOnline } = useNetworkStatus();
   const [isOpen, setIsOpen] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -193,7 +195,7 @@ export function CloseCaseModal({
         type="button"
         data-testid="close-case-btn"
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-1.5 border border-red-300 bg-red-50 hover:bg-red-100 text-red-800 px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-none transition-colors"
+        className="inline-flex items-center justify-center min-h-[48px] h-[48px] px-4 text-xs font-semibold uppercase tracking-wider border border-red-300 bg-red-50 hover:bg-red-100 text-red-800 rounded-none transition-colors w-full sm:w-auto"
       >
         <span>Close Case</span>
       </button>
@@ -506,11 +508,11 @@ export function CloseCaseModal({
               <button
                 type="button"
                 data-testid="confirm-close-case-btn"
-                disabled={loading}
+                disabled={loading || !isOnline}
                 onClick={handleFinalClose}
                 className="bg-red-700 hover:bg-red-800 text-white px-6 py-2 text-xs font-semibold uppercase tracking-wider rounded-none disabled:opacity-50"
               >
-                {loading ? "Closing..." : "Yes, Close Case"}
+                {!isOnline ? "Connect to save" : loading ? "Closing..." : "Yes, Close Case"}
               </button>
             </div>
           </div>

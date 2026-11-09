@@ -22,6 +22,7 @@ export function DailyBoardView({
   const router = useRouter();
   const [selectedCase, setSelectedCase] = useState<CaseTileData | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [panelTab, setPanelTab] = useState<"session" | "reason">("session");
 
   // Compute summary numbers
   const { doneCount, pendingCount, activeCount } = useMemo(() => {
@@ -76,8 +77,12 @@ export function DailyBoardView({
     });
   }, [casesList]);
 
-  const handleTileClick = (caseItem: CaseTileData) => {
+  const handleTileClick = (
+    caseItem: CaseTileData,
+    initialTab?: "session" | "reason"
+  ) => {
     setSelectedCase(caseItem);
+    setPanelTab(initialTab || "session");
     setPanelOpen(true);
   };
 
@@ -219,6 +224,7 @@ export function DailyBoardView({
         onClose={() => setPanelOpen(false)}
         caseData={selectedCase}
         todayIST={todayIST}
+        initialTab={panelTab}
         onSessionSaved={handleSessionSaved}
       />
     </div>

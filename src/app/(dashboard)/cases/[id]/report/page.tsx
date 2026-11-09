@@ -223,7 +223,7 @@ export default async function CaseReportPage({ params }: CaseReportPageProps) {
     startDate: startDateStr,
     endDate: endDateStr,
     isClosed,
-    branchName: caseRecord.branchName || "Main Branch",
+    branchName: caseRecord.branchName || "—",
     roomNo: caseRecord.roomNo || "—",
     therapistName: caseRecord.therapistName || currentUser.name,
     outcome: caseRecord.outcome,

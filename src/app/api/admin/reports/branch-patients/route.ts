@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { cases, clients, sessions, branches } from "@/db/schema";
 import { eq, sql, inArray } from "drizzle-orm";
 import { recordEvent } from "@/lib/events";
+import { getServiceLabel } from "@/lib/services";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -139,7 +140,7 @@ export async function GET(req: NextRequest) {
           patientName: row.clientName,
           age: row.clientAge ?? "N/A",
           sex: row.clientGender ?? "N/A",
-          service: row.service ? row.service.replace(/_/g, " ") : "N/A",
+          service: row.service ? getServiceLabel(row.service) : "N/A",
           room: row.roomNo || "N/A",
           startDate: row.startDate ? String(row.startDate) : "N/A",
           status: statusLabel,

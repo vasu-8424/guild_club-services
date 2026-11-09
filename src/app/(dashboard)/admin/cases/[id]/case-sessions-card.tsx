@@ -57,6 +57,7 @@ export function CaseSessionsCard({
     defaultTherapistId || (therapists[0]?.id ?? "")
   );
   const [scheduleLoading, setScheduleLoading] = React.useState(false);
+  const [visibleCount, setVisibleCount] = React.useState(30);
 
   // Status update state
   const [updatingId, setUpdatingId] = React.useState<string | null>(null);
@@ -183,12 +184,13 @@ export function CaseSessionsCard({
               No sessions scheduled for this case yet.
             </p>
           ) : (
-            sessions.map((s) => (
-              <div
-                key={s.id}
-                data-testid="session-item"
-                className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 text-xs space-y-3"
-              >
+            <>
+              {sessions.slice(0, visibleCount).map((s) => (
+                <div
+                  key={s.id}
+                  data-testid="session-item"
+                  className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 text-xs space-y-3"
+                >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -317,7 +319,18 @@ export function CaseSessionsCard({
                   </div>
                 )}
               </div>
-            ))
+            ))}
+            {sessions.length > visibleCount && (
+              <button
+                type="button"
+                data-testid="load-more-sessions-btn"
+                onClick={() => setVisibleCount((prev) => prev + 30)}
+                className="w-full py-2.5 text-xs font-semibold uppercase tracking-wider text-[#0B7A63] border border-slate-300 hover:bg-slate-50 transition-colors rounded-none"
+              >
+                Load more sessions ({sessions.length - visibleCount} remaining)
+              </button>
+            )}
+            </>
           )}
         </div>
 

@@ -61,35 +61,11 @@ test.describe("Admin Dashboard Layout & Warning Banner Verification", () => {
     // Verify they are stacked (date selector is below download report button)
     expect(dateBox!.y).toBeGreaterThan(downloadBox!.y);
 
-    // 4. Verify Warning Banner and REVIEW CASES button
+    // 4. Verify Rooms section & Rooms metric tile are removed from Admin Dashboard
     const banner = page.locator('[data-testid="null-room-cases-banner"]');
-    await expect(banner).toBeVisible();
-    const bannerBox = await banner.boundingBox();
-    expect(bannerBox).not.toBeNull();
-
-    const reviewBtn = banner.locator("a");
-    await expect(reviewBtn).toBeVisible();
-    await expect(reviewBtn).toContainText(/review cases/i);
-
-    const btnBox = await reviewBtn.boundingBox();
-    expect(btnBox).not.toBeNull();
-
-    // Height must be at least 44px
-    expect(btnBox!.height).toBeGreaterThanOrEqual(44);
-
-    // Button is full width below the text on phones (btn width is nearly entire banner inside padding)
-    expect(btnBox!.width).toBeGreaterThanOrEqual(bannerBox!.width - 36);
-
-    // Button is positioned below the message text inside the banner
-    const bannerTextBox = await banner.locator("p.font-bold").boundingBox();
-    expect(bannerTextBox).not.toBeNull();
-    expect(btnBox!.y).toBeGreaterThan(bannerTextBox!.y);
-
-    // Button text does not overflow button box
-    const isTextInside = await reviewBtn.evaluate((el) => {
-      return el.scrollWidth <= el.clientWidth && el.scrollHeight <= el.clientHeight + 4;
-    });
-    expect(isTextInside).toBe(true);
+    await expect(banner).toHaveCount(0);
+    const roomsStat = page.locator('[data-testid="stat-rooms"]');
+    await expect(roomsStat).toHaveCount(0);
 
     // 5. Verify NO horizontal scroll on the page
     const hasHorizontalScroll = await page.evaluate(() => {

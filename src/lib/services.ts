@@ -7,11 +7,11 @@ export interface ClinicalServiceDefinition {
   badgeClass: string;
 }
 
-export const CLINICAL_SERVICES: readonly ClinicalServiceDefinition[] = [
+export const ACTIVE_CLINICAL_SERVICES: readonly ClinicalServiceDefinition[] = [
   {
-    id: "physiotherapy",
-    label: "Physiotherapy",
-    description: "Physical rehabilitation and mobility improvement therapy",
+    id: "speech_therapy",
+    label: "Speech Therapy",
+    description: "Speech and language rehabilitation therapy",
     badgeClass: "bg-emerald-50 text-emerald-800 border-emerald-200",
   },
   {
@@ -28,18 +28,61 @@ export const CLINICAL_SERVICES: readonly ClinicalServiceDefinition[] = [
   },
 ] as const;
 
-export const SERVICE_TYPE_LABELS: Record<ServiceType, string> = {
-  physiotherapy: "Physiotherapy",
+export const PAST_CLINICAL_SERVICES: readonly ClinicalServiceDefinition[] = [
+  {
+    id: "physiotherapy",
+    label: "Physiotherapy (past)",
+    description: "Legacy physiotherapy cases",
+    badgeClass: "bg-amber-50 text-amber-800 border-amber-200",
+  },
+] as const;
+
+// Alias to active services for case creation forms and new cases
+export const CLINICAL_SERVICES = ACTIVE_CLINICAL_SERVICES;
+
+export const SERVICE_TYPE_LABELS: Record<string, string> = {
+  speech_therapy: "Speech Therapy",
+  physiotherapy: "Physiotherapy (past)",
   swallow_therapy: "Swallow Therapy",
   vitalstim_therapy: "VitalStim Therapy",
 };
 
 export function getServiceLabel(service?: string | null): string {
   if (!service) return "Unknown Service";
-  if (service in SERVICE_TYPE_LABELS) {
-    return SERVICE_TYPE_LABELS[service as ServiceType];
+  const normalized = service.toLowerCase().trim();
+  if (normalized === "physiotherapy" || normalized === "physio therapy") {
+    return "Physiotherapy (past)";
+  }
+  if (normalized === "speech_therapy" || normalized === "speech therapy") {
+    return "Speech Therapy";
+  }
+  if (normalized in SERVICE_TYPE_LABELS) {
+    return SERVICE_TYPE_LABELS[normalized];
   }
   return service.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * Returns the active services, plus "Physiotherapy (past)" only if such cases exist.
+ */
+export function getFilterableServices(existingServices?: string[]): Array<{ id: string; label: string }> {
+  const result: Array<{ id: string; label: string }> = ACTIVE_CLINICAL_SERVICES.map((s) => ({
+    id: s.id,
+    label: s.label,
+  }));
+
+  const hasPastPhysio = existingServices?.some(
+    (s) => s?.toLowerCase().trim() === "physiotherapy" || s?.toLowerCase().trim() === "physio therapy"
+  );
+
+  if (hasPastPhysio) {
+    result.push({
+      id: "physiotherapy",
+      label: "Physiotherapy (past)",
+    });
+  }
+
+  return result;
 }
 
 export type SimplifiedOutcome = "improved" | "partially_improved" | "no_change" | "referred";

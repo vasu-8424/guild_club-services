@@ -242,7 +242,7 @@ export default async function TherapistDetailPage({
       caseNumber: c.caseNumber,
       patientId: c.patientId || "N/A",
       patientName: c.clientName,
-      service: c.service || "physiotherapy",
+      service: c.service || "speech_therapy",
       branchName: c.branchName || "Unassigned",
       roomNo: c.roomNo || c.fallbackRoomNo || "—",
       startDate: c.startDate ? String(c.startDate) : "—",

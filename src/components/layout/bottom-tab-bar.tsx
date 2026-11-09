@@ -4,19 +4,9 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Icons } from "@/components/ui/icons";
 import type { UserRole } from "@/db/schema";
-import type { IconProps } from "@phosphor-icons/react";
 import { getTherapistNotesAction } from "@/lib/actions/admin-notes-actions";
-
-interface TabItem {
-  label: string;
-  href: string;
-  icon: (props: IconProps) => React.ReactNode;
-  badge?: number;
-  testId?: string;
-  aliases?: string[];
-}
+import { ROLE_TAB_CONFIG, isTabActive } from "@/lib/navigation";
 
 interface BottomTabBarProps {
   role: UserRole;
@@ -28,7 +18,6 @@ export function BottomTabBar({ role }: BottomTabBarProps) {
   const [unreadAlerts, setUnreadAlerts] = React.useState<number>(0);
 
   const fetchCounts = React.useCallback(async () => {
-    // Only poll when page is visible
     if (typeof document !== "undefined" && document.visibilityState !== "visible") {
       return;
     }
@@ -60,7 +49,7 @@ export function BottomTabBar({ role }: BottomTabBarProps) {
   React.useEffect(() => {
     fetchCounts();
 
-    // Poll at most every 30 seconds
+    // Poll periodically when visible
     const interval = setInterval(fetchCounts, 30000);
 
     const handleVisibilityOrFocus = () => {
@@ -79,111 +68,7 @@ export function BottomTabBar({ role }: BottomTabBarProps) {
     };
   }, [fetchCounts]);
 
-  const getTabs = (): TabItem[] => {
-    switch (role) {
-      case "therapist":
-        return [
-          {
-            label: "Today",
-            href: "/therapist/dashboard",
-            icon: Icons.Dashboard,
-            testId: "tab-therapist-today",
-          },
-          {
-            label: "Patients",
-            href: "/therapist/cases",
-            icon: Icons.Cases,
-            testId: "tab-therapist-patients",
-          },
-          {
-            label: "Notes",
-            href: "/therapist/notes",
-            icon: Icons.Envelope,
-            badge: unreadNotes,
-            testId: "tab-therapist-notes",
-          },
-          {
-            label: "Profile",
-            href: "/profile",
-            icon: Icons.User,
-            testId: "tab-therapist-profile",
-            aliases: ["tab-profile"],
-          },
-        ];
-      case "admin":
-        return [
-          {
-            label: "Dashboard",
-            href: "/admin/dashboard",
-            icon: Icons.Dashboard,
-            testId: "tab-dashboard",
-          },
-          {
-            label: "Therapists",
-            href: "/admin/therapists",
-            icon: Icons.Therapists,
-            testId: "tab-therapists",
-          },
-          {
-            label: "Rooms",
-            href: "/admin/rooms",
-            icon: Icons.Door,
-            testId: "tab-rooms",
-          },
-          {
-            label: "Cases",
-            href: "/admin/cases",
-            icon: Icons.Cases,
-            testId: "tab-cases",
-          },
-          {
-            label: "Profile",
-            href: "/profile",
-            icon: Icons.User,
-            testId: "tab-profile",
-            aliases: ["tab-admin-profile", "tab-settings"],
-          },
-        ];
-      case "super_admin":
-        return [
-          {
-            label: "Dashboard",
-            href: "/super-admin/dashboard",
-            icon: Icons.Dashboard,
-            testId: "tab-dashboard",
-          },
-          {
-            label: "Branches",
-            href: "/admin/branches",
-            icon: Icons.Buildings,
-            testId: "tab-branches",
-          },
-          {
-            label: "Admins",
-            href: "/super-admin/admins",
-            icon: Icons.Admins,
-            testId: "tab-admins",
-          },
-          {
-            label: "Reports",
-            href: "/super-admin/reports",
-            icon: Icons.Reports,
-            testId: "tab-reports",
-          },
-          {
-            label: "Profile",
-            href: "/profile",
-            icon: Icons.User,
-            testId: "tab-profile",
-            aliases: ["tab-settings", "tab-more"],
-          },
-        ];
-      default:
-        return [];
-    }
-  };
-
-  const tabs = getTabs();
+  const tabs = ROLE_TAB_CONFIG[role] || [];
 
   return (
     <nav
@@ -194,19 +79,17 @@ export function BottomTabBar({ role }: BottomTabBarProps) {
       <div className="flex h-16 w-full items-stretch justify-around">
         {tabs.map((tab) => {
           const Icon = tab.icon;
-          // Determine if tab is active
-          const isActive =
-            pathname === tab.href ||
-            (tab.href === "/profile" && pathname === "/therapist/profile") ||
-            (tab.href !== "/super-admin/dashboard" &&
-              tab.href !== "/admin/dashboard" &&
-              tab.href !== "/therapist/dashboard" &&
-              tab.href !== "/profile" &&
-              pathname.startsWith(tab.href));
+          const isActive = isTabActive(tab, pathname);
+          const badgeCount =
+            tab.badgeKey === "unreadNotes"
+              ? unreadNotes
+              : tab.badgeKey === "unreadAlerts"
+              ? unreadAlerts
+              : 0;
 
           return (
             <Link
-              key={tab.href}
+              key={tab.key}
               href={tab.href}
               prefetch={true}
               data-testid={tab.testId}
@@ -242,12 +125,12 @@ export function BottomTabBar({ role }: BottomTabBarProps) {
                     isActive ? "text-[#0B7A63]" : "text-slate-500"
                   )}
                 />
-                {typeof tab.badge === "number" && tab.badge > 0 && (
+                {badgeCount > 0 && (
                   <span
                     data-testid="unread-notes-badge"
                     className="absolute -top-1 -right-2 flex min-w-[16px] h-4 items-center justify-center px-1 text-[10px] font-bold text-white bg-rose-600 rounded-none leading-none shadow-xs"
                   >
-                    {tab.badge > 99 ? "99+" : tab.badge}
+                    {badgeCount > 99 ? "99+" : badgeCount}
                   </span>
                 )}
               </div>

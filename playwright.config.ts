@@ -120,6 +120,34 @@ export default defineConfig({
       dependencies: ["setup"],
     },
     {
+      name: "case-fast-open",
+      testDir: "./tests/e2e/suites",
+      testMatch: /case-fast-open-and-speech-therapy\.spec\.ts/,
+      use: {
+        isMobile: true,
+        hasTouch: true,
+      },
+      dependencies: ["setup"],
+    },
+    {
+      name: "admin-clean-dashboard",
+      testDir: "./tests/e2e/suites",
+      testMatch: /admin-clean-dashboard\.spec\.ts/,
+      dependencies: ["setup"],
+    },
+    {
+      name: "super-admin-simplified",
+      testDir: "./tests/e2e/suites",
+      testMatch: /super-admin-simplified\.spec\.ts/,
+      dependencies: ["setup"],
+    },
+    {
+      name: "navigation-network",
+      testDir: "./tests/e2e/suites",
+      testMatch: /navigation-and-network-states\.spec\.ts/,
+      dependencies: ["setup"],
+    },
+    {
       name: "mobile-ux",
       testDir: "./tests/e2e/suites",
       testMatch: /mobile-.*\.spec\.ts/,

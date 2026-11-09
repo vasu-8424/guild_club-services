@@ -1,7 +1,7 @@
 /**
  * Single source of truth for Application Version and Build ID
  */
-export const APP_VERSION = "v1.5";
+export const APP_VERSION = "v1.6";
 
 export function getBuildId(): string {
   return (

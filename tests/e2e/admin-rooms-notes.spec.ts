@@ -187,7 +187,7 @@ test.describe.serial("SIMPLIFIED ADMIN PANEL: ROOMS, DASHBOARD, THERAPISTS & NOT
     await page.selectOption('[data-testid="patient-sex-select"]', "male");
     await page.fill('[data-testid="problem-input"]', "Severe lumbar disc herniation with lower limb radiculopathy.");
     await page.fill('[data-testid="present-condition-input"]', "Patient experiences severe localized pain radiating to left calf. Gait is antalgic.");
-    await page.selectOption('[data-testid="service-select"]', "physiotherapy");
+    await page.selectOption('[data-testid="service-select"]', "speech_therapy");
 
     // Select Main Branch
     await page.selectOption('[data-testid="branch-select"]', mainBranchId);
@@ -412,24 +412,14 @@ test.describe.serial("SIMPLIFIED ADMIN PANEL: ROOMS, DASHBOARD, THERAPISTS & NOT
     const rechartsCount = await page.locator(".recharts-responsive-container").count();
     expect(rechartsCount).toBe(0);
 
-    // 2. Plain number stat cards
+    // 2. Plain number stat cards (Rooms tile removed for Admin)
     await expect(page.locator('[data-testid="stat-therapists"]')).toBeVisible();
     await expect(page.locator('[data-testid="stat-active-cases"]')).toBeVisible();
     await expect(page.locator('[data-testid="stat-sessions"]')).toBeVisible();
-    await expect(page.locator('[data-testid="stat-rooms"]')).toBeVisible();
+    await expect(page.locator('[data-testid="stat-rooms"]')).toHaveCount(0);
 
-    // 3. Therapists Table columns
-    const tableHeader = page.locator('[data-testid="therapists-table"] thead, [data-testid="admin-therapists-table"] thead');
-    await expect(tableHeader).toContainText("Therapist");
-    await expect(tableHeader).toContainText("Sessions on this date");
-    await expect(tableHeader).toContainText("Active cases");
-    await expect(tableHeader).toContainText("Cases closed on this date");
-    await expect(tableHeader).toContainText("Rooms in use");
-    await expect(tableHeader).toContainText("Last login");
-    await expect(tableHeader).toContainText("Actions");
-
-    // 4. Totals row present
-    await expect(page.locator('[data-testid="totals-row"]')).toBeVisible();
+    // 3. Therapists Table removed from dashboard
+    await expect(page.locator('[data-testid="therapists-table"]')).toHaveCount(0);
 
     // 5. Past Date Banner via date parameter
     const pastDate = getDaysAgoIST(1);
@@ -648,9 +638,8 @@ test.describe.serial("SIMPLIFIED ADMIN PANEL: ROOMS, DASHBOARD, THERAPISTS & NOT
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     await loginAs(page, adminEmail, adminPassword, /\/admin\/dashboard/);
 
-    // Verify null-room banner
-    await expect(page.locator('[data-testid="null-room-cases-banner"]')).toBeVisible();
-    await expect(page.locator('[data-testid="null-room-cases-banner"]')).toContainText(/open case(s have| has) no room/i);
+    // Verify null-room banner removed for Admin
+    await expect(page.locator('[data-testid="null-room-cases-banner"]')).toHaveCount(0);
 
     // Restore room_id
     await rawSql(

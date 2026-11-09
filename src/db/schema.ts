@@ -65,6 +65,7 @@ export const caseOutcomeEnum = pgEnum("case_outcome", [
 ]);
 
 export const serviceTypeEnum = pgEnum("service_type", [
+  "speech_therapy",
   "physiotherapy",
   "swallow_therapy",
   "vitalstim_therapy",
@@ -76,7 +77,17 @@ export const loginLocationStatusEnum = pgEnum("login_location_status", [
   "unavailable",
 ]);
 
-export const photoKindEnum = pgEnum("photo_kind", ["joining", "present"]);
+export const photoKindEnum = pgEnum("photo_kind", ["joining", "present", "session"]);
+
+export const sessionReasonThreadStatusEnum = pgEnum("session_reason_thread_status", [
+  "open",
+  "resolved",
+]);
+
+export const sessionReasonAuthorRoleEnum = pgEnum("session_reason_author_role", [
+  "therapist",
+  "admin",
+]);
 
 export const sessionStatusEnum = pgEnum("session_status", [
   "scheduled",
@@ -310,8 +321,12 @@ export const casePhotos = pgTable(
     caseId: uuid("case_id")
       .notNull()
       .references(() => cases.id, { onDelete: "cascade" }),
-    kind: photoKindEnum("kind").notNull(), // 'joining' | 'present'
+    sessionId: uuid("session_id").references((): AnyPgColumn => sessions.id, {
+      onDelete: "cascade",
+    }),
+    kind: photoKindEnum("kind").notNull(), // 'joining' | 'present' | 'session'
     fileKey: text("file_key").notNull(),
+    consentObtained: boolean("consent_obtained").default(false).notNull(),
     takenAt: timestamp("taken_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
@@ -325,6 +340,7 @@ export const casePhotos = pgTable(
   (table) => [
     index("case_photos_case_id_idx").on(table.caseId),
     index("case_photos_kind_idx").on(table.kind),
+    index("case_photos_session_id_idx").on(table.sessionId),
   ]
 );
 
@@ -587,6 +603,88 @@ export const adminNotes = pgTable(
     index("admin_notes_created_at_idx").on(table.createdAt),
     index("admin_notes_from_user_id_idx").on(table.fromUserId),
     index("admin_notes_branch_id_idx").on(table.branchId),
+  ]
+);
+
+// -----------------------------------------------------------------------------
+// 9.6. SESSION REASON THREADS & MESSAGES
+// -----------------------------------------------------------------------------
+
+export const sessionReasonThreads = pgTable(
+  "session_reason_threads",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    caseId: uuid("case_id")
+      .notNull()
+      .references((): AnyPgColumn => cases.id, { onDelete: "cascade" }),
+    branchId: uuid("branch_id")
+      .notNull()
+      .references((): AnyPgColumn => branches.id, { onDelete: "cascade" }),
+    therapistId: uuid("therapist_id")
+      .notNull()
+      .references((): AnyPgColumn => users.id, { onDelete: "cascade" }),
+    adminId: uuid("admin_id").references((): AnyPgColumn => users.id, {
+      onDelete: "set null",
+    }),
+    threadDate: date("thread_date").notNull(), // IST YYYY-MM-DD
+    status: sessionReasonThreadStatusEnum("status").default("open").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("session_reason_threads_case_date_unique_idx").on(
+      table.caseId,
+      table.threadDate
+    ),
+    index("session_reason_threads_branch_date_idx").on(
+      table.branchId,
+      table.threadDate
+    ),
+    index("session_reason_threads_therapist_idx").on(table.therapistId),
+    index("session_reason_threads_case_idx").on(table.caseId),
+    index("session_reason_threads_status_idx").on(table.status),
+  ]
+);
+
+export const sessionReasonMessages = pgTable(
+  "session_reason_messages",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    threadId: uuid("thread_id")
+      .notNull()
+      .references((): AnyPgColumn => sessionReasonThreads.id, {
+        onDelete: "cascade",
+      }),
+    branchId: uuid("branch_id")
+      .notNull()
+      .references((): AnyPgColumn => branches.id, { onDelete: "cascade" }),
+    authorId: uuid("author_id")
+      .notNull()
+      .references((): AnyPgColumn => users.id, { onDelete: "cascade" }),
+    authorRole: sessionReasonAuthorRoleEnum("author_role").notNull(),
+    body: text("body").notNull(),
+    originalBody: text("original_body"),
+    isEdited: boolean("is_edited").default(false).notNull(),
+    editedAt: timestamp("edited_at", { withTimezone: true, mode: "date" }),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    readByRecipientAt: timestamp("read_by_recipient_at", {
+      withTimezone: true,
+      mode: "date",
+    }),
+  },
+  (table) => [
+    index("session_reason_messages_thread_created_idx").on(
+      table.threadId,
+      table.createdAt
+    ),
+    index("session_reason_messages_branch_idx").on(table.branchId),
+    index("session_reason_messages_author_idx").on(table.authorId),
   ]
 );
 
@@ -984,6 +1082,58 @@ export type NewAdminNote = typeof adminNotes.$inferInsert;
 export type RoleInBranch = (typeof roleInBranchEnum.enumValues)[number];
 export type UserBranch = typeof userBranches.$inferSelect;
 export type NewUserBranch = typeof userBranches.$inferInsert;
+
+export const sessionReasonThreadsRelations = relations(
+  sessionReasonThreads,
+  ({ one, many }) => ({
+    case: one(cases, {
+      fields: [sessionReasonThreads.caseId],
+      references: [cases.id],
+    }),
+    branch: one(branches, {
+      fields: [sessionReasonThreads.branchId],
+      references: [branches.id],
+    }),
+    therapist: one(users, {
+      fields: [sessionReasonThreads.therapistId],
+      references: [users.id],
+    }),
+    admin: one(users, {
+      fields: [sessionReasonThreads.adminId],
+      references: [users.id],
+    }),
+    messages: many(sessionReasonMessages),
+  })
+);
+
+export const sessionReasonMessagesRelations = relations(
+  sessionReasonMessages,
+  ({ one }) => ({
+    thread: one(sessionReasonThreads, {
+      fields: [sessionReasonMessages.threadId],
+      references: [sessionReasonThreads.id],
+    }),
+    branch: one(branches, {
+      fields: [sessionReasonMessages.branchId],
+      references: [branches.id],
+    }),
+    author: one(users, {
+      fields: [sessionReasonMessages.authorId],
+      references: [users.id],
+    }),
+  })
+);
+
+export type SessionReasonThreadStatus =
+  (typeof sessionReasonThreadStatusEnum.enumValues)[number];
+export type SessionReasonAuthorRole =
+  (typeof sessionReasonAuthorRoleEnum.enumValues)[number];
+
+export type SessionReasonThread = typeof sessionReasonThreads.$inferSelect;
+export type NewSessionReasonThread = typeof sessionReasonThreads.$inferInsert;
+export type SessionReasonMessage = typeof sessionReasonMessages.$inferSelect;
+export type NewSessionReasonMessage = typeof sessionReasonMessages.$inferInsert;
+
 
 
 

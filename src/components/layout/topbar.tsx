@@ -8,6 +8,7 @@ import { BranchSwitcher } from "./branch-switcher";
 import { Icons } from "@/components/ui/icons";
 import type { CurrentUser } from "@/lib/session";
 import { cn } from "@/lib/utils";
+import { useTitle } from "./title-context";
 
 interface ScopeBranchOption {
   id: string;
@@ -30,6 +31,8 @@ export function Topbar({
 }: TopbarProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { title: contextTitle } = useTitle();
+  const displayTitle = contextTitle || title;
   const [branches, setBranches] = React.useState<ScopeBranchOption[]>(
     initialBranches || []
   );
@@ -67,10 +70,11 @@ export function Topbar({
     "/admin/cases",
     "/notifications",
     "/super-admin/dashboard",
-    "/admin/branches",
     "/super-admin/branches",
+    "/admin/branches",
     "/super-admin/admins",
     "/super-admin/reports",
+    "/super-admin/rooms",
     "/super-admin/notifications",
   ];
 
@@ -119,7 +123,7 @@ export function Topbar({
               data-testid="topbar-title"
               className="text-[18px] font-semibold text-slate-900 tracking-tight truncate block leading-tight"
             >
-              {title}
+              {displayTitle}
             </h1>
 
             {/* Branch chip only shown when user has multiple branches */}

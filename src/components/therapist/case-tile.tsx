@@ -2,7 +2,15 @@
 
 import React from "react";
 import Link from "next/link";
-import { Clock, CheckCircle2, ArrowRight, DoorClosed, Stethoscope, AlertTriangle } from "lucide-react";
+import {
+  Clock,
+  CheckCircle2,
+  ArrowRight,
+  DoorClosed,
+  Stethoscope,
+  AlertTriangle,
+  MessageSquare,
+} from "lucide-react";
 import { getServiceLabel } from "@/lib/services";
 
 export interface CaseTileData {
@@ -14,6 +22,8 @@ export interface CaseTileData {
   roomNo: string | null;
   status: string;
   presentCondition: string | null;
+  hasReasonThread?: boolean;
+  unreadReasonCount?: number;
   todaySession?: {
     id: string;
     notes: string | null;
@@ -25,7 +35,7 @@ export interface CaseTileData {
 
 interface CaseTileProps {
   caseItem: CaseTileData;
-  onTileClick: (caseItem: CaseTileData) => void;
+  onTileClick: (caseItem: CaseTileData, initialTab?: "session" | "reason") => void;
 }
 
 function CaseTileComponent({ caseItem, onTileClick }: CaseTileProps) {
@@ -85,13 +95,25 @@ function CaseTileComponent({ caseItem, onTileClick }: CaseTileProps) {
               <span>Done</span>
             </span>
           ) : (
-            <span
-              data-testid="status-pending-badge"
-              className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold bg-red-600 text-white uppercase tracking-wider animate-pulse"
-            >
-              <Clock className="w-3.5 h-3.5" />
-              <span>Pending</span>
-            </span>
+            <div className="flex items-center gap-1">
+              {caseItem.unreadReasonCount && caseItem.unreadReasonCount > 0 ? (
+                <span
+                  data-testid="tile-unread-dot"
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-amber-500 text-white uppercase"
+                  title="Unread reply from admin"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                  <span>Reply</span>
+                </span>
+              ) : null}
+              <span
+                data-testid="status-pending-badge"
+                className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold bg-red-600 text-white uppercase tracking-wider animate-pulse"
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>Pending</span>
+              </span>
+            </div>
           )}
         </div>
 
@@ -99,6 +121,7 @@ function CaseTileComponent({ caseItem, onTileClick }: CaseTileProps) {
         <h3 className="text-xs font-bold text-stone-900 tracking-tight group-hover:text-[#0B7A63] transition-colors mb-1.5 break-words line-clamp-2">
           <Link
             href={`/therapist/cases/${caseItem.id}`}
+            prefetch={true}
             onClick={(e) => e.stopPropagation()}
             data-testid="patient-name"
             className="hover:underline"
@@ -150,6 +173,30 @@ function CaseTileComponent({ caseItem, onTileClick }: CaseTileProps) {
             <span className="font-medium">Condition, note & signature recorded.</span>
           </div>
         )}
+
+        {/* Small "Add reason" action for pending red tiles */}
+        {!isDone && (
+          <div className="mb-2">
+            <button
+              type="button"
+              data-testid="tile-add-reason-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                onTileClick(caseItem, "reason");
+              }}
+              className="w-full min-h-[44px] sm:min-h-[40px] inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-stone-100 hover:bg-stone-200 border border-stone-300 text-stone-800 text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer transition-colors touch-manipulation"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-[#0B7A63]" />
+              <span>{caseItem.hasReasonThread ? "View reason" : "Add reason"}</span>
+              {caseItem.unreadReasonCount && caseItem.unreadReasonCount > 0 ? (
+                <span
+                  data-testid="tile-unread-dot-badge"
+                  className="w-2 h-2 rounded-full bg-amber-500"
+                />
+              ) : null}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Tile Footer / Open Case link */}
@@ -160,6 +207,7 @@ function CaseTileComponent({ caseItem, onTileClick }: CaseTileProps) {
 
         <Link
           href={`/therapist/cases/${caseItem.id}`}
+          prefetch={true}
           onClick={(e) => e.stopPropagation()}
           data-testid="open-case-link"
           className="inline-flex items-center gap-1 text-[11px] font-bold text-[#0B7A63] hover:underline"

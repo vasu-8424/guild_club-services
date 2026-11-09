@@ -274,7 +274,7 @@ Guild Club Services includes a simplified, clinically-focused therapist experien
 - **Therapist Exclusivity**: Cases are initiated directly by treating therapists from `/therapist/dashboard` via the `+ Create Case` button. Admin case creation is hidden and blocked with HTTP 403 Forbidden.
 - **Demographics & Intake**: Captures patient name, age (0–120), sex (`male`, `female`, `other`), clinical problem, present condition, room number, and facility branch.
 - **Three Supported Clinical Services**:
-  - `physiotherapy` — Physiotherapy
+  - `speech_therapy` — Speech Therapy
   - `swallow_therapy` — Swallow Therapy
   - `vitalstim_therapy` — VitalStim Therapy
 - **Joining Condition Photos**: 1 to 3 mandatory baseline intake photos with direct device camera capture (`capture="environment"`), image preview, and removal capabilities (JPEG, PNG, WebP up to 5MB).

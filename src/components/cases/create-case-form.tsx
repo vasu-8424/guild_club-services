@@ -11,6 +11,7 @@ import {
 import { getFreeRoomsForBranchAction } from "@/lib/actions/room-management-actions";
 import { getTodayIST, getDaysAgoIST, getDaysAheadIST } from "@/lib/date-utils";
 import { useKeyboardOffset, scrollInputIntoViewOnFocus } from "@/lib/mobile-keyboard";
+import { useNetworkStatus } from "@/components/network/network-provider";
 import {
   Upload,
   Camera,
@@ -29,6 +30,7 @@ interface CreateCaseFormProps {
 
 export function CreateCaseForm({ branches }: CreateCaseFormProps) {
   const router = useRouter();
+  const { isOnline } = useNetworkStatus();
   const keyboardOffset = useKeyboardOffset();
 
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
@@ -40,7 +42,7 @@ export function CreateCaseForm({ branches }: CreateCaseFormProps) {
   const [sex, setSex] = useState<"male" | "female" | "other">("male");
   const [problem, setProblem] = useState("");
   const [presentCondition, setPresentCondition] = useState("");
-  const [service, setService] = useState<ServiceType>("physiotherapy");
+  const [service, setService] = useState<ServiceType>("speech_therapy");
   const [startDate, setStartDate] = useState(getTodayIST());
   const [branchId, setBranchId] = useState(branches[0]?.id || "");
   const [roomId, setRoomId] = useState("");
@@ -736,10 +738,14 @@ export function CreateCaseForm({ branches }: CreateCaseFormProps) {
         <button
           type="submit"
           data-testid="submit-case-btn"
-          disabled={loading || isCompressing}
+          disabled={loading || isCompressing || !isOnline}
           className="flex-1 min-h-[52px] h-[52px] inline-flex items-center justify-center gap-2 bg-[#0B7A63] hover:bg-[#096350] active:bg-[#064e3e] text-white text-base font-semibold uppercase tracking-wider rounded-none transition-colors disabled:opacity-50 select-none touch-manipulation shadow-xs"
         >
-          {loading ? "Creating Case..." : "Save & Create Case"}
+          {!isOnline
+            ? "Connect to save"
+            : loading
+            ? "Creating Case..."
+            : "Save & Create Case"}
         </button>
       </div>
     </form>

@@ -2,9 +2,11 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Icons } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { SendNoteDialog } from "@/components/admin/send-note-dialog";
+import { getServiceLabel } from "@/lib/services";
 import type { FormattedLoginRecord } from "@/lib/actions/location-actions";
 
 export interface DaySessionMetric {
@@ -64,6 +66,7 @@ export function TherapistDetailClient({
   monthOptions,
   currentMonth,
 }: TherapistDetailClientProps) {
+  const router = useRouter();
   const [showSendNote, setShowSendNote] = React.useState(false);
   const [selectedMonth, setSelectedMonth] = React.useState(currentMonth);
 
@@ -311,7 +314,7 @@ export function TherapistDetailClient({
                       <span className="font-sans font-semibold text-slate-800">{c.patientName}</span>
                     </td>
                     <td className="flex items-center justify-between text-slate-600">
-                      <span className="capitalize">{c.service.replace("_", " ")}</span>
+                      <span>{getServiceLabel(c.service)}</span>
                       <span>Room {c.roomNo}</span>
                     </td>
                     <td className="flex items-center justify-between text-slate-500 font-mono text-[11px]">
@@ -515,7 +518,7 @@ export function TherapistDetailClient({
         onClose={() => setShowSendNote(false)}
         therapistId={therapist.id}
         therapistName={therapist.name}
-        onSuccess={() => window.location.reload()}
+        onSuccess={() => router.refresh()}
       />
     </div>
   );

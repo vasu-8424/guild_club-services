@@ -32,7 +32,8 @@ export function BranchesClient({ initialBranches }: BranchesClientProps) {
       router.push(`/super-admin/dashboard?branch=${branchId}`);
       router.refresh();
     } catch {
-      window.location.href = `/super-admin/dashboard?branch=${branchId}`;
+      router.push(`/super-admin/dashboard?branch=${branchId}`);
+      router.refresh();
     }
   };
 

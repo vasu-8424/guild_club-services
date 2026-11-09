@@ -62,6 +62,8 @@ import {
   Copy,
   Bell,
   DotsThreeCircle,
+  WifiSlash,
+  WifiHigh,
   type IconProps,
 } from "@phosphor-icons/react";
 
@@ -97,6 +99,8 @@ export const Icons = {
   InProgressCases: (props: IconProps) => <HourglassMedium weight="duotone" size={24} {...props} />,
   SuccessRate: (props: IconProps) => <Sparkle weight="duotone" size={24} {...props} />,
   Capacity: (props: IconProps) => <UserCheck weight="duotone" size={24} {...props} />,
+  WifiSlash: (props: IconProps) => <WifiSlash weight="bold" size={20} {...props} />,
+  WifiHigh: (props: IconProps) => <WifiHigh weight="bold" size={20} {...props} />,
 
   // Functional & Button Icons (Bold by default for buttons)
   Add: (props: IconProps) => <Plus weight="bold" size={16} {...props} />,

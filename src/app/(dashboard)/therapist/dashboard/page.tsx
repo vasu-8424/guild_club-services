@@ -2,7 +2,14 @@ import React from "react";
 import { cookies } from "next/headers";
 import { eq, or, and, desc, inArray, isNull, lte, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { cases, clients, sessions, loginRecords } from "@/db/schema";
+import {
+  cases,
+  clients,
+  sessions,
+  loginRecords,
+  sessionReasonThreads,
+  sessionReasonMessages,
+} from "@/db/schema";
 import { requireRole } from "@/lib/session";
 import { getTodayIST } from "@/lib/date-utils";
 import { getScope } from "@/lib/scope";
@@ -155,9 +162,38 @@ export default async function TherapistDashboardPage({
     todaySessionsMap.set(s.caseId, s);
   });
 
+  // 4.5. Query today's reason threads and unread replies for therapist
+  const todayThreads =
+    caseIds.length > 0
+      ? await db
+          .select({
+            caseId: sessionReasonThreads.caseId,
+            threadId: sessionReasonThreads.id,
+            unreadCount: sql<number>`count(case when ${sessionReasonMessages.authorRole} = 'admin' and ${sessionReasonMessages.readByRecipientAt} is null then 1 end)::int`,
+          })
+          .from(sessionReasonThreads)
+          .leftJoin(
+            sessionReasonMessages,
+            eq(sessionReasonMessages.threadId, sessionReasonThreads.id)
+          )
+          .where(
+            and(
+              inArray(sessionReasonThreads.caseId, caseIds),
+              eq(sessionReasonThreads.threadDate, todayIST)
+            )
+          )
+          .groupBy(sessionReasonThreads.caseId, sessionReasonThreads.id)
+      : [];
+
+  const todayThreadsMap = new Map<string, { threadId: string; unreadCount: number }>();
+  todayThreads.forEach((t) => {
+    todayThreadsMap.set(t.caseId, { threadId: t.threadId, unreadCount: t.unreadCount });
+  });
+
   // 5. Construct Tile data
   const tilesData: CaseTileData[] = rawCases.map((c) => {
     const session = todaySessionsMap.get(c.id);
+    const threadInfo = todayThreadsMap.get(c.id);
     return {
       id: c.id,
       patientId: c.patientId || c.caseNumber,
@@ -167,6 +203,8 @@ export default async function TherapistDashboardPage({
       roomNo: c.roomNo,
       status: c.status,
       presentCondition: c.presentCondition,
+      hasReasonThread: Boolean(threadInfo),
+      unreadReasonCount: threadInfo?.unreadCount ?? 0,
       todaySession: session
         ? {
             id: session.id,

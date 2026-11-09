@@ -105,19 +105,18 @@ test.describe("DSH: Date-Wise Dashboards, Analytics & Stage 3 Features", () => {
     const page = await context.newPage();
     await page.goto("/super-admin/dashboard");
 
-    // Open dropdown
-    await page.getByTestId("dashboard-date-selector").click();
-    await expect(page.getByTestId("date-selector-dropdown")).toBeVisible();
+    const firstBranchBtn = page.locator('[data-testid^="select-branch-btn-"]').first();
+    if (await firstBranchBtn.isVisible()) {
+      await firstBranchBtn.click();
+      await page.waitForLoadState("domcontentloaded");
+    }
 
-    // Click Yesterday preset
-    await page.getByTestId("preset-yesterday-button").click();
+    const yesterday = getYesterdayIST();
+    const datePicker = page.getByTestId("super-admin-date-picker");
+    await datePicker.fill(yesterday);
 
     // Verify URL contains ?date=
-    const yesterday = getYesterdayIST();
     await expect(page).toHaveURL(new RegExp(`date=${yesterday}`), { timeout: 10000 });
-
-    // Verify trigger reflects Yesterday or date
-    await expect(page.getByTestId("dashboard-date-selector")).toContainText(/yesterday|history/i);
 
     await context.close();
   });
@@ -130,6 +129,12 @@ test.describe("DSH: Date-Wise Dashboards, Analytics & Stage 3 Features", () => {
 
     // Navigate directly with bookmarkable URL for Day X
     await page.goto(`/super-admin/dashboard?date=${dayXStr}`);
+
+    const firstBranchBtn = page.locator('[data-testid^="select-branch-btn-"]').first();
+    if (await firstBranchBtn.isVisible()) {
+      await firstBranchBtn.click();
+      await page.waitForLoadState("domcontentloaded");
+    }
 
     // Verify History read-only banner appears
     const banner = page.getByTestId("history-banner");
@@ -269,22 +274,26 @@ test.describe("DSH: Date-Wise Dashboards, Analytics & Stage 3 Features", () => {
     await context.close();
   });
 
-  test("DSH-10: Super Admin Reports page (/super-admin/reports) renders metrics, charts, and export actions", async ({ browser }) => {
+  test("DSH-10: Super Admin Reports page (/super-admin/reports) renders simplified export actions", async ({ browser }) => {
     const context = await browser.newContext({
       storageState: path.join(authDir, "super-admin.json"),
     });
     const page = await context.newPage();
     await page.goto("/super-admin/reports");
 
+    // Pick branch if prompted
+    const firstBranchBtn = page.locator('[data-testid^="select-branch-btn-"]').first();
+    if (await firstBranchBtn.isVisible()) {
+      await firstBranchBtn.click();
+      await page.waitForLoadState("domcontentloaded");
+    }
+
     // 1. Verify page title and header
-    await expect(page.locator("body")).toContainText(/clinical operations & success analytics/i, { timeout: 10000 });
+    await expect(page.getByTestId("reports-title")).toHaveText("Reports", { timeout: 10000 });
 
     // 2. Export buttons are visible and interactive
     await expect(page.getByTestId("export-excel-button")).toBeVisible();
     await expect(page.getByTestId("export-pdf-button")).toBeVisible();
-
-    // 3. Therapist performance table is present
-    await expect(page.locator("body")).toContainText(/therapist workload & performance ledger/i);
 
     await context.close();
   });

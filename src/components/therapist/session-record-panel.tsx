@@ -1,15 +1,17 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, CheckCircle, Clock, AlertCircle, Save, Edit3, ShieldCheck } from "lucide-react";
+import { X, CheckCircle, Clock, AlertCircle, Save, Edit3, ShieldCheck, MessageSquare } from "lucide-react";
 import { SignaturePad } from "./signature-pad";
 import { WritingAssist } from "@/components/writing-assist/writing-assist";
+import { ReasonThreadView } from "./reason-thread-view";
 import {
   recordDailySessionAction,
   updateTodaySessionAction,
 } from "@/lib/actions/therapist-session-new-actions";
 import { formatDisplayDate } from "@/lib/date-utils";
 import { useKeyboardOffset, scrollInputIntoViewOnFocus } from "@/lib/mobile-keyboard";
+import { useNetworkStatus } from "@/components/network/network-provider";
 
 export interface SessionRecordCaseData {
   id: string;
@@ -32,6 +34,7 @@ interface SessionRecordPanelProps {
   onClose: () => void;
   caseData: SessionRecordCaseData | null;
   todayIST: string;
+  initialTab?: "session" | "reason";
   onSessionSaved: () => void;
 }
 
@@ -40,9 +43,12 @@ export function SessionRecordPanel({
   onClose,
   caseData,
   todayIST,
+  initialTab = "session",
   onSessionSaved,
 }: SessionRecordPanelProps) {
   const isDoneToday = Boolean(caseData?.todaySession);
+  const { isOnline } = useNetworkStatus();
+  const [activeTab, setActiveTab] = useState<"session" | "reason">(initialTab);
   const [isEditing, setIsEditing] = useState(false);
   const keyboardOffset = useKeyboardOffset();
 
@@ -73,8 +79,9 @@ export function SessionRecordPanel({
       setIsEditing(false);
       setErrorMessage(null);
       setFieldErrors({});
+      setActiveTab(initialTab);
     }
-  }, [caseData]);
+  }, [caseData, initialTab]);
 
   if (!isOpen || !caseData) return null;
 
@@ -184,8 +191,52 @@ export function SessionRecordPanel({
           </button>
         </div>
 
-        {/* Status Banner */}
-        <div className="px-6 py-3 border-b border-stone-200">
+        {/* Sub-Tabs: Record Session vs Reason Thread */}
+        <div className="flex border-b border-stone-200 bg-stone-50 px-6 pt-2">
+          <button
+            type="button"
+            data-testid="panel-tab-session"
+            onClick={() => setActiveTab("session")}
+            className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider min-h-[44px] cursor-pointer transition-colors border-b-2 -mb-[1px] ${
+              activeTab === "session"
+                ? "border-[#0B7A63] text-[#0B7A63] bg-white font-extrabold"
+                : "border-transparent text-stone-500 hover:text-stone-800"
+            }`}
+          >
+            Record Session
+          </button>
+          <button
+            type="button"
+            data-testid="panel-tab-reason"
+            onClick={() => setActiveTab("reason")}
+            className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider min-h-[44px] cursor-pointer transition-colors border-b-2 -mb-[1px] flex items-center gap-1.5 ${
+              activeTab === "reason"
+                ? "border-[#0B7A63] text-[#0B7A63] bg-white font-extrabold"
+                : "border-transparent text-stone-500 hover:text-stone-800"
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>Reason Thread</span>
+          </button>
+        </div>
+
+        {activeTab === "reason" ? (
+          <div className="p-6">
+            <ReasonThreadView
+              caseId={caseData.id}
+              patientId={caseData.patientId}
+              clientName={caseData.clientName}
+              todayIST={todayIST}
+              isSessionRecordedToday={isDoneToday}
+              onThreadUpdated={() => {
+                onSessionSaved();
+              }}
+            />
+          </div>
+        ) : (
+          <>
+            {/* Status Banner */}
+            <div className="px-6 py-3 border-b border-stone-200">
           {isDoneToday ? (
             <div className="flex items-center justify-between bg-emerald-50 border border-emerald-300 p-3">
               <div className="flex items-center gap-2 text-xs font-semibold text-emerald-900">
@@ -376,16 +427,24 @@ export function SessionRecordPanel({
                 <button
                   type="submit"
                   data-testid="save-session-btn"
-                  disabled={saving}
+                  disabled={saving || !isOnline}
                   className="flex-1 min-h-[52px] h-[52px] bg-[#0B7A63] hover:bg-[#086350] active:bg-[#064e3e] disabled:bg-stone-400 text-white font-semibold text-base uppercase tracking-wider rounded-none transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm select-none touch-manipulation"
                 >
                   <Save className="w-5 h-5" />
-                  <span>{saving ? "Saving..." : "Save session"}</span>
+                  <span>
+                    {!isOnline
+                      ? "Connect to save"
+                      : saving
+                      ? "Saving..."
+                      : "Save session"}
+                  </span>
                 </button>
               </div>
             )}
           </div>
         </form>
+        </>
+        )}
       </div>
     </div>
   );

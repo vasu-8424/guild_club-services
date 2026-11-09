@@ -12,6 +12,7 @@ import { WritingAssist } from "@/components/writing-assist/writing-assist";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AlertCircle, AlertTriangle, CheckCircle, ArrowLeft } from "lucide-react";
 import type { CasePriority } from "@/db/schema";
+import { useNetworkStatus } from "@/components/network/network-provider";
 
 interface TherapistOption {
   id: string;
@@ -27,6 +28,7 @@ interface CreateCaseFormProps {
 
 export function CreateCaseForm({ therapists }: CreateCaseFormProps) {
   const router = useRouter();
+  const { isOnline } = useNetworkStatus();
 
   // Client Details
   const [clientName, setClientName] = React.useState("");
@@ -336,9 +338,10 @@ export function CreateCaseForm({ therapists }: CreateCaseFormProps) {
           variant="primary"
           size="md"
           isLoading={isLoading}
+          disabled={!isOnline}
           className="w-full sm:w-auto"
         >
-          Create Case Intake
+          {!isOnline ? "Connect to save" : "Create Case Intake"}
         </Button>
       </div>
     </form>

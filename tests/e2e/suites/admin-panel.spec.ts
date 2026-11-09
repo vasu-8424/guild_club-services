@@ -12,11 +12,11 @@ test.describe("Suite H: ADMIN SIMPLE PANEL AND NOTES", () => {
     await page.click('[data-testid="login-submit-button"]');
     await expect(page).toHaveURL(/\/admin\/dashboard/);
 
-    // Verify 4 summary cards exist
+    // Verify remaining 3 summary cards exist, and stat-rooms is removed
     await expect(page.locator('[data-testid="stat-active-cases"], [data-testid="summary-card-active-cases"]')).toBeVisible();
     await expect(page.locator('[data-testid="stat-sessions"], [data-testid="summary-card-today-sessions"]')).toBeVisible();
-    await expect(page.locator('[data-testid="stat-rooms"], [data-testid="summary-card-completed-cases"]')).toBeVisible();
     await expect(page.locator('[data-testid="stat-therapists"], [data-testid="summary-card-active-therapists"]')).toBeVisible();
+    await expect(page.locator('[data-testid="stat-rooms"]')).toHaveCount(0);
   });
 
   test("[AD-02] No chart elements on page (no canvas, no svg chart containers)", async ({ page }) => {

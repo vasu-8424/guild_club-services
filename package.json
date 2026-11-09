@@ -30,6 +30,7 @@
     "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.6.0",
     "@capacitor/geolocation": "^8.2.4",
+    "@capacitor/network": "^8.0.1",
     "@capacitor/status-bar": "^8.0.4",
     "@google/genai": "^2.32.0",
     "@neondatabase/serverless": "^1.2.0",

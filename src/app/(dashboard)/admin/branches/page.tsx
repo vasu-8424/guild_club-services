@@ -1,22 +1,17 @@
-import React from "react";
-import { requireRole } from "@/lib/session";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { getBranchesAction } from "@/lib/actions/branch-actions";
-import { BranchesClient } from "@/components/branches/branches-client";
-
-export const metadata = {
-  title: "Branches | Guild Club Services",
-};
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/session";
 
 export default async function AdminBranchesPage() {
-  const user = await requireRole("super_admin");
+  const user = await getCurrentUser();
 
-  const res = await getBranchesAction(true);
-  const branches = res.success ? res.branches : [];
+  if (!user) {
+    redirect("/login");
+  }
 
-  return (
-    <DashboardShell user={user} title="Branches">
-      <BranchesClient initialBranches={branches} />
-    </DashboardShell>
-  );
+  if (user.role === "super_admin") {
+    redirect("/super-admin/branches");
+  }
+
+  // Admin role does not manage branches
+  redirect("/admin/dashboard");
 }

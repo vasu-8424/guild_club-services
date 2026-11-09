@@ -1,22 +1,12 @@
 import { requireRole } from "@/lib/session";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { db } from "@/db";
-import { users, cases, userBranches } from "@/db/schema";
-import { eq, and, isNull, inArray, sql } from "drizzle-orm";
-import { parseDateFilter } from "@/lib/date-utils";
+import { cases, clients, users } from "@/db/schema";
+import { eq, and, isNotNull, sql, desc } from "drizzle-orm";
+import { getTodayIST, formatDateTimeIST, formatTimeIST } from "@/lib/date-utils";
 import { getScope } from "@/lib/scope";
 import { BranchPickerCard } from "@/components/layout/branch-picker-card";
-import {
-  getDashboardSummary,
-  getPeopleSummary,
-  getCaseMovements,
-  getActivityHeatmapData,
-  getPipelineFunnelData,
-  getDailyTrendData,
-  getTherapistCapacityList,
-  getAdminProductivityList,
-} from "@/lib/dashboard";
-import { getRecentlyClosedCasesAction } from "@/lib/actions/notification-actions";
+import { type ClosedCaseItem } from "@/components/dashboard/recently-closed-cases-card";
 import { SuperAdminDashboardClient } from "./super-admin-dashboard-client";
 
 interface SuperAdminDashboardPageProps {
@@ -33,7 +23,6 @@ export default async function SuperAdminDashboard({
 }: SuperAdminDashboardPageProps) {
   const user = await requireRole("super_admin");
   const rawParams = searchParams ? await searchParams : {};
-  const filter = parseDateFilter(rawParams);
   const branchParam = typeof rawParams.branch === "string" ? rawParams.branch : undefined;
 
   const scope = await getScope(user, branchParam);
@@ -52,132 +41,64 @@ export default async function SuperAdminDashboard({
   }
 
   const activeBranchId = scope.activeBranchId;
+  const selectedBranch = scope.allowedBranches.find((b) => b.id === activeBranchId);
 
-  // 1. Fetch core summaries and chart datasets in parallel, scoped to selected branch
-  const [
-    summary,
-    people,
-    movements,
-    adminsCount,
-    therapistsCount,
-    activeCasesCount,
-    totalCasesCount,
-    heatmapData,
-    pipelineData,
-    trendData,
-    therapistCapacity,
-    adminProductivity,
-    recentlyClosedRes,
-  ] = await Promise.all([
-    getDashboardSummary(user, filter),
-    getPeopleSummary(user, filter),
-    getCaseMovements(user, filter),
-    db
-      .select({ count: sql<number>`count(DISTINCT ${userBranches.userId})::int` })
-      .from(userBranches)
-      .innerJoin(users, eq(users.id, userBranches.userId))
-      .where(
-        and(
-          eq(userBranches.branchId, activeBranchId),
-          isNull(userBranches.removedAt),
-          eq(users.role, "admin"),
-          isNull(users.deletedAt)
-        )
-      ),
-    db
-      .select({ count: sql<number>`count(DISTINCT ${userBranches.userId})::int` })
-      .from(userBranches)
-      .innerJoin(users, eq(users.id, userBranches.userId))
-      .where(
-        and(
-          eq(userBranches.branchId, activeBranchId),
-          isNull(userBranches.removedAt),
-          eq(users.role, "therapist"),
-          isNull(users.deletedAt)
-        )
-      ),
-    db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(cases)
-      .where(
-        and(
-          eq(cases.branchId, activeBranchId),
-          inArray(cases.status, ["assigned", "accepted", "in_progress"])
-        )
-      ),
-    db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(cases)
-      .where(eq(cases.branchId, activeBranchId)),
-    getActivityHeatmapData(filter.endDate),
-    getPipelineFunnelData(filter),
-    getDailyTrendData(filter),
-    getTherapistCapacityList(),
-    getAdminProductivityList(filter),
-    getRecentlyClosedCasesAction(5),
-  ]);
+  // Date selection (default today IST)
+  const todayIST = getTodayIST();
+  const rawDate = Array.isArray(rawParams.date) ? rawParams.date[0] : rawParams.date;
+  const selectedDate =
+    rawDate && /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : todayIST;
+  const isToday = selectedDate === todayIST;
+  const isPast = selectedDate < todayIST;
 
-  // 2. Status breakdown for charts scoped to branch
-  const statusRows = await db
+  // Query closed cases for activeBranchId on selectedDate with IST day boundaries
+  const dayStart = sql`(${selectedDate}::date)::timestamp AT TIME ZONE 'Asia/Kolkata'`;
+  const dayEnd = sql`(${selectedDate}::date + interval '1 day')::timestamp AT TIME ZONE 'Asia/Kolkata'`;
+
+  const rows = await db
     .select({
-      status: cases.status,
-      count: sql<number>`count(*)::int`,
+      id: cases.id,
+      caseNumber: cases.caseNumber,
+      patientId: sql<string>`COALESCE(${cases.patientId}, ${cases.caseNumber})`,
+      patientName: clients.fullName,
+      outcome: cases.outcome,
+      closedAt: cases.closedAt,
+      therapistName: users.name,
     })
     .from(cases)
-    .where(eq(cases.branchId, activeBranchId))
-    .groupBy(cases.status);
+    .leftJoin(clients, eq(cases.clientId, clients.id))
+    .leftJoin(users, eq(cases.currentTherapistId, users.id))
+    .where(
+      and(
+        eq(cases.status, "completed"),
+        eq(cases.branchId, activeBranchId),
+        isNotNull(cases.closedAt),
+        sql`${cases.closedAt} >= ${dayStart}`,
+        sql`${cases.closedAt} < ${dayEnd}`
+      )
+    )
+    .orderBy(desc(cases.closedAt));
 
-  const statusLabelMap: Record<string, string> = {
-    new: "New",
-    assigned: "Assigned",
-    accepted: "Accepted",
-    in_progress: "In Progress",
-    on_hold: "On Hold",
-    completed: "Completed",
-  };
-
-  const statusData = statusRows.map((r) => ({
-    name: statusLabelMap[r.status] || r.status,
-    value: r.count,
+  const recentlyClosedCases: ClosedCaseItem[] = rows.map((r) => ({
+    id: r.id,
+    caseNumber: r.caseNumber,
+    patientId: r.patientId,
+    patientName: r.patientName || "Patient",
+    therapistName: r.therapistName || "Assigned Therapist",
+    outcome: r.outcome || "successful",
+    closedAt: r.closedAt ? r.closedAt.toISOString() : null,
+    closedAtIst: r.closedAt ? formatDateTimeIST(r.closedAt) : null,
+    closedTime: r.closedAt ? formatTimeIST(r.closedAt) : null,
   }));
-
-  // 3. Category breakdown for charts scoped to branch
-  const categoryRows = await db
-    .select({
-      category: cases.category,
-      count: sql<number>`count(*)::int`,
-    })
-    .from(cases)
-    .where(eq(cases.branchId, activeBranchId))
-    .groupBy(cases.category)
-    .orderBy(sql`count(*) DESC`)
-    .limit(6);
-
-  const categoryData = categoryRows.map((r) => ({
-    name: r.category,
-    value: r.count,
-  }));
-
-  const recentlyClosedCases = recentlyClosedRes?.data || [];
 
   return (
     <DashboardShell user={user} title="Super Administrator Portal">
       <SuperAdminDashboardClient
         user={user}
-        summary={summary}
-        people={people}
-        movements={movements}
-        statusData={statusData}
-        categoryData={categoryData}
-        adminsCount={adminsCount[0]?.count ?? 0}
-        therapistsCount={therapistsCount[0]?.count ?? 0}
-        activeCasesCount={activeCasesCount[0]?.count ?? 0}
-        totalCasesCount={totalCasesCount[0]?.count ?? 0}
-        heatmapData={heatmapData}
-        pipelineData={pipelineData}
-        trendData={trendData}
-        therapistCapacity={therapistCapacity}
-        adminProductivity={adminProductivity}
+        selectedDate={selectedDate}
+        isPast={isPast}
+        isToday={isToday}
+        branchName={selectedBranch?.name || "Clinic Branch"}
         recentlyClosedCases={recentlyClosedCases}
       />
     </DashboardShell>

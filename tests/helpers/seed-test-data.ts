@@ -23,6 +23,8 @@ import {
   rooms,
   adminNotes,
   userBranches,
+  sessionReasonMessages,
+  sessionReasonThreads,
 } from "../../src/db/schema";
 import { getTodayIST, formatToISTDateString } from "../../src/lib/date-utils";
 
@@ -72,6 +74,7 @@ export interface SeededTestUsers {
   therapist3: { id: string; email: string; password: string };
   therapistForcePwd: { id: string; email: string; password: string };
   deactivated: { id: string; email: string; password: string };
+  wellknoxBranch: { id: string; name: string };
   mainBranch: { id: string; name: string };
   northBranch: { id: string; name: string };
 }
@@ -88,6 +91,8 @@ export async function seedTestData(): Promise<SeededTestUsers> {
 
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
+      await db.delete(sessionReasonMessages);
+      await db.delete(sessionReasonThreads);
       await db.delete(passwordResetTokens);
       await db.delete(inAppNotifications);
       await db.delete(adminNotes);
@@ -124,7 +129,12 @@ export async function seedTestData(): Promise<SeededTestUsers> {
   const saltRounds = 10;
   const todayIST = getTodayIST();
 
-  // 1. Branches: "Main Branch" and "North Branch"
+  // 1. Branches: "Wellknox Banjara Hills", "Main Branch" and "North Branch"
+  const [wellknoxBranch] = await db
+    .insert(branches)
+    .values({ name: "Wellknox Banjara Hills", isActive: true })
+    .returning();
+
   const [mainBranch] = await db
     .insert(branches)
     .values({ name: "Main Branch", isActive: true })
@@ -153,7 +163,7 @@ export async function seedTestData(): Promise<SeededTestUsers> {
     })
     .returning();
 
-  // 3. Admin 1: Main only
+  // 3. Admin 1: Wellknox Banjara Hills only
   const adminMainEmail = process.env.TEST_ADMIN_MAIN_EMAIL || "qa.admin.main@guildclub.com";
   const adminMainPassword = process.env.TEST_ADMIN_MAIN_PASSWORD || "Password@Admin123";
   const adminMainHash = await bcrypt.hash(adminMainPassword, saltRounds);
@@ -174,7 +184,7 @@ export async function seedTestData(): Promise<SeededTestUsers> {
 
   await db.insert(userBranches).values({
     userId: adminMain.id,
-    branchId: mainBranch.id,
+    branchId: wellknoxBranch.id,
     roleInBranch: "admin",
     assignedBy: superAdmin.id,
   });
@@ -239,12 +249,20 @@ export async function seedTestData(): Promise<SeededTestUsers> {
     maxOpenCases: 15,
   });
 
-  await db.insert(userBranches).values({
-    userId: therapist1.id,
-    branchId: mainBranch.id,
-    roleInBranch: "therapist",
-    assignedBy: adminMain.id,
-  });
+  await db.insert(userBranches).values([
+    {
+      userId: therapist1.id,
+      branchId: wellknoxBranch.id,
+      roleInBranch: "therapist",
+      assignedBy: adminMain.id,
+    },
+    {
+      userId: therapist1.id,
+      branchId: mainBranch.id,
+      roleInBranch: "therapist",
+      assignedBy: adminMain.id,
+    },
+  ]);
 
   const t2Email = process.env.TEST_THERAPIST_2_EMAIL || "qa.therapist2.north@guildclub.com";
   const t2Password = process.env.TEST_THERAPIST_2_PASSWORD || "Password@Therapist2";
@@ -266,7 +284,7 @@ export async function seedTestData(): Promise<SeededTestUsers> {
 
   await db.insert(therapistProfiles).values({
     userId: therapist2.id,
-    specialization: "Neurological Physiotherapy",
+    specialization: "Pediatric Speech Therapy",
     experienceYears: 6,
     maxOpenCases: 12,
   });
@@ -298,7 +316,7 @@ export async function seedTestData(): Promise<SeededTestUsers> {
 
   await db.insert(therapistProfiles).values({
     userId: therapist3.id,
-    specialization: "Sports Physiotherapy",
+    specialization: "Clinical Speech & Language Therapy",
     experienceYears: 10,
     maxOpenCases: 20,
   });
@@ -371,6 +389,11 @@ export async function seedTestData(): Promise<SeededTestUsers> {
   });
 
   // 8. Rooms: 2 rooms per branch
+  await db.insert(rooms).values([
+    { roomNo: "101 Super Deluxe", branchId: wellknoxBranch.id, isActive: true, createdBy: adminMain.id },
+    { roomNo: "102 Sharing", branchId: wellknoxBranch.id, isActive: true, createdBy: adminMain.id },
+  ]);
+
   const [roomMain1] = await db
     .insert(rooms)
     .values({ roomNo: "101", branchId: mainBranch.id, isActive: true, createdBy: adminMain.id })
@@ -391,6 +414,7 @@ export async function seedTestData(): Promise<SeededTestUsers> {
 
   // 9. Clients and Cases: 1 closed case, 1 open case per therapist, and past sessions
   const therapistList = [
+    { t: therapist1, branchId: wellknoxBranch.id, prefix: "W1" },
     { t: therapist1, branchId: mainBranch.id, prefix: "M1" },
     { t: therapist2, branchId: northBranch.id, prefix: "N2" },
     { t: therapist3, branchId: mainBranch.id, prefix: "B3" },
@@ -402,7 +426,7 @@ export async function seedTestData(): Promise<SeededTestUsers> {
       .insert(clients)
       .values({
         fullName: `Patient Open ${item.prefix}`,
-        phone: `+91981111${item.prefix === "M1" ? "1111" : item.prefix === "N2" ? "2222" : "3333"}`,
+        phone: `+91981111${item.prefix === "W1" ? "0000" : item.prefix === "M1" ? "1111" : item.prefix === "N2" ? "2222" : "3333"}`,
         age: 38,
         gender: "female",
       })
@@ -413,7 +437,7 @@ export async function seedTestData(): Promise<SeededTestUsers> {
       .insert(clients)
       .values({
         fullName: `Patient Closed ${item.prefix}`,
-        phone: `+91982222${item.prefix === "M1" ? "1111" : item.prefix === "N2" ? "2222" : "3333"}`,
+        phone: `+91982222${item.prefix === "W1" ? "0000" : item.prefix === "M1" ? "1111" : item.prefix === "N2" ? "2222" : "3333"}`,
         age: 52,
         gender: "male",
       })
@@ -424,19 +448,19 @@ export async function seedTestData(): Promise<SeededTestUsers> {
       .insert(cases)
       .values({
         caseNumber: `GCS-QA-${item.prefix}-OPEN`,
-        patientId: `GCP-9${item.prefix === "M1" ? "011" : item.prefix === "N2" ? "021" : "031"}`,
+        patientId: `GCP-9${item.prefix === "W1" ? "001" : item.prefix === "M1" ? "011" : item.prefix === "N2" ? "021" : "031"}`,
         clientId: cOpen.id,
         currentTherapistId: item.t.id,
         createdBy: item.t.id,
         branchId: item.branchId,
-        service: "physiotherapy",
-        category: "physiotherapy",
+        service: "speech_therapy",
+        category: "speech_therapy",
         priority: "medium",
         problem: `Active rehabilitation program ${item.prefix}`,
         description: `Functional motor recovery and pain management for ${item.prefix}`,
         presentCondition: "Initial assessment completed, steady progression recorded",
         startDate: todayIST,
-        roomNo: item.prefix === "M1" ? "101" : item.prefix === "N2" ? "201" : "102",
+        roomNo: item.prefix === "W1" ? "101 Super Deluxe" : item.prefix === "M1" ? "101" : item.prefix === "N2" ? "201" : "102",
         status: "active",
       })
       .returning();
@@ -450,19 +474,19 @@ export async function seedTestData(): Promise<SeededTestUsers> {
       .insert(cases)
       .values({
         caseNumber: `GCS-QA-${item.prefix}-CLOSED`,
-        patientId: `GCP-9${item.prefix === "M1" ? "012" : item.prefix === "N2" ? "022" : "032"}`,
+        patientId: `GCP-9${item.prefix === "W1" ? "002" : item.prefix === "M1" ? "012" : item.prefix === "N2" ? "022" : "032"}`,
         clientId: cClosed.id,
         currentTherapistId: item.t.id,
         createdBy: item.t.id,
         branchId: item.branchId,
-        service: "physiotherapy",
-        category: "physiotherapy",
+        service: item.prefix === "O3" ? "physiotherapy" : "speech_therapy",
+        category: item.prefix === "O3" ? "physiotherapy" : "speech_therapy",
         priority: "low",
         problem: `Post-operative shoulder recovery ${item.prefix}`,
         description: `Discharged after successful rehabilitation ${item.prefix}`,
         presentCondition: "Full range of motion achieved, zero discomfort",
         startDate: pastDateIST,
-        roomNo: item.prefix === "M1" ? "101" : item.prefix === "N2" ? "201" : "102",
+        roomNo: item.prefix === "W1" ? "102 Sharing" : item.prefix === "M1" ? "101" : item.prefix === "N2" ? "201" : "102",
         status: "completed",
         closedAt: new Date(),
         closingNotes: "Completed treatment program successfully",
@@ -500,6 +524,7 @@ export async function seedTestData(): Promise<SeededTestUsers> {
     therapist3: { id: therapist3.id, email: t3Email, password: t3Password },
     therapistForcePwd: { id: therapistForcePwd.id, email: tForceEmail, password: tForcePassword },
     deactivated: { id: deactivated.id, email: deactEmail, password: deactPassword },
+    wellknoxBranch: { id: wellknoxBranch.id, name: wellknoxBranch.name },
     mainBranch: { id: mainBranch.id, name: mainBranch.name },
     northBranch: { id: northBranch.id, name: northBranch.name },
   };
