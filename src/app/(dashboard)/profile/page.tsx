@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { LogoutButton } from "@/components/layout/logout-button";
+import { IosInstallStatusRow } from "@/components/pwa/ios-install-status-row";
 
 export const metadata = {
   title: "Profile & Settings | Guild Club Services",
@@ -204,6 +205,8 @@ export default async function ProfilePage() {
                 support@guildclub.com
               </a>
             </div>
+
+            <IosInstallStatusRow />
 
             {/* FULL-WIDTH SIGN OUT BUTTON (Destructive outline style, 52px high) */}
             <div className="pt-3">

@@ -42,6 +42,12 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Guild Club",
   },
+  formatDetection: {
+    telephone: false,
+    date: false,
+    address: false,
+    email: false,
+  },
 };
 
 export default function RootLayout({

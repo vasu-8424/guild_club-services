@@ -52,7 +52,7 @@ export function IosInstallBanner() {
       role="dialog"
       aria-label="Add to iPhone Home Screen"
       data-testid="ios-install-banner"
-      className="fixed bottom-3 left-3 right-3 z-50 mx-auto max-w-md border border-[#0B7A63]/30 bg-white p-4 shadow-xl shadow-slate-900/15 rounded-none animate-in fade-in slide-in-from-bottom-4 duration-300"
+      className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-3 right-3 z-50 mx-auto max-w-md border border-[#0B7A63]/30 bg-white p-4 shadow-xl shadow-slate-900/15 rounded-none animate-in fade-in slide-in-from-bottom-4 duration-300"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
