@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ServiceWorkerRegister } from "@/components/pwa/sw-register";
+import { IosInstallBanner } from "@/components/pwa/ios-install-banner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
     title: "Guild Club",
   },
 };
@@ -55,6 +56,7 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-slate-100 text-slate-900 font-sans antialiased selection:bg-[#0B7A63] selection:text-white">
         <ServiceWorkerRegister />
+        <IosInstallBanner />
         {children}
       </body>
     </html>

@@ -1,8 +1,10 @@
 {
+  "id": "/",
   "name": "Guild Club Services",
   "short_name": "Guild Club",
   "description": "Therapy Case Management Portal",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0B7A63",
   "theme_color": "#0B7A63",
