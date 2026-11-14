@@ -88,68 +88,69 @@ function LoginForm() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 font-sans flex-col">
+    <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
       <StaleUiGuard />
-      {/* Left Marketing / Hero Panel (Hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-slate-900 p-12 relative overflow-hidden border-r border-slate-800">
-        <div className="absolute inset-0 bg-radial from-[#0B7A63]/25 via-transparent to-transparent pointer-events-none" />
+      <div className="flex flex-1 flex-col lg:flex-row min-h-screen">
+        {/* Left Marketing / Hero Panel (Hidden on mobile) */}
+        <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-slate-900 p-12 relative overflow-hidden border-r border-slate-800">
+          <div className="absolute inset-0 bg-radial from-[#0B7A63]/25 via-transparent to-transparent pointer-events-none" />
 
-        {/* Top Brand Logo */}
-        <div className="flex items-center gap-3 relative z-10">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full overflow-hidden shadow-md border border-amber-500/20 bg-slate-900 shrink-0">
-            <Image src="/logo.png" alt="Guild Club Services" width={48} height={48} priority className="h-full w-full object-cover" />
+          {/* Top Brand Logo */}
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full overflow-hidden shadow-md border border-amber-500/20 bg-slate-900 shrink-0">
+              <Image src="/logo.png" alt="Guild Club Services" width={48} height={48} priority className="h-full w-full object-cover" />
+            </div>
+            <div>
+              <span className="text-lg font-semibold tracking-tight text-white block">
+                Guild Club Services
+              </span>
+              <span className="text-xs font-semibold text-[#0F9D7A] uppercase tracking-wider block">
+                Clinical Care Platform
+              </span>
+            </div>
           </div>
-          <div>
-            <span className="text-lg font-semibold tracking-tight text-white block">
-              Guild Club Services
-            </span>
-            <span className="text-xs font-semibold text-[#0F9D7A] uppercase tracking-wider block">
-              Clinical Care Platform
-            </span>
+
+          {/* Center Tagline & Illustration Callout */}
+          <div className="relative z-10 max-w-md space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-none bg-slate-800 px-3 py-1 text-xs font-semibold text-teal-300 border border-slate-700">
+              <Icons.Security className="h-4 w-4 text-[#0F9D7A]" />
+              <span>Secure Therapy Case Management</span>
+            </div>
+            <h2 className="text-3xl font-semibold tracking-tight text-white leading-tight">
+              Empowering compassionate care through seamless case coordination.
+            </h2>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              A unified clinical portal for therapists, clinic administrators, and supervisors. Managing referrals, session tracking, and clinical progression with complete audit transparency.
+            </p>
+
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-800">
+              <div className="flex items-start gap-2.5">
+                <Icons.Success className="h-4 w-4 text-[#0F9D7A] shrink-0 mt-0.5" />
+                <span className="text-xs text-slate-200">End-to-End Case Lifecycle</span>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <Icons.Success className="h-4 w-4 text-[#0F9D7A] shrink-0 mt-0.5" />
+                <span className="text-xs text-slate-200">Date-Wise Audit Trails</span>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <Icons.Success className="h-4 w-4 text-[#0F9D7A] shrink-0 mt-0.5" />
+                <span className="text-xs text-slate-200">Role-Based Access Control</span>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <Icons.Success className="h-4 w-4 text-[#0F9D7A] shrink-0 mt-0.5" />
+                <span className="text-xs text-slate-200">Asia/Kolkata Synchronized</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="relative z-10 text-xs text-slate-500">
+            &copy; {new Date().getFullYear()} Guild Club Services. Authorized personnel only.
           </div>
         </div>
 
-        {/* Center Tagline & Illustration Callout */}
-        <div className="relative z-10 max-w-md space-y-6">
-          <div className="inline-flex items-center gap-2 rounded-none bg-slate-800 px-3 py-1 text-xs font-semibold text-teal-300 border border-slate-700">
-            <Icons.Security className="h-4 w-4 text-[#0F9D7A]" />
-            <span>Secure Therapy Case Management</span>
-          </div>
-          <h2 className="text-3xl font-semibold tracking-tight text-white leading-tight">
-            Empowering compassionate care through seamless case coordination.
-          </h2>
-          <p className="text-sm text-slate-300 leading-relaxed">
-            A unified clinical portal for therapists, clinic administrators, and supervisors. Managing referrals, session tracking, and clinical progression with complete audit transparency.
-          </p>
-
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-800">
-            <div className="flex items-start gap-2.5">
-              <Icons.Success className="h-4 w-4 text-[#0F9D7A] shrink-0 mt-0.5" />
-              <span className="text-xs text-slate-200">End-to-End Case Lifecycle</span>
-            </div>
-            <div className="flex items-start gap-2.5">
-              <Icons.Success className="h-4 w-4 text-[#0F9D7A] shrink-0 mt-0.5" />
-              <span className="text-xs text-slate-200">Date-Wise Audit Trails</span>
-            </div>
-            <div className="flex items-start gap-2.5">
-              <Icons.Success className="h-4 w-4 text-[#0F9D7A] shrink-0 mt-0.5" />
-              <span className="text-xs text-slate-200">Role-Based Access Control</span>
-            </div>
-            <div className="flex items-start gap-2.5">
-              <Icons.Success className="h-4 w-4 text-[#0F9D7A] shrink-0 mt-0.5" />
-              <span className="text-xs text-slate-200">Asia/Kolkata Synchronized</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="relative z-10 text-xs text-slate-500">
-          &copy; {new Date().getFullYear()} Guild Club Services. Authorized personnel only.
-        </div>
-      </div>
-
-      {/* Right Login Card Panel */}
-      <div className="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:px-12 xl:px-20">
+        {/* Right Login Card Panel */}
+        <div className="flex flex-1 lg:w-1/2 flex-col justify-center px-4 py-12 sm:px-6 lg:px-12 xl:px-20">
         <div className="mx-auto w-full max-w-md space-y-6">
           {/* Mobile Header (Shown only on small screens) */}
           <div className="lg:hidden text-center mb-6">
@@ -278,6 +279,7 @@ function LoginForm() {
             
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
