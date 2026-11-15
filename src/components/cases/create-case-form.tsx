@@ -698,54 +698,57 @@ export function CreateCaseForm({ branches }: CreateCaseFormProps) {
       </div>
 
       {/* 6. Consent Checkbox */}
-      <div className="pt-2 border-t border-stone-200">
-        <label className="flex items-start gap-3 cursor-pointer select-none touch-manipulation">
-          <input
-            type="checkbox"
-            data-testid="consent-checkbox"
-            checked={consentObtained}
-            onChange={(e) => setConsentObtained(e.target.checked)}
-            className="mt-1 h-5 w-5 rounded-none border-stone-300 text-[#0B7A63] focus:ring-[#0B7A63]"
-            required
-          />
-          <span className="text-[14px] text-stone-800 font-semibold">
+      <div className="pt-3 border-t border-stone-200">
+        <label
+          htmlFor="consent-checkbox"
+          className="flex items-start gap-3.5 p-4 bg-stone-50 border border-stone-200 hover:border-stone-300 hover:bg-stone-100/60 cursor-pointer select-none touch-manipulation transition-colors"
+        >
+          <div className="relative flex items-center justify-center shrink-0 mt-0.5">
+            <input
+              type="checkbox"
+              id="consent-checkbox"
+              data-testid="consent-checkbox"
+              checked={consentObtained}
+              onChange={(e) => setConsentObtained(e.target.checked)}
+              className="h-7 w-7 min-h-[28px] min-w-[28px] rounded-none border-2 border-stone-400 text-[#0B7A63] focus:ring-2 focus:ring-[#0B7A63] accent-[#0B7A63] cursor-pointer"
+              required
+            />
+          </div>
+          <span className="text-[15px] text-stone-900 font-semibold leading-snug">
             Consent obtained <span className="text-red-500">*</span>
-            <span className="block text-[13px] font-normal text-stone-500 mt-0.5">
+            <span className="block text-[13px] font-normal text-stone-600 mt-1 leading-relaxed">
               I certify that explicit informed consent for recording clinical details and condition photos was obtained from the patient or legal guardian.
             </span>
           </span>
         </label>
         {fieldErrors.consentObtained && (
-          <p className="text-[13px] text-red-600 mt-1">{fieldErrors.consentObtained}</p>
+          <p className="text-[13px] text-red-600 mt-1.5 font-medium">{fieldErrors.consentObtained}</p>
         )}
       </div>
 
-      {/* Fixed Save & Create Case Action Bar above Tab Bar */}
-      <div
-        className="fixed bottom-0 left-0 right-0 max-w-[480px] mx-auto z-30 bg-white/95 backdrop-blur-md p-3 border-t border-stone-200 flex items-center justify-between gap-3 shadow-[0_-2px_12px_rgba(15,23,42,0.08)] pb-[calc(0.75rem+env(safe-area-inset-bottom))]"
-        style={{ bottom: keyboardOffset > 0 ? `${keyboardOffset}px` : 0 }}
-      >
-        <button
-          type="button"
-          onClick={() => {
-            if (isDirty && !confirm("Discard unsaved case information?")) return;
-            router.push("/therapist/dashboard");
-          }}
-          className="min-h-[52px] h-[52px] px-5 border border-stone-300 text-stone-700 hover:bg-stone-50 text-[14px] font-semibold uppercase tracking-wider rounded-none transition-colors select-none touch-manipulation"
-        >
-          Cancel
-        </button>
+      {/* 7. Form Submission Action Buttons (Always visible in form flow directly below consent) */}
+      <div className="pt-6 pb-28 space-y-3">
         <button
           type="submit"
           data-testid="submit-case-btn"
           disabled={loading || isCompressing || !isOnline}
-          className="flex-1 min-h-[52px] h-[52px] inline-flex items-center justify-center gap-2 bg-[#0B7A63] hover:bg-[#096350] active:bg-[#064e3e] text-white text-base font-semibold uppercase tracking-wider rounded-none transition-colors disabled:opacity-50 select-none touch-manipulation shadow-xs"
+          className="w-full min-h-[52px] h-[52px] inline-flex items-center justify-center gap-2 bg-[#0B7A63] hover:bg-[#096350] active:bg-[#064e3e] text-white text-base font-bold uppercase tracking-wider rounded-none transition-colors disabled:opacity-50 select-none touch-manipulation shadow-md cursor-pointer"
         >
           {!isOnline
             ? "Connect to save"
             : loading
             ? "Creating Case..."
             : "Save & Create Case"}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            if (isDirty && !confirm("Discard unsaved case information?")) return;
+            router.push("/therapist/dashboard");
+          }}
+          className="w-full min-h-[48px] h-[48px] px-5 border border-stone-300 bg-white text-stone-700 hover:bg-stone-50 active:bg-stone-100 text-[14px] font-semibold uppercase tracking-wider rounded-none transition-colors select-none touch-manipulation cursor-pointer"
+        >
+          Cancel
         </button>
       </div>
     </form>
