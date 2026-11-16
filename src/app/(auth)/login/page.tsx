@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { loginAction } from "@/lib/actions/auth-actions";
 import { Button } from "@/components/ui/button";
@@ -274,6 +275,16 @@ function LoginForm() {
               <p className="text-xs text-slate-500">
                 Guild Club Services is an invite-only internal portal. Contact your clinic administrator for account credentials.
               </p>
+              <div className="mt-3 flex items-center justify-center gap-3 text-xs text-slate-400">
+                <Link
+                  href="/privacy"
+                  className="hover:text-[#0B7A63] underline underline-offset-2 transition-colors"
+                >
+                  Privacy Policy
+                </Link>
+                <span>&bull;</span>
+                <span>v1.6</span>
+              </div>
             </div>
 
             
