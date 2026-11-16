@@ -253,7 +253,7 @@ export default async function AdminCaseDetailPage({ params }: CaseDetailPageProp
               <Link
                 href={`/admin/cases/${caseRecord.id}/report`}
                 data-testid="admin-progress-report-btn"
-                className="inline-flex items-center gap-1.5 border border-slate-300 hover:bg-slate-100 text-slate-800 px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-none transition-colors"
+                className="inline-flex items-center justify-center min-h-[44px] h-[44px] gap-1.5 border border-slate-300 hover:bg-slate-100 text-slate-800 px-4 text-xs font-semibold uppercase tracking-wider rounded-none transition-colors whitespace-nowrap"
               >
                 <FileText className="w-4 h-4 text-slate-600" />
                 <span>Progress report</span>

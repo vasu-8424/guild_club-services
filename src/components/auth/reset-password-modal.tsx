@@ -97,9 +97,9 @@ export function ResetPasswordModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
         {resetSuccess ? (
-          <div className="py-2">
+          <div className="p-0">
             <CredentialsSuccessModal
               roleLabel={roleLabel}
               title="Password Reset Successfully!"
@@ -110,7 +110,7 @@ export function ResetPasswordModal({
             />
           </div>
         ) : (
-          <>
+          <div className="p-5 sm:p-6 space-y-4">
             <DialogHeader>
               <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700 mb-2">
                 <KeyRound className="h-5 w-5" />
@@ -191,7 +191,7 @@ export function ResetPasswordModal({
                 </Button>
               </div>
             </form>
-          </>
+          </div>
         )}
       </DialogContent>
     </Dialog>

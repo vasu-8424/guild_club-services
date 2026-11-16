@@ -606,11 +606,11 @@ export function MonthCalendar({
                 )}
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-200">
+              <div className="flex flex-row items-center justify-end gap-2.5 pt-3 border-t border-stone-200">
                 <button
                   type="button"
                   onClick={() => setActiveModal(null)}
-                  className="px-4 py-2 border border-stone-300 text-stone-700 hover:bg-stone-100 text-xs font-semibold uppercase tracking-wider rounded-none"
+                  className="px-5 py-2.5 min-h-[44px] h-[44px] border border-stone-300 text-stone-700 hover:bg-stone-100 text-xs font-semibold uppercase tracking-wider rounded-none cursor-pointer text-center"
                 >
                   Cancel
                 </button>
@@ -618,7 +618,7 @@ export function MonthCalendar({
                   type="submit"
                   data-testid="save-session-btn"
                   disabled={saving || noteText.trim().length < 10}
-                  className="bg-[#0B7A63] hover:bg-[#096350] text-white px-5 py-2 text-xs font-semibold uppercase tracking-wider rounded-none disabled:opacity-50"
+                  className="bg-[#0B7A63] hover:bg-[#096350] text-white px-6 py-2.5 min-h-[44px] h-[44px] text-xs font-semibold uppercase tracking-wider rounded-none disabled:opacity-50 cursor-pointer text-center"
                 >
                   {saving ? "Saving..." : "Save session"}
                 </button>
@@ -681,7 +681,7 @@ export function MonthCalendar({
                 type="button"
                 data-testid="close-view-session-btn"
                 onClick={() => setActiveModal(null)}
-                className="px-4 py-2 border border-stone-300 text-stone-700 hover:bg-stone-100 text-xs font-semibold uppercase tracking-wider rounded-none"
+                className="px-6 py-2.5 min-h-[44px] h-[44px] border border-stone-300 text-stone-700 hover:bg-stone-100 text-xs font-semibold uppercase tracking-wider rounded-none cursor-pointer text-center"
               >
                 Close
               </button>
@@ -715,7 +715,7 @@ export function MonthCalendar({
               type="button"
               data-testid="close-missed-modal-btn"
               onClick={() => setActiveModal(null)}
-              className="bg-stone-800 hover:bg-stone-900 text-white px-6 py-2 text-xs font-semibold uppercase tracking-wider rounded-none"
+              className="bg-stone-800 hover:bg-stone-900 text-white px-6 py-2.5 min-h-[44px] h-[44px] text-xs font-semibold uppercase tracking-wider rounded-none cursor-pointer text-center"
             >
               Close
             </button>

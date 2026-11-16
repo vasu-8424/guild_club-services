@@ -195,7 +195,7 @@ export function CloseCaseModal({
         type="button"
         data-testid="close-case-btn"
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center justify-center min-h-[48px] h-[48px] px-4 text-xs font-semibold uppercase tracking-wider border border-red-300 bg-red-50 hover:bg-red-100 text-red-800 rounded-none transition-colors w-full sm:w-auto"
+        className="inline-flex items-center justify-center min-h-[44px] h-[44px] px-4 text-xs font-semibold uppercase tracking-wider border border-red-300 bg-red-50 hover:bg-red-100 text-red-800 rounded-none transition-colors w-full whitespace-nowrap text-center cursor-pointer"
       >
         <span>Close Case</span>
       </button>
@@ -497,11 +497,11 @@ export function CloseCaseModal({
               Close case {patientId}? You cannot add sessions after closing.
             </p>
 
-            <div className="flex items-center justify-center gap-3">
+            <div className="flex flex-row items-center justify-center gap-3 w-full">
               <button
                 type="button"
                 onClick={() => setShowConfirm(false)}
-                className="px-4 py-2 border border-stone-300 text-stone-700 hover:bg-stone-100 text-xs font-semibold uppercase tracking-wider rounded-none"
+                className="px-5 py-2.5 min-h-[44px] h-[44px] border border-stone-300 text-stone-700 hover:bg-stone-100 text-xs font-semibold uppercase tracking-wider rounded-none flex-1 sm:flex-initial text-center cursor-pointer"
               >
                 Back
               </button>
@@ -510,7 +510,7 @@ export function CloseCaseModal({
                 data-testid="confirm-close-case-btn"
                 disabled={loading || !isOnline}
                 onClick={handleFinalClose}
-                className="bg-red-700 hover:bg-red-800 text-white px-6 py-2 text-xs font-semibold uppercase tracking-wider rounded-none disabled:opacity-50"
+                className="bg-red-700 hover:bg-red-800 text-white px-6 py-2.5 min-h-[44px] h-[44px] text-xs font-semibold uppercase tracking-wider rounded-none disabled:opacity-50 flex-1 sm:flex-initial text-center cursor-pointer"
               >
                 {!isOnline ? "Connect to save" : loading ? "Closing..." : "Yes, Close Case"}
               </button>

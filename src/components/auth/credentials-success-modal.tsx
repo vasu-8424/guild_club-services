@@ -136,13 +136,13 @@ export function CredentialsSuccessModal({
         )}
 
         {/* Security Warning Notice */}
-        <div className="flex items-start gap-2.5 rounded-none border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900">
+        <div className="flex items-start gap-2.5 rounded-none border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900 w-full min-w-0">
           <ShieldAlert className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
-          <div>
+          <div className="flex-1 min-w-0 text-left">
             <span className="font-semibold block mb-0.5">One-time Credential View:</span>
-            <span>
+            <p className="break-words leading-relaxed text-amber-900 m-0">
               Share these details with the {roleLabel}. The password cannot be viewed again.
-            </span>
+            </p>
           </div>
         </div>
 
@@ -235,10 +235,10 @@ export function CredentialsSuccessModal({
             variant="outline"
             onClick={copyAllCredentials}
             data-testid="copy-credentials-button"
-            className="w-full sm:w-auto flex items-center gap-2 text-xs"
+            leadingIcon={copiedAll ? <Check className="h-4 w-4 text-emerald-600 shrink-0" /> : <Copy className="h-4 w-4 shrink-0" />}
+            className="w-full sm:w-auto text-xs whitespace-nowrap min-h-[44px] h-[44px] px-4"
           >
-            {copiedAll ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-            <span>{copiedAll ? "Copied All Credentials!" : "Copy credentials"}</span>
+            {copiedAll ? "Copied All Credentials!" : "Copy credentials"}
           </Button>
 
           {onDone ? (

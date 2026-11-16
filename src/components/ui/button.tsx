@@ -60,7 +60,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     // Strict single-source layout rules
     const baseLayout = cn(
-      "btn relative inline-flex flex-row items-center justify-center box-border shrink-0 min-w-0 select-none font-semibold rounded-none tracking-tight whitespace-normal break-words text-center leading-tight transition-all duration-150 cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0B7A63] focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed max-w-full",
+      "btn relative inline-flex flex-row items-center justify-center box-border shrink-0 min-w-0 select-none font-semibold rounded-none tracking-tight whitespace-normal break-words text-center leading-tight transition-all duration-150 cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0B7A63] focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed max-w-full [&_svg]:shrink-0",
       !isIconButton && "w-full sm:w-auto"
     );
 

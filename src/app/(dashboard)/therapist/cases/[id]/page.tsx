@@ -333,26 +333,26 @@ export default async function TherapistCaseDetailPage({
     <DashboardShell user={currentUser} title={`Case ${caseRecord.patientId || caseRecord.caseNumber}`}>
       <div className="space-y-6 max-w-5xl mx-auto pb-12">
         {/* Top Navigation & Action Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-4">
-          <div>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-stone-200 pb-4">
+          <div className="space-y-2">
             <Link
               href="/therapist/dashboard"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-stone-800 transition-colors uppercase tracking-wider mb-2"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-stone-800 transition-colors uppercase tracking-wider"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>My Patients</span>
             </Link>
 
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <h1 className="text-2xl font-mono font-bold text-stone-900 tracking-tight">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h1 className="text-2xl font-mono font-bold text-stone-900 tracking-tight shrink-0">
                 {caseRecord.patientId || caseRecord.caseNumber}
               </h1>
 
-              {/* Status & Service Badges: Equal 36px height, equal padding, 2-column grid on phones */}
-              <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
+              {/* Status & Service Badges: wrap cleanly, never truncate */}
+              <div className="flex flex-wrap items-center gap-2">
                 <span
                   data-testid="status-badge"
-                  className={`inline-flex items-center justify-center h-[36px] min-h-[36px] px-3.5 text-xs font-bold uppercase tracking-wider border rounded-none truncate text-center ${
+                  className={`inline-flex items-center justify-center h-[32px] min-h-[32px] px-3 text-xs font-bold uppercase tracking-wider border rounded-none whitespace-nowrap text-center ${
                     isClosed
                       ? "bg-stone-100 text-stone-700 border-stone-300"
                       : "bg-emerald-100 text-emerald-800 border-emerald-300"
@@ -362,31 +362,31 @@ export default async function TherapistCaseDetailPage({
                 </span>
                 <span
                   data-testid="service-badge"
-                  className="inline-flex items-center justify-center h-[36px] min-h-[36px] px-3.5 text-xs font-bold uppercase tracking-wider border rounded-none truncate text-center bg-emerald-50 text-emerald-800 border-emerald-200"
+                  className="inline-flex items-center justify-center h-[32px] min-h-[32px] px-3 text-xs font-bold uppercase tracking-wider border rounded-none whitespace-nowrap text-center bg-emerald-50 text-emerald-800 border-emerald-200"
                 >
                   {serviceLabel}
                 </span>
               </div>
             </div>
 
-            <p className="text-xs text-stone-500 mt-1 font-mono">
+            <p className="text-xs text-stone-500 font-mono">
               Case Ref: {caseRecord.caseNumber}
             </p>
           </div>
 
-          {/* Action buttons: Equal 48px height, equal padding, 2-column grid on phones */}
-          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
+          {/* Action buttons: Dedicated row on mobile, side-by-side without truncate */}
+          <div className="flex items-center gap-2.5 w-full sm:w-auto">
             <Link
               href={`/therapist/cases/${caseRecord.id}/report`}
               data-testid="progress-report-btn"
-              className="inline-flex items-center justify-center h-[48px] min-h-[48px] px-4 text-xs font-semibold uppercase tracking-wider border border-stone-300 hover:bg-stone-100 text-stone-800 rounded-none transition-colors gap-1.5 w-full sm:w-auto text-center"
+              className="inline-flex items-center justify-center h-[44px] min-h-[44px] px-4 text-xs font-semibold uppercase tracking-wider border border-stone-300 hover:bg-stone-100 text-stone-800 rounded-none transition-colors gap-1.5 flex-1 sm:flex-initial text-center whitespace-nowrap"
             >
               <FileText className="w-4 h-4 text-stone-600 shrink-0" />
-              <span className="truncate">Progress report</span>
+              <span>Progress report</span>
             </Link>
 
             {!isClosed && (
-              <div className="w-full sm:w-auto">
+              <div className="flex-1 sm:flex-initial">
                 <CloseCaseModal
                   caseId={caseRecord.id}
                   patientId={caseRecord.patientId || caseRecord.caseNumber}
