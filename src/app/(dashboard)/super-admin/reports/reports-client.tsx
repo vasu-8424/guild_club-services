@@ -4,6 +4,7 @@ import * as React from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Icons } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
+import { getTodayIST, getYesterdayIST, getDaysAgoIST } from "@/lib/date-utils";
 import { exportReportsToExcel, exportReportsToPdf } from "@/lib/report-exports";
 import type { SuperAdminReportsData } from "@/lib/dashboard";
 
@@ -83,11 +84,79 @@ export function ReportsClient({
         </p>
       </div>
 
-      {/* 2. Date Range Filter Form (Native From and To date fields) */}
+      {/* 2. Date Range Filter Form (with quick presets and date pickers) */}
       <div className="rounded-none border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800">
-          Date Range
-        </h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800">
+            Select Date Range
+          </h2>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                const today = getTodayIST();
+                setFromInput(today);
+                setToInput(today);
+                const sp = new URLSearchParams(searchParams ? searchParams.toString() : "");
+                sp.set("from", today);
+                sp.set("to", today);
+                router.push(`/super-admin/reports?${sp.toString()}`);
+              }}
+              className="px-2.5 py-1.5 min-h-[36px] text-xs font-semibold uppercase tracking-wider border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 rounded-none cursor-pointer"
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const yest = getYesterdayIST();
+                setFromInput(yest);
+                setToInput(yest);
+                const sp = new URLSearchParams(searchParams ? searchParams.toString() : "");
+                sp.set("from", yest);
+                sp.set("to", yest);
+                router.push(`/super-admin/reports?${sp.toString()}`);
+              }}
+              className="px-2.5 py-1.5 min-h-[36px] text-xs font-semibold uppercase tracking-wider border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 rounded-none cursor-pointer"
+            >
+              Yesterday
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const today = getTodayIST();
+                const past7 = getDaysAgoIST(6);
+                setFromInput(past7);
+                setToInput(today);
+                const sp = new URLSearchParams(searchParams ? searchParams.toString() : "");
+                sp.set("from", past7);
+                sp.set("to", today);
+                router.push(`/super-admin/reports?${sp.toString()}`);
+              }}
+              className="px-2.5 py-1.5 min-h-[36px] text-xs font-semibold uppercase tracking-wider border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 rounded-none cursor-pointer"
+            >
+              Past 7 Days
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const today = getTodayIST();
+                const [y, m] = today.split("-");
+                const firstDay = `${y}-${m}-01`;
+                setFromInput(firstDay);
+                setToInput(today);
+                const sp = new URLSearchParams(searchParams ? searchParams.toString() : "");
+                sp.set("from", firstDay);
+                sp.set("to", today);
+                router.push(`/super-admin/reports?${sp.toString()}`);
+              }}
+              className="px-2.5 py-1.5 min-h-[36px] text-xs font-semibold uppercase tracking-wider border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 rounded-none cursor-pointer"
+            >
+              This Month
+            </button>
+          </div>
+        </div>
+
         <form onSubmit={handleApplyRange} className="flex flex-col sm:flex-row sm:items-end gap-3">
           <div className="flex-1 space-y-1.5">
             <label

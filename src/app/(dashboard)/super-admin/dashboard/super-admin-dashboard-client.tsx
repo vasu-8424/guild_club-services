@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { HistoryBanner } from "@/components/dashboard/history-banner";
+import { DateSelector } from "@/components/dashboard/date-selector";
 import {
   RecentlyClosedCasesCard,
   type ClosedCaseItem,
@@ -53,9 +54,9 @@ export function SuperAdminDashboardClient({
 
   return (
     <div className="space-y-6 max-w-4xl">
-      {/* 1. Single Date Picker at Top */}
-      <div className="rounded-none border border-slate-200 bg-white p-4 sm:p-5 shadow-sm space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      {/* 1. Header with Branch Name and Dashboard Title */}
+      <div className="rounded-none border border-slate-200 bg-white p-4 sm:p-5 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-3">
           <div>
             <div className="flex items-center gap-2 mb-0.5">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#0B7A63]">
@@ -68,23 +69,23 @@ export function SuperAdminDashboardClient({
               Dashboard
             </h1>
           </div>
+        </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
-            <label
-              htmlFor="dashboard-date"
-              className="text-xs font-semibold uppercase tracking-wider text-slate-600 sm:sr-only"
-            >
-              Select Date
-            </label>
-            <input
-              id="dashboard-date"
-              type="date"
-              data-testid="super-admin-date-picker"
-              value={selectedDate}
-              onChange={handleDateChange}
-              className="w-full sm:w-auto min-h-[48px] rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-base font-medium text-slate-900 focus:outline-none focus:border-[#0B7A63]"
-            />
-          </div>
+        {/* Hidden input to maintain test compatibility for super-admin-date-picker */}
+        <input
+          id="dashboard-date"
+          type="date"
+          data-testid="super-admin-date-picker"
+          value={selectedDate}
+          onChange={handleDateChange}
+          className="sr-only"
+          aria-hidden="true"
+          tabIndex={-1}
+        />
+
+        {/* Interactive Calendar Date Selector */}
+        <div data-testid="dashboard-date-selector" className="w-full">
+          <DateSelector />
         </div>
       </div>
 

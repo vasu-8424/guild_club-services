@@ -9,7 +9,7 @@ import {
   type CreateCasePhotoInput,
 } from "@/lib/actions/case-creation-actions";
 import { getFreeRoomsForBranchAction } from "@/lib/actions/room-management-actions";
-import { getTodayIST, getDaysAgoIST, getDaysAheadIST } from "@/lib/date-utils";
+import { getTodayIST, getYesterdayIST, getDaysAgoIST, getDaysAheadIST } from "@/lib/date-utils";
 import { useKeyboardOffset, scrollInputIntoViewOnFocus } from "@/lib/mobile-keyboard";
 import { useNetworkStatus } from "@/components/network/network-provider";
 import {
@@ -588,9 +588,27 @@ export function CreateCaseForm({ branches }: CreateCaseFormProps) {
 
             {/* Start Date */}
             <div className="space-y-1.5">
-              <label className="block text-[14px] font-semibold tracking-wide uppercase text-stone-700">
-                Start Date <span className="text-red-500">*</span>
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="block text-[14px] font-semibold tracking-wide uppercase text-stone-700">
+                  Start Date <span className="text-red-500">*</span>
+                </label>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setStartDate(getTodayIST())}
+                    className="px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 rounded-none cursor-pointer"
+                  >
+                    Today
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStartDate(getYesterdayIST())}
+                    className="px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 rounded-none cursor-pointer"
+                  >
+                    Yesterday
+                  </button>
+                </div>
+              </div>
               <input
                 type="date"
                 data-testid="start-date-input"
