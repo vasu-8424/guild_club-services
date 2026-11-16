@@ -54,4 +54,6 @@ next-env.d.ts
 # built APKs and AAB bundles
 *.apk
 *.aab
+*.keystore
+*.jks
 android/local.properties
