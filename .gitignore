@@ -51,6 +51,7 @@ next-env.d.ts
 /storage/files/*
 !/storage/files/.gitkeep
 
-# built APKs
+# built APKs and AAB bundles
 *.apk
+*.aab
 android/local.properties
