@@ -89,10 +89,10 @@ export function DashboardPersistentShell({
             {user.role === "therapist" && <TabCloseBeaconListener />}
 
             {/* 
-              Main Scrollable Content Area 
-              Padding bottom accommodates fixed 64px bottom tab bar + safe area inset + 16px buffer
+              Main Scrollable Content Area - Native document scroll ensures smooth scrolling across all devices
+              Padding bottom accommodates fixed 64px bottom tab bar + safe area inset + 40px buffer
             */}
-            <main className="flex-1 w-full max-w-full min-w-0 overflow-y-auto overflow-x-hidden px-4 py-4 pb-[calc(4rem+env(safe-area-inset-bottom)+1.5rem)]">
+            <main className="flex-1 w-full max-w-full min-w-0 px-4 py-4 pb-[calc(4rem+env(safe-area-inset-bottom)+2.5rem)]">
               <StaleUiGuard />
               {children}
             </main>

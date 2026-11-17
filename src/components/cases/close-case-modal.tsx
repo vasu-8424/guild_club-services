@@ -61,7 +61,17 @@ export function CloseCaseModal({
     }
 
     Array.from(files).forEach((file) => {
-      if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      const mime =
+        file.type ||
+        (file.name.toLowerCase().endsWith(".png")
+          ? "image/png"
+          : file.name.toLowerCase().endsWith(".webp")
+          ? "image/webp"
+          : file.name.toLowerCase().endsWith(".jpg") || file.name.toLowerCase().endsWith(".jpeg")
+          ? "image/jpeg"
+          : "");
+
+      if (!["image/jpeg", "image/png", "image/webp"].includes(mime)) {
         setError("Only JPEG, PNG, and WebP images are allowed.");
         return;
       }
@@ -204,11 +214,11 @@ export function CloseCaseModal({
       {isOpen && (
         <div
           data-testid="close-case-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm p-2 sm:p-4"
         >
-          <div className="bg-white border-2 border-stone-900 w-full max-w-2xl shadow-2xl rounded-none my-4 sm:my-8 flex flex-col max-h-[min(90dvh,calc(100dvh-2rem))]">
+          <div className="bg-white border-2 border-stone-900 w-full max-w-2xl shadow-2xl rounded-none flex flex-col max-h-[94dvh] sm:max-h-[90dvh]">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 bg-stone-50">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-stone-200 bg-stone-50 shrink-0">
               <div>
                 <h3 className="text-base font-bold uppercase tracking-tight text-stone-900">
                   Close Case & Submit Final Progress Report: {patientId}
@@ -218,14 +228,14 @@ export function CloseCaseModal({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="p-1 text-stone-400 hover:text-stone-800"
+                className="p-2 text-stone-400 hover:text-stone-800 cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleProceedToConfirm} className="p-6 overflow-y-auto flex-1 space-y-6 text-left">
+            <form onSubmit={handleProceedToConfirm} className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-6 text-left overscroll-contain">
               {error && (
                 <div className="p-3 bg-red-50 border border-red-200 text-red-800 text-xs">
                   {error}

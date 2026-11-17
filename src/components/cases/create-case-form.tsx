@@ -129,7 +129,17 @@ export function CreateCaseForm({ branches }: CreateCaseFormProps) {
 
     setIsCompressing(true);
     Array.from(files).forEach((file) => {
-      if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      const mime =
+        file.type ||
+        (file.name.toLowerCase().endsWith(".png")
+          ? "image/png"
+          : file.name.toLowerCase().endsWith(".webp")
+          ? "image/webp"
+          : file.name.toLowerCase().endsWith(".jpg") || file.name.toLowerCase().endsWith(".jpeg")
+          ? "image/jpeg"
+          : "");
+
+      if (!["image/jpeg", "image/png", "image/webp"].includes(mime)) {
         setError("Only JPEG, PNG, and WebP images are allowed.");
         setIsCompressing(false);
         return;
@@ -588,27 +598,9 @@ export function CreateCaseForm({ branches }: CreateCaseFormProps) {
 
             {/* Start Date */}
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="block text-[14px] font-semibold tracking-wide uppercase text-stone-700">
-                  Start Date <span className="text-red-500">*</span>
-                </label>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setStartDate(getTodayIST())}
-                    className="px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 rounded-none cursor-pointer"
-                  >
-                    Today
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setStartDate(getYesterdayIST())}
-                    className="px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 rounded-none cursor-pointer"
-                  >
-                    Yesterday
-                  </button>
-                </div>
-              </div>
+              <label className="block text-[14px] font-semibold tracking-wide uppercase text-stone-700">
+                Start Date <span className="text-red-500">*</span>
+              </label>
               <input
                 type="date"
                 data-testid="start-date-input"
@@ -619,6 +611,32 @@ export function CreateCaseForm({ branches }: CreateCaseFormProps) {
                 className="w-full min-h-[48px] border border-stone-300 px-3 py-3 text-base focus:outline-none focus:border-[#0B7A63] rounded-none bg-white"
                 required
               />
+              <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                <button
+                  type="button"
+                  data-testid="start-date-today-btn"
+                  onClick={() => setStartDate(getTodayIST())}
+                  className={`min-h-[36px] py-1 px-1.5 text-[11px] font-bold uppercase tracking-wider border text-center transition-colors cursor-pointer rounded-none ${
+                    startDate === getTodayIST()
+                      ? "border-[#0B7A63] bg-[#e6f4f1] text-[#0B7A63]"
+                      : "border-slate-300 bg-white hover:bg-slate-50 text-slate-700"
+                  }`}
+                >
+                  Today
+                </button>
+                <button
+                  type="button"
+                  data-testid="start-date-yesterday-btn"
+                  onClick={() => setStartDate(getYesterdayIST())}
+                  className={`min-h-[36px] py-1 px-1.5 text-[11px] font-bold uppercase tracking-wider border text-center transition-colors cursor-pointer rounded-none ${
+                    startDate === getYesterdayIST()
+                      ? "border-[#0B7A63] bg-[#e6f4f1] text-[#0B7A63]"
+                      : "border-slate-300 bg-white hover:bg-slate-50 text-slate-700"
+                  }`}
+                >
+                  Yesterday
+                </button>
+              </div>
               {fieldErrors.startDate && (
                 <p className="text-[13px] text-red-600">{fieldErrors.startDate}</p>
               )}
