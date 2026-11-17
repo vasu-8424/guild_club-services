@@ -101,44 +101,19 @@ export async function loginAction(data: LoginInput): Promise<AuthActionResult> {
       };
     }
 
-    // 4. Password verification (with fallback support for standard demo credentials)
+    // 4. Password verification (secure bcrypt comparison with initial-letter case resilience)
     let isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
-    if (!isPasswordValid) {
-      const allowedFallbacks: Record<string, string[]> = {
-        "admin@guildclub.com": ["Admin@12345", "Admin@123", "TestAdmin@123"],
-        "test.admin@guildclub.com": ["TestAdmin@123", "Admin@12345", "Admin@123"],
-        "superadmin@guildclub.com": ["ChangeMe@12345", "TestSuperAdmin@123"],
-        "test.superadmin@guildclub.com": ["TestSuperAdmin@123", "ChangeMe@12345"],
-        "therapist@guildclub.com": ["Therapist@12345", "TestTherapist@123"],
-        "test.therapist@guildclub.com": ["TestTherapist@123", "Therapist@12345"],
-        "veeravasu944@gmail.com": ["Admin@12345", "Therapist@12345", "Admin@123"],
-        "vasuunakka@gmail.com": ["Admin@12345", "Therapist@12345", "Admin@123"],
-        "g.jahnavi4321@gmail.com": [
-          "jahnavi@12345",
-          "Jahnavi@12345",
-          "jahnavi@123",
-          "Jahnavi@123",
-          "GuildClub@2026",
-        ],
-        "keerthana2666@gmail.com": [
-          "keerthana@12345",
-          "Keerthana@12345",
-          "keerthana@123",
-          "Keerthana@123",
-          "GuildClub@2026",
-        ],
-      };
+    // If initial comparison failed, check with flipped first-char case (handles mobile keyboard auto-capitalization)
+    if (!isPasswordValid && password.length > 0) {
+      const firstChar = password.charAt(0);
+      const flippedFirst =
+        firstChar === firstChar.toUpperCase()
+          ? firstChar.toLowerCase() + password.slice(1)
+          : firstChar.toUpperCase() + password.slice(1);
 
-      const fallbacks = allowedFallbacks[normalizedEmail];
-      if (fallbacks && fallbacks.includes(password)) {
+      if (await bcrypt.compare(flippedFirst, user.passwordHash)) {
         isPasswordValid = true;
-        try {
-          const newHash = await bcrypt.hash(password, 10);
-          await db.update(users).set({ passwordHash: newHash }).where(eq(users.id, user.id));
-        } catch (e) {
-          console.warn("Could not upgrade password hash:", e);
-        }
       }
     }
 

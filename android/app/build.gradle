@@ -19,9 +19,9 @@ android {
     signingConfigs {
         release {
             storeFile file('release.keystore')
-            storePassword 'guildclub123'
-            keyAlias 'guildclub'
-            keyPassword 'guildclub123'
+            storePassword System.getenv("KEYSTORE_PASSWORD") ?: 'guildclub123'
+            keyAlias System.getenv("KEY_ALIAS") ?: 'guildclub'
+            keyPassword System.getenv("KEY_PASSWORD") ?: 'guildclub123'
         }
     }
     buildTypes {

@@ -73,14 +73,13 @@ async function seed() {
     superAdminId = createdSuperAdmin.id;
     console.log(`✅ Super Admin created successfully!`);
     console.log(`   Email: ${superAdminEmail}`);
-    console.log(`   Password: ${superAdminPassword}`);
     console.log(`   Role: super_admin`);
     console.log(`   Must Change Password: ${superAdminMustChange}`);
   }
 
   // 2. Demo Admin Account for testing role-based access
-  const adminEmail = "admin@guildclub.com";
-  const adminPassword = "Admin@12345";
+  const adminEmail = process.env.ADMIN_SEED_EMAIL || "admin@guildclub.com";
+  const adminPassword = process.env.ADMIN_SEED_PASSWORD || "Admin@12345";
   const existingAdmin = await db
     .select()
     .from(users)
@@ -101,12 +100,12 @@ async function seed() {
       mustChangePassword: false,
       createdBy: superAdminId,
     });
-    console.log(`✅ Demo Admin created: ${adminEmail} / ${adminPassword}`);
+    console.log(`✅ Admin account initialized: ${adminEmail}`);
   }
 
   // 3. Demo Therapist Account (with mustChangePassword: true to test password change flow)
-  const therapistEmail = "therapist@guildclub.com";
-  const therapistPassword = "Therapist@12345";
+  const therapistEmail = process.env.THERAPIST_SEED_EMAIL || "therapist@guildclub.com";
+  const therapistPassword = process.env.THERAPIST_SEED_PASSWORD || "Therapist@12345";
   const existingTherapist = await db
     .select()
     .from(users)
@@ -139,9 +138,7 @@ async function seed() {
       maxOpenCases: 12,
     });
 
-    console.log(
-      `✅ Demo Therapist created: ${therapistEmail} / ${therapistPassword} (mustChangePassword: true)`
-    );
+    console.log(`✅ Therapist account initialized: ${therapistEmail}`);
   }
 
   console.log("✨ Seeding completed successfully!");
