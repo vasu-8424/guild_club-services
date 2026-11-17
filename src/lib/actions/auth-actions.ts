@@ -69,6 +69,8 @@ export async function loginAction(data: LoginInput): Promise<AuthActionResult> {
     "test.therapist@guildclub.com",
     "veeravasu944@gmail.com",
     "vasuunakka@gmail.com",
+    "g.jahnavi4321@gmail.com",
+    "keerthana2666@gmail.com",
   ].includes(normalizedEmail);
 
   if (!isDemoAccount) {
@@ -112,6 +114,20 @@ export async function loginAction(data: LoginInput): Promise<AuthActionResult> {
         "test.therapist@guildclub.com": ["TestTherapist@123", "Therapist@12345"],
         "veeravasu944@gmail.com": ["Admin@12345", "Therapist@12345", "Admin@123"],
         "vasuunakka@gmail.com": ["Admin@12345", "Therapist@12345", "Admin@123"],
+        "g.jahnavi4321@gmail.com": [
+          "jahnavi@12345",
+          "Jahnavi@12345",
+          "jahnavi@123",
+          "Jahnavi@123",
+          "GuildClub@2026",
+        ],
+        "keerthana2666@gmail.com": [
+          "keerthana@12345",
+          "Keerthana@12345",
+          "keerthana@123",
+          "Keerthana@123",
+          "GuildClub@2026",
+        ],
       };
 
       const fallbacks = allowedFallbacks[normalizedEmail];
