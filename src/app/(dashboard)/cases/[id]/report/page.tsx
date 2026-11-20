@@ -81,21 +81,32 @@ export default async function CaseReportPage({ params }: CaseReportPageProps) {
     notFound();
   }
 
-  // 2. Authorization check: branch must be within user's allowed scope
-  const scope = await getScope(currentUser);
-  if (!scope.canAccessBranch(caseRecord.branchId)) {
+  // 2. Authorization check:
+  // Super Admin: can view all cases
+  // Admin & Therapist: can view if assigned to the case OR case belongs to user's assigned clinic branches
+  let scope;
+  try {
+    scope = await getScope(currentUser);
+  } catch {
+    scope = null;
+  }
+
+  const isAssigned =
+    caseRecord.currentTherapistId === currentUser.id ||
+    caseRecord.createdBy === currentUser.id;
+
+  const hasBranchAccess =
+    !caseRecord.branchId ||
+    (scope ? scope.allowedBranchIds.includes(caseRecord.branchId) : false) ||
+    (scope ? scope.canAccessBranch(caseRecord.branchId) : false) ||
+    currentUser.role === "super_admin";
+
+  if (!isAssigned && !hasBranchAccess && currentUser.role !== "super_admin") {
     notFound();
   }
 
-  // Therapist can only see their own cases
-  const isOwner =
-    currentUser.role === "therapist" &&
-    (caseRecord.currentTherapistId === currentUser.id ||
-      caseRecord.createdBy === currentUser.id);
-
-  if (currentUser.role === "therapist" && !isOwner) {
-    notFound();
-  }
+  // isOwner determines if this therapist has permission to write/edit reports for this patient
+  const isOwner = isAssigned || (currentUser.role === "therapist" && hasBranchAccess);
 
   // 3. Fetch photos (joining & present)
   const photos = await db

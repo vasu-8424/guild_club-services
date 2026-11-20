@@ -12,6 +12,7 @@ import {
   type ProgressReport,
 } from "@/db/schema";
 import { getCurrentUser, requireRole } from "@/lib/session";
+import { getScope } from "@/lib/scope";
 import { getTodayIST } from "@/lib/date-utils";
 import { recordEvent } from "@/lib/events";
 import { notifyProgressReportSubmitted } from "@/lib/notifications/in-app";
@@ -131,6 +132,7 @@ export async function saveReportDraftAction(input: {
       caseNumber: cases.caseNumber,
       currentTherapistId: cases.currentTherapistId,
       createdBy: cases.createdBy,
+      branchId: cases.branchId,
       status: cases.status,
     })
     .from(cases)
@@ -140,7 +142,18 @@ export async function saveReportDraftAction(input: {
     return { success: false, error: "Case not found." };
   }
 
-  if (caseRecord.currentTherapistId !== currentUser.id && caseRecord.createdBy !== currentUser.id) {
+  const isAssigned = caseRecord.currentTherapistId === currentUser.id || caseRecord.createdBy === currentUser.id;
+  let hasBranch = false;
+  if (!isAssigned) {
+    try {
+      const scope = await getScope(currentUser);
+      hasBranch = !caseRecord.branchId || scope.allowedBranchIds.includes(caseRecord.branchId);
+    } catch {
+      hasBranch = false;
+    }
+  }
+
+  if (!isAssigned && !hasBranch) {
     return { success: false, error: "You are not authorized to write reports for this case." };
   }
 
@@ -254,6 +267,7 @@ export async function submitReportAction(input: {
       caseNumber: cases.caseNumber,
       currentTherapistId: cases.currentTherapistId,
       createdBy: cases.createdBy,
+      branchId: cases.branchId,
       status: cases.status,
     })
     .from(cases)
@@ -263,7 +277,18 @@ export async function submitReportAction(input: {
     return { success: false, error: "Case not found." };
   }
 
-  if (caseRecord.currentTherapistId !== currentUser.id && caseRecord.createdBy !== currentUser.id) {
+  const isAssigned = caseRecord.currentTherapistId === currentUser.id || caseRecord.createdBy === currentUser.id;
+  let hasBranch = false;
+  if (!isAssigned) {
+    try {
+      const scope = await getScope(currentUser);
+      hasBranch = !caseRecord.branchId || scope.allowedBranchIds.includes(caseRecord.branchId);
+    } catch {
+      hasBranch = false;
+    }
+  }
+
+  if (!isAssigned && !hasBranch) {
     return { success: false, error: "You are not authorized to submit reports for this case." };
   }
 
@@ -518,6 +543,7 @@ export async function getCaseReportsAction(caseId: string): Promise<ProgressRepo
       id: cases.id,
       currentTherapistId: cases.currentTherapistId,
       createdBy: cases.createdBy,
+      branchId: cases.branchId,
     })
     .from(cases)
     .where(eq(cases.id, caseId));
@@ -528,7 +554,17 @@ export async function getCaseReportsAction(caseId: string): Promise<ProgressRepo
 
   // Role checks
   if (currentUser.role === "therapist") {
-    if (caseRecord.currentTherapistId !== currentUser.id && caseRecord.createdBy !== currentUser.id) {
+    const isAssigned = caseRecord.currentTherapistId === currentUser.id || caseRecord.createdBy === currentUser.id;
+    let hasBranch = false;
+    if (!isAssigned) {
+      try {
+        const scope = await getScope(currentUser);
+        hasBranch = !caseRecord.branchId || scope.allowedBranchIds.includes(caseRecord.branchId);
+      } catch {
+        hasBranch = false;
+      }
+    }
+    if (!isAssigned && !hasBranch) {
       return { success: false, error: "Unauthorized access to case reports." };
     }
   }

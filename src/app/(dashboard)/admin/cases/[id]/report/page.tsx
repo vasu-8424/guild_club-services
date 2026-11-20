@@ -1,12 +1,4 @@
-import { redirect } from "next/navigation";
+import CaseReportPage, { metadata } from "@/app/(dashboard)/cases/[id]/report/page";
 
-interface AdminReportPageProps {
-  params: Promise<{ id: string }>;
-}
-
-export default async function AdminCaseReportPage({
-  params,
-}: AdminReportPageProps) {
-  const { id } = await params;
-  redirect(`/cases/${id}/report`);
-}
+export { metadata };
+export default CaseReportPage;

@@ -94,6 +94,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/super-admin") ||
     pathname.startsWith("/admin") ||
     pathname.startsWith("/therapist") ||
+    pathname.startsWith("/cases") ||
     pathname.startsWith("/change-password");
 
   if (isProtectedPath) {
@@ -194,5 +195,6 @@ export const config = {
     "/super-admin/:path*",
     "/admin/:path*",
     "/therapist/:path*",
+    "/cases/:path*",
   ],
 };

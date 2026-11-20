@@ -61,6 +61,7 @@ export async function getScope(
   }
 
   // Check URL / explicit parameter first, then fallback to cookie
+  const isExplicitParam = Boolean(selectedBranchId?.trim());
   let requestedBranchId = selectedBranchId?.trim() || null;
   if (!requestedBranchId) {
     try {
@@ -124,10 +125,15 @@ export async function getScope(
     if (requestedBranchId) {
       const match = allowedBranches.find((b) => b.id === requestedBranchId);
       if (!match) {
-        // Explicit URL or cookie tampering with an unauthorized branch
-        notFound();
+        if (isExplicitParam) {
+          notFound();
+        } else {
+          // Stale cookie from a previous session or removed branch: fall back safely
+          activeBranch = allowedBranches[0] || null;
+        }
+      } else {
+        activeBranch = match;
       }
-      activeBranch = match;
     } else {
       // Default to first assigned branch if any
       activeBranch = allowedBranches[0] || null;
@@ -138,10 +144,10 @@ export async function getScope(
   const hasSelectedBranch = activeBranch !== null;
 
   const canAccessBranch = (branchId: string | null | undefined): boolean => {
-    if (!branchId) return false;
-    // When a branch is selected, operations MUST match the active branch
-    if (activeBranchId) {
-      return branchId === activeBranchId;
+    if (!branchId) return true;
+    if (user.role === "super_admin") return true;
+    if (activeBranchId && branchId === activeBranchId) {
+      return true;
     }
     return allowedBranchIds.includes(branchId);
   };

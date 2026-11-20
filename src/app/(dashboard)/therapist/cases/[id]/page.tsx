@@ -30,6 +30,7 @@ import {
 
 interface TherapistCaseDetailPageProps {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ tab?: string }>;
 }
 
 /**
@@ -134,6 +135,8 @@ async function CaseDetailAsyncTabs({
   currentUserId,
   isClosed,
   closedDateStr,
+  hasBranchAccess = false,
+  defaultTab = "calendar",
 }: {
   caseRecord: {
     id: string;
@@ -147,6 +150,8 @@ async function CaseDetailAsyncTabs({
   currentUserId: string;
   isClosed: boolean;
   closedDateStr: string | null;
+  hasBranchAccess?: boolean;
+  defaultTab?: "calendar" | "report";
 }) {
   const [rawSessions, rawReports] = await Promise.all([
     // Query 1: recorded sessions (indexed on case_id, session_date)
@@ -232,9 +237,10 @@ async function CaseDetailAsyncTabs({
       startDate={caseRecord.startDate || formatToISTDateString(caseRecord.createdAt)}
       closedAtDate={closedDateStr}
       isClosed={isClosed}
-      isOwner={caseRecord.currentTherapistId === currentUserId || caseRecord.createdBy === currentUserId}
+      isOwner={caseRecord.currentTherapistId === currentUserId || caseRecord.createdBy === currentUserId || hasBranchAccess}
       initialSessions={initialSessions}
       initialReports={initialReports}
+      defaultTab={defaultTab}
     />
   );
 }
@@ -265,9 +271,16 @@ function PhotosSkeleton() {
 
 export default async function TherapistCaseDetailPage({
   params,
+  searchParams,
 }: TherapistCaseDetailPageProps) {
   const currentUser = await requireRole("therapist");
   const { id } = await params;
+  const rawQuery = searchParams ? await searchParams : {};
+  const activeTabParam = rawQuery.tab;
+  const defaultTab: "calendar" | "report" =
+    activeTabParam === "progress-report" || activeTabParam === "report"
+      ? "report"
+      : "calendar";
 
   // 1. Single small query: Fetch case header + intake details
   const [caseRecord] = await db
@@ -308,17 +321,18 @@ export default async function TherapistCaseDetailPage({
     notFound();
   }
 
-  // 2. Authorization
+  // 2. Authorization: Assigned therapist OR belongs to user's assigned branch
   const isOwner =
     caseRecord.currentTherapistId === currentUser.id ||
     caseRecord.createdBy === currentUser.id;
 
-  if (!isOwner) {
-    redirect("/therapist/dashboard");
-  }
-
   const scope = await getScope(currentUser);
-  if (!scope.canAccessBranch(caseRecord.branchId)) {
+  const hasBranchAccess =
+    !caseRecord.branchId ||
+    scope.allowedBranchIds.includes(caseRecord.branchId) ||
+    scope.canAccessBranch(caseRecord.branchId);
+
+  if (!isOwner && !hasBranchAccess) {
     redirect("/therapist/dashboard");
   }
 
@@ -508,6 +522,8 @@ export default async function TherapistCaseDetailPage({
             currentUserId={currentUser.id}
             isClosed={isClosed}
             closedDateStr={closedDateStr}
+            hasBranchAccess={hasBranchAccess}
+            defaultTab={defaultTab}
           />
         </Suspense>
       </div>
