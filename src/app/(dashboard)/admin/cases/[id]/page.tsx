@@ -90,7 +90,7 @@ export default async function AdminCaseDetailPage({ params }: CaseDetailPageProp
     notFound();
   }
 
-  // 2. Fetch notes
+  // 2. Fetch direct case notes
   const rawNotesList = await db
     .select({
       id: caseNotes.id,
@@ -105,7 +105,7 @@ export default async function AdminCaseDetailPage({ params }: CaseDetailPageProp
     .where(eq(caseNotes.caseId, id))
     .orderBy(desc(caseNotes.createdAt));
 
-  const notesList = rawNotesList.map((n) => ({
+  const directNotesList = rawNotesList.map((n) => ({
     ...n,
     authorName: formatUserName(n.authorName, n.authorDeletedAt),
   }));
@@ -145,6 +145,22 @@ export default async function AdminCaseDetailPage({ params }: CaseDetailPageProp
     ...s,
     therapistName: formatUserName(s.therapistName, s.therapistDeletedAt),
   }));
+
+  // Integrate session treatment notes into the clinical notes list so admins see all practitioner notes in one place
+  const sessionNotesList = rawSessionsList
+    .filter((s) => Boolean(s.notes && s.notes.trim()))
+    .map((s) => ({
+      id: `session-note-${s.id}`,
+      note: `[Session Treatment Note · ${s.sessionDate ? String(s.sessionDate) : new Date(s.scheduledAt).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })}]:\n${s.notes}`,
+      createdAt: s.completedAt || s.scheduledAt,
+      authorName: formatUserName(s.therapistName, s.therapistDeletedAt),
+      authorDeletedAt: null,
+      authorRole: "therapist",
+    }));
+
+  const notesList = [...directNotesList, ...sessionNotesList].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 
   const calendarSessions: CalendarSessionItem[] = rawSessionsList
     .filter((s) => s.sessionDate !== null)
