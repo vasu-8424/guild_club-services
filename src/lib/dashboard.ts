@@ -988,7 +988,7 @@ export async function getPipelineFunnelData(
       COUNT(CASE WHEN status = 'new' THEN 1 END)::int as new_count,
       COUNT(CASE WHEN status = 'assigned' THEN 1 END)::int as assigned_count,
       COUNT(CASE WHEN status = 'accepted' THEN 1 END)::int as accepted_count,
-      COUNT(CASE WHEN status = 'in_progress' THEN 1 END)::int as in_progress_count,
+      COUNT(CASE WHEN status IN ('in_progress', 'active') THEN 1 END)::int as in_progress_count,
       COUNT(CASE WHEN status = 'completed' THEN 1 END)::int as completed_count
     FROM cases
     WHERE created_at < (($1::date + 1))::timestamp AT TIME ZONE 'Asia/Kolkata'
@@ -1068,7 +1068,7 @@ export async function getTherapistCapacityList(): Promise<TherapistCapacityItem[
       u.id,
       u.name,
       COALESCE(tp.specialization, 'General Therapy') as specialization,
-      COUNT(DISTINCT CASE WHEN c.status IN ('assigned', 'accepted', 'in_progress') THEN c.id END)::int as open_cases,
+      COUNT(DISTINCT CASE WHEN c.status IN ('assigned', 'accepted', 'in_progress', 'active') THEN c.id END)::int as open_cases,
       COUNT(DISTINCT CASE WHEN ce.event_type = 'session_held' THEN ce.id END)::int as sessions_held,
       COUNT(DISTINCT CASE WHEN ce.event_type = 'case_closed' AND ce.metadata->>'outcome' = 'successful' THEN ce.case_id END)::int as successful_cases,
       COUNT(DISTINCT CASE WHEN ce.event_type = 'case_closed' THEN ce.case_id END)::int as total_closed
@@ -1204,7 +1204,7 @@ export async function getPriorityStatusMatrix(): Promise<PriorityStatusMatrixIte
     SELECT 
       priority,
       COUNT(CASE WHEN status = 'new' THEN 1 END)::int as new_count,
-      COUNT(CASE WHEN status IN ('assigned', 'accepted', 'in_progress') THEN 1 END)::int as in_progress_count,
+      COUNT(CASE WHEN status IN ('assigned', 'accepted', 'in_progress', 'active') THEN 1 END)::int as in_progress_count,
       COUNT(CASE WHEN status = 'on_hold' THEN 1 END)::int as on_hold_count,
       COUNT(CASE WHEN status = 'completed' THEN 1 END)::int as completed_count
     FROM cases

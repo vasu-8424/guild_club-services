@@ -1,7 +1,7 @@
 import { requireRole } from "@/lib/session";
 import { db } from "@/db";
 import { users, therapistProfiles, cases } from "@/db/schema";
-import { eq, isNull, and, or, sql } from "drizzle-orm";
+import { eq, isNull, isNotNull, ne, and, or, sql } from "drizzle-orm";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,7 @@ export default async function TherapistsPage({
     .where(whereCondition)
     .orderBy(users.name);
 
-  // Count active cases for each therapist
+  // Count active cases for each therapist (all non-completed cases)
   const activeCasesCounts = await db
     .select({
       therapistId: cases.currentTherapistId,
@@ -61,12 +61,8 @@ export default async function TherapistsPage({
     .from(cases)
     .where(
       and(
-        sql`${cases.currentTherapistId} IS NOT NULL`,
-        or(
-          eq(cases.status, "assigned"),
-          eq(cases.status, "accepted"),
-          eq(cases.status, "in_progress")
-        )
+        isNotNull(cases.currentTherapistId),
+        ne(cases.status, "completed")
       )
     )
     .groupBy(cases.currentTherapistId);

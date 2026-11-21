@@ -424,7 +424,7 @@ export async function getTherapistOpenCasesAction(
     .where(
       and(
         eq(cases.currentTherapistId, therapistId),
-        inArray(cases.status, ["assigned", "accepted", "in_progress", "on_hold"])
+        inArray(cases.status, ["assigned", "accepted", "in_progress", "on_hold", "active"])
       )
     );
 
@@ -512,7 +512,7 @@ export async function deleteTherapistAction(
       .where(
         and(
           eq(cases.currentTherapistId, userId),
-          inArray(cases.status, ["assigned", "accepted", "in_progress", "on_hold"])
+          inArray(cases.status, ["assigned", "accepted", "in_progress", "on_hold", "active"])
         )
       );
 
