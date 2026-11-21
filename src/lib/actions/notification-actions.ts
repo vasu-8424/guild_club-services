@@ -20,8 +20,12 @@ export interface GetNotificationsParams {
 /**
  * Build a branch-aware WHERE condition for in_app_notifications:
  * - Shows notifications where branchId matches the selected branch OR branchId IS NULL (account-level).
+ * - For Super Admin without a selected branch, shows all notifications.
  */
-function buildBranchCondition(activeBranchId: string | null) {
+function buildBranchCondition(activeBranchId: string | null, isSuperAdmin: boolean = false) {
+  if (isSuperAdmin && !activeBranchId) {
+    return sql`true`;
+  }
   if (!activeBranchId) {
     // No branch selected: show only account-level (null branch) notifications
     return isNull(inAppNotifications.branchId);
@@ -53,8 +57,10 @@ export async function getNotificationsAction(params: GetNotificationsParams = {}
   } = params;
 
   // Resolve active branch
-  let activeBranchId = paramBranchId !== undefined ? paramBranchId : null;
-  if (activeBranchId === undefined) {
+  let activeBranchId: string | null = null;
+  if (paramBranchId !== undefined) {
+    activeBranchId = paramBranchId;
+  } else {
     try {
       const scope = await getScope(user);
       activeBranchId = scope.activeBranchId;
@@ -63,10 +69,13 @@ export async function getNotificationsAction(params: GetNotificationsParams = {}
     }
   }
 
+  const isSuperAdmin = user.role === "super_admin";
+  const branchCondition = buildBranchCondition(activeBranchId, isSuperAdmin)!;
+
   // Base security: only user's own notifications
   const conditions = [
     eq(inAppNotifications.userId, user.id),
-    buildBranchCondition(activeBranchId)!,
+    branchCondition,
   ];
 
   if (tab === "unread") {
@@ -154,7 +163,8 @@ export async function getLatestNotificationsAction(branchId?: string | null) {
     }
   }
 
-  const branchCondition = buildBranchCondition(activeBranchId)!;
+  const isSuperAdmin = user.role === "super_admin";
+  const branchCondition = buildBranchCondition(activeBranchId, isSuperAdmin)!;
 
   const notifications = await db
     .select()
@@ -222,7 +232,8 @@ export async function markAllNotificationsReadAction(branchId?: string | null) {
     }
   }
 
-  const branchCondition = buildBranchCondition(activeBranchId)!;
+  const isSuperAdmin = user.role === "super_admin";
+  const branchCondition = buildBranchCondition(activeBranchId, isSuperAdmin)!;
 
   await db
     .update(inAppNotifications)
@@ -262,7 +273,8 @@ export async function pollNotificationsAction(params: { since?: string; branchId
     }
   }
 
-  const branchCondition = buildBranchCondition(activeBranchId)!;
+  const isSuperAdmin = user.role === "super_admin";
+  const branchCondition = buildBranchCondition(activeBranchId, isSuperAdmin)!;
 
   const [unreadRow] = await db
     .select({ count: sql<number>`count(*)::int` })
