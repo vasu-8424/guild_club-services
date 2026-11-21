@@ -16,9 +16,15 @@ import type { CurrentUser } from "@/lib/session";
 
 interface NotificationsViewProps {
   user: CurrentUser;
+  initialData?: {
+    items: InAppNotification[];
+    unreadCount: number;
+    totalCount: number;
+    totalPages: number;
+  };
 }
 
-export function NotificationsView({ user }: NotificationsViewProps) {
+export function NotificationsView({ user, initialData }: NotificationsViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -29,13 +35,26 @@ export function NotificationsView({ user }: NotificationsViewProps) {
   const [outcomeFilter, setOutcomeFilter] = React.useState<string>("all");
   const [page, setPage] = React.useState<number>(1);
 
-  const [items, setItems] = React.useState<InAppNotification[]>([]);
-  const [unreadCount, setUnreadCount] = React.useState(0);
-  const [totalCount, setTotalCount] = React.useState(0);
-  const [totalPages, setTotalPages] = React.useState(1);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [items, setItems] = React.useState<InAppNotification[]>(
+    initialData?.items ?? []
+  );
+  const [unreadCount, setUnreadCount] = React.useState(
+    initialData?.unreadCount ?? 0
+  );
+  const [totalCount, setTotalCount] = React.useState(
+    initialData?.totalCount ?? 0
+  );
+  const [totalPages, setTotalPages] = React.useState(
+    initialData?.totalPages ?? 1
+  );
+  const [isLoading, setIsLoading] = React.useState(!initialData);
+  const initialRenderRef = React.useRef(Boolean(initialData));
 
   const loadData = React.useCallback(async () => {
+    if (initialRenderRef.current) {
+      initialRenderRef.current = false;
+      return;
+    }
     setIsLoading(true);
     try {
       const res = await getNotificationsAction({

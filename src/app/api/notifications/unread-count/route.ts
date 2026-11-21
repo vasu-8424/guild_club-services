@@ -21,14 +21,12 @@ export async function GET() {
     }
 
     const branchCondition =
-      user.role === "super_admin" && !activeBranchId
+      user.role === "super_admin" || !activeBranchId
         ? sql`true`
-        : activeBranchId
-        ? or(
-            eq(inAppNotifications.branchId, activeBranchId),
-            isNull(inAppNotifications.branchId)
-          )
-        : isNull(inAppNotifications.branchId);
+        : or(
+          eq(inAppNotifications.branchId, activeBranchId),
+          isNull(inAppNotifications.branchId)
+        );
 
     const [unreadRow] = await db
       .select({ count: sql<number>`count(*)::int` })

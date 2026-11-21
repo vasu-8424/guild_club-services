@@ -27,10 +27,8 @@ function buildBranchCondition(activeBranchId: string | null, isSuperAdmin: boole
     return sql`true`;
   }
   if (!activeBranchId) {
-    // No branch selected: show only account-level (null branch) notifications
-    return isNull(inAppNotifications.branchId);
+    return sql`true`;
   }
-  // Show branch-specific + account-level
   return or(
     eq(inAppNotifications.branchId, activeBranchId),
     isNull(inAppNotifications.branchId)
