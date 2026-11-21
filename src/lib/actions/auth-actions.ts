@@ -62,10 +62,12 @@ export async function loginAction(data: LoginInput): Promise<AuthActionResult> {
 
   const isDemoAccount = [
     "admin@guildclub.com",
+    "admin.mock@guildclub.com",
     "test.admin@guildclub.com",
     "superadmin@guildclub.com",
     "test.superadmin@guildclub.com",
     "therapist@guildclub.com",
+    "therapist.mock@guildclub.com",
     "test.therapist@guildclub.com",
     "veeravasu944@gmail.com",
     "vasuunakka@gmail.com",
