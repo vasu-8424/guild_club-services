@@ -7,6 +7,9 @@ const buildId =
   `gcs-${Date.now()}`;
 
 const nextConfig: NextConfig = {
+  experimental: {
+    agentUpgrade: "security",
+  },
   output: process.env.BUILD_STANDALONE === "true" ? "standalone" : undefined,
   generateBuildId: async () => buildId,
   env: {
