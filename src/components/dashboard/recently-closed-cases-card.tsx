@@ -28,7 +28,7 @@ export function RecentlyClosedCasesCard({
   userRole = "admin",
   className = "",
 }: RecentlyClosedCasesCardProps) {
-  const basePath = userRole === "super_admin" ? "/super-admin" : "/admin";
+  const basePath = userRole === "therapist" ? "/therapist" : "/admin";
 
   return (
     <Card data-testid="recently-closed-cases-card" className={`rounded-none border-slate-200 shadow-sm ${className}`}>

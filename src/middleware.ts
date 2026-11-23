@@ -95,6 +95,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/admin") ||
     pathname.startsWith("/therapist") ||
     pathname.startsWith("/cases") ||
+    pathname.startsWith("/notifications") ||
     pathname.startsWith("/change-password");
 
   if (isProtectedPath) {
@@ -166,6 +167,7 @@ export async function middleware(request: NextRequest) {
         (pathname.startsWith("/admin/therapists") ||
           pathname.startsWith("/admin/cases") ||
           pathname.startsWith("/admin/branches") ||
+          pathname.startsWith("/admin/notifications") ||
           pathname.startsWith("/admin/rooms"));
 
       if (!isSharedAdminRoute) {
@@ -192,6 +194,8 @@ export const config = {
     "/forgot-password",
     "/reset-password",
     "/change-password",
+    "/notifications/:path*",
+    "/notifications",
     "/super-admin/:path*",
     "/admin/:path*",
     "/therapist/:path*",

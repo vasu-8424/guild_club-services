@@ -104,8 +104,9 @@ export function NotificationsView({ user, initialData }: NotificationsViewProps)
 
   const getCaseUrl = (caseId?: string | null) => {
     if (!caseId) return "#";
-    const basePath = user.role === "super_admin" ? "/super-admin" : "/admin";
-    return `${basePath}/cases/${caseId}`;
+    return user.role === "therapist"
+      ? `/therapist/cases/${caseId}`
+      : `/admin/cases/${caseId}`;
   };
 
   return (

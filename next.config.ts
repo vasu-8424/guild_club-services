@@ -37,6 +37,30 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/admin/notifications",
+        destination: "/notifications",
+        permanent: false,
+      },
+      {
+        source: "/therapist/notifications",
+        destination: "/notifications",
+        permanent: false,
+      },
+      {
+        source: "/super-admin/cases/:id",
+        destination: "/admin/cases/:id",
+        permanent: false,
+      },
+      {
+        source: "/super-admin/cases",
+        destination: "/admin/cases",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

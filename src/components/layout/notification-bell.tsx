@@ -126,8 +126,11 @@ export function NotificationBell({ userRole = "admin" }: NotificationBellProps) 
     setIsOpen(false);
 
     if (notif.caseId) {
-      const basePath = userRole === "super_admin" ? "/super-admin" : "/admin";
-      router.push(`${basePath}/cases/${notif.caseId}`);
+      const caseUrl =
+        userRole === "therapist"
+          ? `/therapist/cases/${notif.caseId}`
+          : `/admin/cases/${notif.caseId}`;
+      router.push(caseUrl);
     } else {
       router.push("/notifications");
     }
@@ -152,8 +155,11 @@ export function NotificationBell({ userRole = "admin" }: NotificationBellProps) 
                 type="button"
                 onClick={() => {
                   setToast(null);
-                  const basePath = userRole === "super_admin" ? "/super-admin" : "/admin";
-                  router.push(`${basePath}/cases/${toast.caseId}`);
+                  const caseUrl =
+                    userRole === "therapist"
+                      ? `/therapist/cases/${toast.caseId}`
+                      : `/admin/cases/${toast.caseId}`;
+                  router.push(caseUrl);
                 }}
                 className="mt-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300 underline"
               >
